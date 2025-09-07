@@ -336,11 +336,18 @@
           <button class="tab-btn active" id="tab-login" role="tab" aria-selected="true" aria-controls="login-form" tabindex="0">Login</button>
           <button class="tab-btn" id="tab-signup" role="tab" aria-selected="false" aria-controls="signup-form" tabindex="-1">Sign Up</button>
         </div>
+        <!-- Success/Error Messages -->
+        <div th:if="${message}" class="alert alert-success" style="background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #c3e6cb;">
+          <span th:text="${message}"></span>
+        </div>
+        <div th:if="${error}" class="alert alert-danger" style="background: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #f5c6cb;">
+          <span th:text="${error}"></span>
+        </div>
         <!-- Login form -->
-        <form id="login-form" method="post" action="/auth/login" autocomplete="on" role="tabpanel" aria-labelledby="tab-login">
+        <form id="login-form" method="post" action="/login" autocomplete="on" role="tabpanel" aria-labelledby="tab-login">
           <div class="input-field">
-            <label for="username">Email</label>
-            <input type="email" id="username" name="username" placeholder="username@gmail.com" autocomplete="username" required />
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" placeholder="Enter your username" autocomplete="username" required />
           </div>
           <div class="input-field">
             <label for="password">Password</label>
@@ -375,19 +382,19 @@
           <div class="alt-link">Don't have an account? <a id="show-signup">Register</a></div>
         </form>
         <!-- Signup form -->
-        <form id="signup-form" style="display:none;" autocomplete="on"
+        <form id="signup-form" style="display:none;" method="post" action="/register" autocomplete="on"
           role="tabpanel" aria-labelledby="tab-signup">
           <div class="input-field">
-            <label for="signup-name">Full Name</label>
-            <input type="text" id="signup-name" placeholder="Your full name" autocomplete="name" required />
+            <label for="signup-name">Username</label>
+            <input type="text" id="signup-name" name="username" placeholder="Your username" autocomplete="username" required />
           </div>
           <div class="input-field">
             <label for="signup-email">Email</label>
-            <input type="email" id="signup-email" placeholder="username@gmail.com" autocomplete="email" required />
+            <input type="email" id="signup-email" name="email" placeholder="username@gmail.com" autocomplete="email" required />
           </div>
           <div class="input-field">
             <label for="signup-password">Create Password</label>
-            <input type="password" id="signup-password" placeholder="Choose a password" autocomplete="new-password"
+            <input type="password" id="signup-password" name="password" placeholder="Choose a password" autocomplete="new-password"
               required />
           </div>
           <button type="submit" class="form-btn">Register</button>
