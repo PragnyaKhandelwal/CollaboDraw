@@ -15,7 +15,16 @@
       --nav-height: 56px;
       --shadow-green: rgba(32, 185, 124, 0.15);
       --main-bg: #fafdff;
+      --white: #ffffff;
+      --gray: #666666;
+      --light-gray: #f3f4f6;
+      --border: #e5e7eb;
+      --text-dark: #1f2937;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+      --orange: #f59e0b;
     }
+
     body {
       margin: 0;
       min-height: 100vh;
@@ -23,6 +32,8 @@
       font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
       background: var(--main-bg);
     }
+
+    /* Sidebar Styles */
     .sidebar {
       background: var(--sidebar-bg);
       color: var(--sidebar-text);
@@ -35,12 +46,15 @@
       align-items: flex-start;
       overflow: hidden;
       z-index: 10;
+      position: fixed;
     }
+
     .sidebar.collapsed {
       width: var(--sidebar-collapsed-width);
       min-width: var(--sidebar-collapsed-width);
       align-items: center;
     }
+
     .logo {
       width: 100%;
       display: flex;
@@ -57,34 +71,41 @@
       transition: all 0.3s cubic-bezier(.4,0,.2,1);
       box-sizing: border-box;
     }
+
     .logo img {
       height: 36px;
       border-radius: 8px;
       transition: margin 0.3s cubic-bezier(.4,0,.2,1), opacity 0.3s;
     }
+
     .logo-text {
       transition: opacity 0.3s cubic-bezier(.4,0,.2,1), width 0.3s cubic-bezier(.4,0,.2,1);
       white-space: nowrap;
       overflow: hidden;
     }
+
     .sidebar.collapsed .logo-text {
       opacity: 0;
       pointer-events: none;
       width: 1px;
     }
+
     .sidebar-nav {
       flex: 1;
       width: 100%;
     }
+
     .sidebar-nav ul {
       list-style: none;
       margin: 0;
       padding: 0;
     }
+
     .sidebar-nav li {
       margin-bottom: 6px;
       width: 100%;
     }
+
     .sidebar-nav a {
       display: flex;
       align-items: center;
@@ -100,11 +121,13 @@
       transition: background 0.2s cubic-bezier(.4,0,.2,1), color 0.2s;
       white-space: nowrap;
     }
+
     .sidebar-nav a:hover,
     .sidebar-nav a.active {
       background: var(--main-green);
       color: #fff;
     }
+
     .nav-icon {
       width: 22px;
       height: 22px;
@@ -115,66 +138,702 @@
       flex-shrink: 0;
       transition: margin 0.3s cubic-bezier(.4,0,.2,1);
     }
+
     .nav-text {
       transition: opacity 0.25s, width 0.25s;
     }
+
     .sidebar.collapsed .nav-text {
       opacity: 0;
       width: 0;
       pointer-events: none;
     }
+
+    /* Toggle Button */
+    .sidebar-toggle {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--main-green);
+      color: white;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+
+    .sidebar-toggle:hover {
+      background: #1a9966;
+      transform: translateX(-50%) scale(1.05);
+    }
+
+    /* Main Content */
     .main-content {
       flex: 1;
       min-height: 100vh;
-      transition: margin-left 0.3s cubic-bezier(.4,0,.2,1);
       margin-left: var(--sidebar-width);
-      background: #fafdff;
+      background: var(--main-bg);
       display: flex;
       flex-direction: column;
+      transition: margin-left 0.3s cubic-bezier(.4,0,.2,1);
     }
+
     .sidebar.collapsed ~ .main-content {
       margin-left: var(--sidebar-collapsed-width);
     }
 
+    /* Header */
+    .header {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    .search-bar {
+      flex: 1;
+      max-width: 400px;
+      margin: 0 40px;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 12px 16px 12px 44px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 15px;
+      transition: all 0.3s;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--main-green);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .notification-btn {
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: var(--light-gray);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .notification-btn:hover {
+      background: var(--border);
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      background: var(--main-green);
+      border-radius: 50%;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Dashboard Content */
+    .dashboard-content {
+      flex: 1;
+      padding: 40px 32px;
+    }
+
+    .welcome-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+    }
+
+    .welcome-text h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 8px;
+    }
+
+    .welcome-text p {
+      color: var(--gray);
+      font-size: 1.1rem;
+    }
+
+    .new-board-btn {
+      background: var(--main-green);
+      color: white;
+      border: none;
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s;
+      text-decoration: none;
+    }
+
+    .new-board-btn:hover {
+      background: #1a9966;
+      transform: translateY(-2px);
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 48px;
+    }
+
+    .action-card {
+      background: var(--white);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+    }
+
+    .action-card:hover {
+      border-color: var(--main-green);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 32px rgba(32, 185, 124, 0.1);
+    }
+
+    .action-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 24px;
+      color: white;
+    }
+
+    .action-card:nth-child(1) .action-icon { background: var(--main-green); }
+    .action-card:nth-child(2) .action-icon { background: var(--blue); }
+    .action-card:nth-child(3) .action-icon { background: var(--purple); }
+    .action-card:nth-child(4) .action-icon { background: var(--orange); }
+
+    .action-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-dark);
+    }
+
+    .action-description {
+      color: var(--gray);
+      font-size: 14px;
+    }
+
+    /* Recent Boards */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    .view-all-btn {
+      color: var(--main-green);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+
+    .view-all-btn:hover {
+      color: #1a9966;
+    }
+
+    .boards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+
+    .board-card {
+      background: var(--white);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .board-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+    }
+
+    .board-preview {
+      height: 180px;
+      background: linear-gradient(135deg, #e6fffa 0%, #f0f9ff 100%);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray);
+      font-size: 48px;
+    }
+
+    .board-info {
+      padding: 20px;
+    }
+
+    .board-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-dark);
+    }
+
+    .board-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--gray);
+      font-size: 14px;
+    }
+
+    .board-collaborators {
+      display: flex;
+      gap: -6px;
+    }
+
+    .collaborator-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid white;
+      margin-left: -6px;
+    }
+
+    .collaborator-avatar:first-child { margin-left: 0; }
+    .collaborator-avatar:nth-child(1) { background: var(--blue); }
+    .collaborator-avatar:nth-child(2) { background: var(--main-green); }
+    .collaborator-avatar:nth-child(3) { background: var(--purple); }
+
+    /* Templates Section */
+    .templates-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .template-card {
+      background: var(--white);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .template-card:hover {
+      border-color: var(--main-green);
+      transform: translateY(-2px);
+    }
+
+    .template-icon {
+      width: 50px;
+      height: 50px;
+      background: var(--light-gray);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 24px;
+    }
+
+    .template-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-dark);
+    }
+
+    .template-description {
+      color: var(--gray);
+      font-size: 14px;
+    }
+
+    /* Responsive */
     @media (max-width: 700px) {
       .main-content {
         margin-left: var(--sidebar-collapsed-width);
-        padding: 1rem;
       }
       .sidebar {
         width: var(--sidebar-collapsed-width);
         min-width: var(--sidebar-collapsed-width);
       }
-      .sidebar.collapsed {
-        width: var(--sidebar-collapsed-width);
-      }
-      .sidebar .logo-text {
+      .sidebar .logo-text,
+      .sidebar .nav-text {
         opacity: 0;
         width: 0;
         pointer-events: none;
+      }
+      .dashboard-content {
+        padding: 20px 16px;
+      }
+      .welcome-section {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+      }
+      .search-bar {
+        display: none;
+      }
+      .header {
+        padding: 0 16px;
+      }
+      .quick-actions {
+        grid-template-columns: 1fr 1fr;
+      }
+      .boards-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (min-width: 701px) {
+      .sidebar-toggle {
+        opacity: 1;
       }
     }
   </style>
 </head>
 <body>
   <div class="sidebar" id="sidebar" role="navigation" aria-label="Main sidebar navigation">
-    <div class="logo" id="sidebar-logo" tabindex="0" aria-label="CollaboDraw logo">
-      <img src="/images/Preview.png" alt="CollaboDraw logo" />
+    <div class="logo" id="sidebar-logo" tabindex="0" aria-label="CollaboDraw logo" onclick="window.location.href='home.html'">
+      <img src="/src/main/resources/static/images/Preview.png" alt="CollaboDraw logo" />
       <span class="logo-text">CollaboDraw</span>
     </div>
     <nav class="sidebar-nav" role="menu" aria-label="Main menu">
       <ul>
-        <li><a href="#" class="active"><span class="nav-icon"><!-- Home SVG --><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 4.354l-7 5.688V20h4v-5h6v5h4V10.042z"/></svg></span><span class="nav-text">Home</span></a></li>
-        <li><a href="#"><span class="nav-icon"><!-- Plus SVG --><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg></span><span class="nav-text">Create</span></a></li>
-        <li><a href="#"><span class="nav-icon"><!-- Document SVG --><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM13 9V3.5L18.5 9z"/></svg></span><span class="nav-text">My Content</span></a></li>
-        <li><a href="#"><span class="nav-icon"><!-- Users SVG --><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M16,11A4,4 0 1,1 12,7A4,4 0 0,1 16,11M6,12A2,2 0 1,1 4,10A2,2 0 0,1 6,12M6,14A6,6 0 0,1 12,16C14.67,16 16,15.33 16,14V13C16,11.67 14.67,11 12,11A6,6 0 0,1 6,14Z"/></svg></span><span class="nav-text">Shared with Me</span></a></li>
-        <li><a href="#"><span class="nav-icon"><!-- Settings SVG --><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 16A4 4 0 1 0 12 8A4 4 0 0 0 12 16ZM4.93 4.93L3.52 6.34 6.34 3.52 4.93 4.93M1 12V13C1 13.55 1.45 14 2 14H4A3 3 0 0 1 6.34 18.36C6.11 18.59 5.89 18.82 5.66 19.05L4.93 19.77 3.52 18.36 4.93 16.95C4.32 16.64 3.74 16.28 3.16 15.87L1.04 13.99 1 13V12 12ZM12 21.76V23A1 1 0 0 0 13 24A1 1 0 0 0 14 23V21.76A7.937 7.937 0 0 1 21.76 14H23A1 1 0 0 0 24 13A1 1 0 0 0 23 12H21.76A7.937 7.937 0 0 1 12 21.76Z"/></svg></span><span class="nav-text">Settings</span></a></li>
+        <li><a href="home.html" class="active"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 4.354l-7 5.688V20h4v-5h6v5h4V10.042z"/></svg></span><span class="nav-text">Home</span></a></li>
+        <li><a href="mainscreen.html"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg></span><span class="nav-text">Create</span></a></li>
+        <li><a href="my-content.html"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM13 9V3.5L18.5 9z"/></svg></span><span class="nav-text">My Content</span></a></li>
+        <li><a href="shared.html"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M16,11A4,4 0 1,1 12,7A4,4 0 0,1 16,11M6,12A2,2 0 1,1 4,10A2,2 0 0,1 6,12M6,14A6,6 0 0,1 12,16C14.67,16 16,15.33 16,14V13C16,11.67 14.67,11 12,11A6,6 0 0,1 6,14Z"/></svg></span><span class="nav-text">Shared with Me</span></a></li>
+        <li><a href="settings.html"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" /></svg></span><span class="nav-text">Settings</span></a></li>
       </ul>
     </nav>
+    <button class="sidebar-toggle" id="toggleBtn" aria-label="Toggle sidebar">‹</button>
   </div>
+
   <div class="main-content" role="main">
-    <!-- Your main page content here -->
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="page-title">Dashboard</h1>
+      </div>
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" placeholder="Search boards, templates, or teammates...">
+      </div>
+      <div class="header-right">
+        <button class="notification-btn">🔔</button>
+        <div class="avatar" onclick="window.location.href='settings.html'" th:text="${currentUser.initials ?: 'JD'}">JD</div>
+      </div>
+    </header>
+
+    <!-- Dashboard Content -->
+    <main class="dashboard-content">
+      <!-- Welcome Section -->
+      <div class="welcome-section">
+        <div class="welcome-text">
+          <h1 th:text="'Welcome back, ' + ${currentUser.firstName ?: 'User'} + '!'">Welcome back, John!</h1>
+          <p>Ready to create something amazing today?</p>
+        </div>
+        <a href="mainscreen.html" class="new-board-btn">
+          <span>+</span>
+          New Board
+        </a>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <div class="action-card" onclick="window.location.href='mainscreen.html'">
+          <div class="action-icon">🎨</div>
+          <div class="action-title">Blank Board</div>
+          <div class="action-description">Start with a clean canvas</div>
+        </div>
+        <div class="action-card" onclick="window.location.href='templates.html'">
+          <div class="action-icon">📊</div>
+          <div class="action-title">From Template</div>
+          <div class="action-description">Choose from pre-made layouts</div>
+        </div>
+        <div class="action-card" onclick="showImportDialog()">
+          <div class="action-icon">📁</div>
+          <div class="action-title">Import File</div>
+          <div class="action-description">Upload existing documents</div>
+        </div>
+        <div class="action-card" onclick="showJoinDialog()">
+          <div class="action-icon">👥</div>
+          <div class="action-title">Join Session</div>
+          <div class="action-description">Enter collaboration code</div>
+        </div>
+      </div>
+
+      <!-- Recent Boards -->
+      <section>
+        <div class="section-header">
+          <h2 class="section-title">Recent Boards</h2>
+          <a href="my-content.html" class="view-all-btn">View All →</a>
+        </div>
+        <div class="boards-grid" th:if="${recentBoards != null and not #lists.isEmpty(recentBoards)}">
+          <div class="board-card" th:each="board : ${recentBoards}" th:onclick="'openBoard(\'' + ${board.id} + '\')'">
+            <div class="board-preview" th:text="${board.icon ?: '🎯'}">🎯</div>
+            <div class="board-info">
+              <div class="board-title" th:text="${board.title}">Product Strategy Meeting</div>
+              <div class="board-meta">
+                <span th:text="${board.lastModified}">2 hours ago</span>
+                <div class="board-collaborators">
+                  <div class="collaborator-avatar" th:each="collaborator, iterStat : ${board.collaborators}" th:if="${iterStat.index < 3}"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Default Recent Boards (fallback when no data) -->
+        <div class="boards-grid" th:if="${recentBoards == null or #lists.isEmpty(recentBoards)}">
+          <div class="board-card" onclick="openBoard('board-1')">
+            <div class="board-preview">🎯</div>
+            <div class="board-info">
+              <div class="board-title">Product Strategy Meeting</div>
+              <div class="board-meta">
+                <span>2 hours ago</span>
+                <div class="board-collaborators">
+                  <div class="collaborator-avatar"></div>
+                  <div class="collaborator-avatar"></div>
+                  <div class="collaborator-avatar"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="board-card" onclick="openBoard('board-2')">
+            <div class="board-preview">📊</div>
+            <div class="board-info">
+              <div class="board-title">User Journey Mapping</div>
+              <div class="board-meta">
+                <span>Yesterday</span>
+                <div class="board-collaborators">
+                  <div class="collaborator-avatar"></div>
+                  <div class="collaborator-avatar"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="board-card" onclick="openBoard('board-3')">
+            <div class="board-preview">💡</div>
+            <div class="board-info">
+              <div class="board-title">Brainstorm Session</div>
+              <div class="board-meta">
+                <span>3 days ago</span>
+                <div class="board-collaborators">
+                  <div class="collaborator-avatar"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="board-card" onclick="openBoard('board-4')">
+            <div class="board-preview">🔄</div>
+            <div class="board-info">
+              <div class="board-title">Process Flow Design</div>
+              <div class="board-meta">
+                <span>1 week ago</span>
+                <div class="board-collaborators">
+                  <div class="collaborator-avatar"></div>
+                  <div class="collaborator-avatar"></div>
+                  <div class="collaborator-avatar"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Popular Templates -->
+      <section>
+        <div class="section-header">
+          <h2 class="section-title">Popular Templates</h2>
+          <a href="templates.html" class="view-all-btn">View All →</a>
+        </div>
+        <div class="templates-grid" th:if="${popularTemplates != null and not #lists.isEmpty(popularTemplates)}">
+          <div class="template-card" th:each="template : ${popularTemplates}" th:onclick="'useTemplate(\'' + ${template.id} + '\')'">
+            <div class="template-icon" th:text="${template.icon ?: '🧠'}">🧠</div>
+            <div class="template-title" th:text="${template.title}">Mind Map</div>
+            <div class="template-description" th:text="${template.description}">Organize ideas and concepts visually</div>
+          </div>
+        </div>
+
+        <!-- Default Popular Templates (fallback when no data) -->
+        <div class="templates-grid" th:if="${popularTemplates == null or #lists.isEmpty(popularTemplates)}">
+          <div class="template-card" onclick="useTemplate('mindmap')">
+            <div class="template-icon">🧠</div>
+            <div class="template-title">Mind Map</div>
+            <div class="template-description">Organize ideas and concepts visually</div>
+          </div>
+          <div class="template-card" onclick="useTemplate('kanban')">
+            <div class="template-icon">📋</div>
+            <div class="template-title">Kanban Board</div>
+            <div class="template-description">Track project progress and tasks</div>
+          </div>
+          <div class="template-card" onclick="useTemplate('swot')">
+            <div class="template-icon">🎯</div>
+            <div class="template-title">SWOT Analysis</div>
+            <div class="template-description">Strategic planning framework</div>
+          </div>
+          <div class="template-card" onclick="useTemplate('wireframe')">
+            <div class="template-icon">📐</div>
+            <div class="template-title">Wireframe</div>
+            <div class="template-description">Design app and web layouts</div>
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
-  <script src="/sidebar-toggle.js"></script>
+
+  <script>
+    // Sidebar toggle functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const sidebar = document.getElementById('sidebar');
+      const toggleBtn = document.getElementById('toggleBtn');
+      
+      toggleBtn.addEventListener('click', function() {
+        sidebar.classList.toggle('collapsed');
+        toggleBtn.innerHTML = sidebar.classList.contains('collapsed') ? '›' : '‹';
+      });
+
+      // Auto-collapse on mobile
+      function checkMobile() {
+        if (window.innerWidth <= 700) {
+          sidebar.classList.add('collapsed');
+          toggleBtn.innerHTML = '›';
+        } else {
+          sidebar.classList.remove('collapsed');
+          toggleBtn.innerHTML = '‹';
+        }
+      }
+
+      window.addEventListener('resize', checkMobile);
+      checkMobile();
+
+      // Navigation functionality
+      document.querySelectorAll('.sidebar-nav a').forEach(link => {
+        link.addEventListener('click', function(e) {
+          if (this.getAttribute('href') === '#') {
+            e.preventDefault();
+          }
+          document.querySelectorAll('.sidebar-nav a').forEach(l => l.classList.remove('active'));
+          this.classList.add('active');
+        });
+      });
+    });
+
+    // Navigation functions
+    function openBoard(boardId) {
+      // Navigate to whiteboard with specific board ID
+      window.location.href = `mainscreen.html?board=${boardId}`;
+    }
+
+    function useTemplate(templateId) {
+      // Navigate to whiteboard with template
+      window.location.href = `mainscreen.html?template=${templateId}`;
+    }
+
+    function showImportDialog() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.pdf,.png,.jpg,.jpeg,.svg,.psd,.sketch';
+      input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          // Navigate to whiteboard with import parameter
+          window.location.href = `mainscreen.html?import=${encodeURIComponent(file.name)}`;
+        }
+      };
+      input.click();
+    }
+
+    function showJoinDialog() {
+      const sessionCode = prompt('Enter collaboration session code:');
+      if (sessionCode && sessionCode.trim()) {
+        // Navigate to whiteboard with session parameter
+        window.location.href = `mainscreen.html?session=${encodeURIComponent(sessionCode.trim())}`;
+      }
+    }
+
+    // Search functionality
+    document.querySelector('.search-input').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        const query = this.value.trim();
+        if (query) {
+          // Navigate to search results
+          window.location.href = `my-content.html?search=${encodeURIComponent(query)}`;
+        }
+      }
+    });
+  </script>
 </body>
 </html>
