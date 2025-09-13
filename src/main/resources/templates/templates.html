@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CollaboDraw - Templates</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --main-green: #20b97c;
+      --sidebar-bg: #0e7e58;
+      --sidebar-text: #ccece1;
+      --sidebar-width: 240px;
+      --sidebar-collapsed-width: 60px;
+      --nav-height: 56px;
+      --shadow-green: rgba(32, 185, 124, 0.15);
+      --main-bg: #fafdff;
+      --white: #ffffff;
+      --gray: #666666;
+      --light-gray: #f3f4f6;
+      --border: #e5e7eb;
+      --text-dark: #1f2937;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+      --orange: #f59e0b;
+      --red: #ef4444;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      background: var(--main-bg);
+    }
+
+    /* Sidebar Styles */
+    .sidebar {
+      background: var(--sidebar-bg);
+      color: var(--sidebar-text);
+      width: var(--sidebar-width);
+      min-width: var(--sidebar-width);
+      height: 100vh;
+      transition: width 0.3s cubic-bezier(.4,0,.2,1);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      overflow: hidden;
+      z-index: 10;
+      position: fixed;
+    }
+
+    .sidebar.collapsed {
+      width: var(--sidebar-collapsed-width);
+      min-width: var(--sidebar-collapsed-width);
+      align-items: center;
+    }
+
+    .logo {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.6rem;
+      font-weight: 800;
+      font-family: 'Montserrat', sans-serif;
+      color: #fff;
+      margin: 20px 0 30px 0;
+      cursor: pointer;
+      padding: 0 10px;
+      white-space: nowrap;
+      transition: all 0.3s cubic-bezier(.4,0,.2,1);
+      box-sizing: border-box;
+    }
+
+    .logo img {
+      height: 36px;
+      border-radius: 8px;
+      transition: margin 0.3s cubic-bezier(.4,0,.2,1), opacity 0.3s;
+    }
+
+    .logo-text {
+      transition: opacity 0.3s cubic-bezier(.4,0,.2,1), width 0.3s cubic-bezier(.4,0,.2,1);
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .sidebar.collapsed .logo-text {
+      opacity: 0;
+      pointer-events: none;
+      width: 1px;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      width: 100%;
+    }
+
+    .sidebar-nav ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .sidebar-nav li {
+      margin-bottom: 6px;
+      width: 100%;
+    }
+
+    .sidebar-nav a {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: var(--sidebar-text);
+      text-decoration: none;
+      font-size: 1.13rem;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: 8px;
+      width: 100%;
+      box-sizing: border-box;
+      transition: background 0.2s cubic-bezier(.4,0,.2,1), color 0.2s;
+      white-space: nowrap;
+    }
+
+    .sidebar-nav a:hover,
+    .sidebar-nav a.active {
+      background: var(--main-green);
+      color: #fff;
+    }
+
+    .nav-icon {
+      width: 22px;
+      height: 22px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3em;
+      flex-shrink: 0;
+      transition: margin 0.3s cubic-bezier(.4,0,.2,1);
+    }
+
+    .nav-text {
+      transition: opacity 0.25s, width 0.25s;
+    }
+
+    .sidebar.collapsed .nav-text {
+      opacity: 0;
+      width: 0;
+      pointer-events: none;
+    }
+
+    /* Toggle Button */
+    .sidebar-toggle {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--main-green);
+      color: white;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+
+    .sidebar-toggle:hover {
+      background: #1a9966;
+      transform: translateX(-50%) scale(1.05);
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      min-height: 100vh;
+      margin-left: var(--sidebar-width);
+      background: var(--main-bg);
+      display: flex;
+      flex-direction: column;
+      transition: margin-left 0.3s cubic-bezier(.4,0,.2,1);
+    }
+
+    .sidebar.collapsed ~ .main-content {
+      margin-left: var(--sidebar-collapsed-width);
+    }
+
+    /* Header */
+    .header {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    .search-bar {
+      flex: 1;
+      max-width: 400px;
+      margin: 0 40px;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 12px 16px 12px 44px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 15px;
+      transition: all 0.3s;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--main-green);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .notification-btn {
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: var(--light-gray);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .notification-btn:hover {
+      background: var(--border);
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      background: var(--main-green);
+      border-radius: 50%;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Templates Content */
+    .templates-content {
+      flex: 1;
+      padding: 40px 32px;
+    }
+
+    /* Hero Section */
+    .hero-section {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .hero-section h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 16px;
+    }
+
+    .hero-section p {
+      font-size: 1.1rem;
+      color: var(--gray);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Breadcrumb */
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+      font-size: 14px;
+      color: var(--gray);
+    }
+
+    .breadcrumb a {
+      color: var(--main-green);
+      text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+      text-decoration: underline;
+    }
+
+    /* Category Filters */
+    .category-filters {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .category-filter {
+      padding: 10px 20px;
+      border: 2px solid var(--border);
+      border-radius: 25px;
+      background: var(--white);
+      color: var(--gray);
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 600;
+    }
+
+    .category-filter.active,
+    .category-filter:hover {
+      border-color: var(--main-green);
+      color: var(--main-green);
+      background: rgba(32, 185, 124, 0.05);
+      transform: translateY(-2px);
+    }
+
+    /* Templates Sections */
+    .template-section {
+      margin-bottom: 48px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    .section-count {
+      color: var(--gray);
+      font-size: 14px;
+    }
+
+    /* Templates Grid */
+    .templates-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    /* Template Card */
+    .template-card {
+      background: var(--white);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .template-card:hover {
+      border-color: var(--main-green);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 32px var(--shadow-green);
+    }
+
+    .template-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--main-green), var(--blue));
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .template-card:hover::before {
+      opacity: 1;
+    }
+
+    .template-icon {
+      width: 64px;
+      height: 64px;
+      background: var(--light-gray);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 28px;
+      transition: all 0.3s;
+    }
+
+    .template-card:hover .template-icon {
+      transform: scale(1.1);
+    }
+
+    /* Template icon colors */
+    .template-card:nth-child(4n+1) .template-icon { background: rgba(32, 185, 124, 0.1); color: var(--main-green); }
+    .template-card:nth-child(4n+2) .template-icon { background: rgba(59, 130, 246, 0.1); color: var(--blue); }
+    .template-card:nth-child(4n+3) .template-icon { background: rgba(139, 92, 246, 0.1); color: var(--purple); }
+    .template-card:nth-child(4n+4) .template-icon { background: rgba(245, 158, 11, 0.1); color: var(--orange); }
+
+    .template-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-dark);
+    }
+
+    .template-description {
+      color: var(--gray);
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .template-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--gray);
+      margin-bottom: 16px;
+    }
+
+    .template-usage {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .template-badge {
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-free {
+      background: rgba(32, 185, 124, 0.1);
+      color: var(--main-green);
+    }
+
+    .badge-pro {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--orange);
+    }
+
+    .badge-new {
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--blue);
+    }
+
+    .template-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .template-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 12px;
+    }
+
+    .btn-primary {
+      background: var(--main-green);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #1a9966;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--gray);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--main-green);
+      color: var(--main-green);
+    }
+
+    /* Featured Template */
+    .template-card.featured {
+      background: linear-gradient(135deg, rgba(32, 185, 124, 0.05), var(--white));
+      border-color: var(--main-green);
+      position: relative;
+    }
+
+    .featured-badge {
+      position: absolute;
+      top: -8px;
+      right: 16px;
+      background: var(--main-green);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      .main-content {
+        margin-left: var(--sidebar-collapsed-width);
+      }
+      .sidebar {
+        width: var(--sidebar-collapsed-width);
+        min-width: var(--sidebar-collapsed-width);
+      }
+      .sidebar .logo-text,
+      .sidebar .nav-text {
+        opacity: 0;
+        width: 0;
+        pointer-events: none;
+      }
+      .templates-content {
+        padding: 20px 16px;
+      }
+      .search-bar {
+        display: none;
+      }
+      .header {
+        padding: 0 16px;
+      }
+      .hero-section h1 {
+        font-size: 2rem;
+      }
+      .templates-grid {
+        grid-template-columns: 1fr;
+      }
+      .category-filters {
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding-bottom: 8px;
+      }
+      .category-filter {
+        flex-shrink: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar" id="sidebar" role="navigation" aria-label="Main sidebar navigation">
+    <div class="logo" id="sidebar-logo" tabindex="0" aria-label="CollaboDraw logo" onclick="window.location.href='home.html'">
+      <img src="/src/main/resources/static/images/Preview.png" alt="CollaboDraw logo" />
+      <span class="logo-text">CollaboDraw</span>
+    </div>
+    <nav class="sidebar-nav" role="menu" aria-label="Main menu">
+      <ul>
+        <li><a href="home.html"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 4.354l-7 5.688V20h4v-5h6v5h4V10.042z"/></svg></span><span class="nav-text">Home</span></a></li>
+        <li><a href="mainscreen.html"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg></span><span class="nav-text">Create</span></a></li>
+        <li><a href="my-content.html"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM13 9V3.5L18.5 9z"/></svg></span><span class="nav-text">My Content</span></a></li>
+        <li><a href="shared.html"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M16,11A4,4 0 1,1 12,7A4,4 0 0,1 16,11M6,12A2,2 0 1,1 4,10A2,2 0 0,1 6,12M6,14A6,6 0 0,1 12,16C14.67,16 16,15.33 16,14V13C16,11.67 14.67,11 12,11A6,6 0 0,1 6,14Z"/></svg></span><span class="nav-text">Shared with Me</span></a></li>
+        <li><a href="settings.html"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" /></svg></span><span class="nav-text">Settings</span></a></li>
+      </ul>
+    </nav>
+    <button class="sidebar-toggle" id="toggleBtn" aria-label="Toggle sidebar">‹</button>
+  </div>
+
+  <div class="main-content" role="main">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="page-title">Templates</h1>
+      </div>
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" placeholder="Search templates...">
+      </div>
+      <div class="header-right">
+        <button class="notification-btn">🔔</button>
+        <div class="avatar" onclick="window.location.href='settings.html'">JD</div>
+      </div>
+    </header>
+
+    <!-- Templates Content -->
+    <main class="templates-content">
+      <!-- Breadcrumb -->
+      <nav class="breadcrumb">
+        <a href="home.html">Home</a>
+        <span>›</span>
+        <span>Templates</span>
+      </nav>
+
+      <!-- Hero Section -->
+      <div class="hero-section">
+        <h1>Choose a Template</h1>
+        <p>Start with professionally designed templates to accelerate your workflow and spark creativity</p>
+      </div>
+
+      <!-- Category Filters -->
+      <div class="category-filters">
+        <div class="category-filter active" data-category="all">All Templates</div>
+        <div class="category-filter" data-category="popular">Popular</div>
+        <div class="category-filter" data-category="business">Business</div>
+        <div class="category-filter" data-category="design">Design</div>
+        <div class="category-filter" data-category="education">Education</div>
+        <div class="category-filter" data-category="planning">Planning</div>
+      </div>
+
+      <!-- Popular Templates -->
+      <div class="template-section">
+        <div class="section-header">
+          <h2 class="section-title">Popular Templates</h2>
+          <span class="section-count">8 templates</span>
+        </div>
+        
+        <div class="templates-grid">
+          <!-- Blank Canvas -->
+          <div class="template-card" onclick="useTemplate('blank')">
+            <div class="template-icon">✨</div>
+            <h3 class="template-title">Blank Canvas</h3>
+            <p class="template-description">Start from scratch with unlimited possibilities</p>
+            <div class="template-meta">
+              <div class="template-usage">👥 ∞ uses</div>
+              <div class="template-badge badge-free">Free</div>
+            </div>
+            <div class="template-actions">
+              <button class="template-btn btn-primary" onclick="event.stopPropagation(); useTemplate('blank')">Use Template</button>
+            </div>
+          </div>
+
+          <!-- Mind Map -->
+          <div class="template-card" onclick="useTemplate('mindmap')">
+            <div class="template-icon">🧠</div>
+            <h3 class="template-title">Mind Map</h3>
+            <p class="template-description">Organize ideas and concepts in a visual hierarchy. Perfect for brainstorming and knowledge mapping.</p>
+            <div class="template-meta">
+              <div class="template-usage">👥 12.5k uses</div>
+              <div class="template-badge badge-free">Free</div>
+            </div>
+            <div class="template-actions">
+              <button class="template-btn btn-primary" onclick="event.stopPropagation(); useTemplate('mindmap')">Use Template</button>
+              <button class="template-btn btn-secondary" onclick="event.stopPropagation(); previewTemplate('mindmap')">Preview</button>
+            </div>
+          </div>
+
+          <!-- Kanban Board -->
+          <div class="template-card" onclick="useTemplate('kanban')">
+            <div class="template-icon">📋</div>
+            <h3 class="template-title">Kanban Board</h3>
+            <p class="template-description">Visualize work progress with customizable columns for task management and workflow optimization.</p>
+            <div class="template-meta">
+              <div class="template-usage">👥 8.2k uses</div>
+              <div class="template-badge badge-free">Free</div>
+            </div>
+            <div class="template-actions">
+              <button class="template-btn btn-primary" onclick="event.stopPropagation(); useTemplate('kanban')">Use Template</button>
+              <button class="template-btn btn-secondary" onclick="event.stopPropagation(); previewTemplate('kanban')">Preview</button>
+            </div>
+          </div>
+
+          <!-- Brainstorming Session -->
+          <div class="template-card" onclick="useTemplate('brainstorm')">
+            <div class="template-icon">💡</div>
+            <h3 class="template-title">Brainstorming Session</h3>
+            <p class="template-description">Structured framework for creative ideation with sticky notes and voting areas.</p>
+            <div class="template-meta">
+              <div class="template-usage">👥 15.1k uses</div>
+              <div class="template-badge badge-new">New</div>
+            </div>
+            <div class="template-actions">
+              <button class="template-btn btn-primary" onclick="event.stopPropagation(); useTemplate('brainstorm')">Use Template</button>
+              <button class="template-btn btn-secondary" onclick="event.stopPropagation(); previewTemplate('brainstorm')">Preview</button>
+            </div>
+          </div>
+
+          <!-- Process Flowchart -->
+          <div class="template-card" onclick="useTemplate('flowchart')">
+            <div class="template-icon">🔄</div>
+            <h3 class="template-title">Process Flowchart</h3>
+            <p class="template-description">Map out processes and workflows with decision points, actions, and flow directions.</p>
+            <div class="template-meta">
+              <div class="template-usage">👥 9.8k uses</div>
+              <div class="template-badge badge-free">Free</div>
+            </div>
+            <div class="template-actions">
+              <button class="template-btn btn-primary" onclick="event.stopPropagation(); useTemplate('flowchart')">Use Template</button>
+              <button class="template-btn btn-secondary" onclick="event.stopPropagation(); previewTemplate('flowchart')">Preview</button>
+            </div>
+          </div>
+
+          <!-- SWOT Analysis -->
+          <div class="template-card" onclick="useTemplate('swot')">
+            <div class="template-icon">⚖️</div>
+            <h3 class="template-title">SWOT Analysis</h3>
+            <p class="template-description">Strategic planning framework to evaluate Strengths, Weaknesses, Opportunities, and Threats.</p>
+            <div class="template-meta">
+              <div class="template-usage">👥 6.4k uses</div>
+              <div class="template-badge badge-pro">Pro</div>
+            </div>
+            <div class="template-actions">
+              <button class="template-btn btn-primary" onclick="event.stopPropagation(); useTemplate('swot')">Use Template</button>
+              <button class="template-btn btn-secondary" onclick="event.stopPropagation(); previewTemplate('swot')">Preview</button>
+            </div>
+          </div>
+
+          <!-- UI Wireframe -->
+          <div class="template-card" onclick="useTemplate('wireframe')">
+            <div class="template-icon">📱</div>
+            <h3 class="template-title">UI Wireframe</h3>
+            <p class="template-description">Design app and web layouts with pre-built UI components and responsive grids.</p>
+            <div class="template-meta">
+              <div class="template-usage">👥 11.2k uses</div>
+              <div class="template-badge badge-free">Free</div>
+            </div>
+            <div class="template-actions">
+              <button class="template-btn btn-primary" onclick="event.stopPropagation(); useTemplate('wireframe')">Use Template</button>
+              <button class="template-btn btn-secondary" onclick="event.stopPropagation(); previewTemplate('wireframe')">Preview</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Business & Strategy -->
+      <div class="template-section">
+        <div class="section-header">
+          <h2 class="section-title">Business &amp; Strategy</h2>
+          <span class="section-count">3 templates</span>
+        </div>
+        
+        <div class="templates-grid">
+          <!-- Business Model Canvas -->
+          <div class="template-card" onclick="useTemplate('business-model')">
+            <div class="template-icon">💼</div>
+            <h3 class="template-title">Business Model Canvas</h3>
+            <p class="template-description">Comprehensive framework for developing and analyzing business models.</p>
+            <div class="template-meta">
+              <div class="template-usage">👥 7.3k uses</div>
+              <div class="template-badge badge-pro">Pro</div>
+            </div>
+            <div class="template-actions">
+              <button class="template-btn btn-primary" onclick="event.stopPropagation(); useTemplate('business-model')">Use Template</button>
+              <button class="template-btn btn-secondary" onclick="event.stopPropagation(); previewTemplate('business-model')">Preview</button>
+            </div>
+          </div>
+
+          <!-- User Journey Map -->
+          <div class="template-card" onclick="useTemplate('user-journey')">
+            <div class="template-icon">🗺️</div>
+            <h3 class="template-title">User Journey Map</h3>
+            <p class="template-description">Visualize customer touchpoints and experiences across all interaction stages.</p>
+            <div class="template-meta">
+              <div class="template-usage">👥 5.9k uses</div>
+              <div class="template-badge badge-free">Free</div>
+            </div>
+            <div class="template-actions">
+              <button class="template-btn btn-primary" onclick="event.stopPropagation(); useTemplate('user-journey')">Use Template</button>
+              <button class="template-btn btn-secondary" onclick="event.stopPropagation(); previewTemplate('user-journey')">Preview</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Sidebar toggle functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const sidebar = document.getElementById('sidebar');
+      const toggleBtn = document.getElementById('toggleBtn');
+      
+      toggleBtn.addEventListener('click', function() {
+        sidebar.classList.toggle('collapsed');
+        toggleBtn.innerHTML = sidebar.classList.contains('collapsed') ? '›' : '‹';
+      });
+
+      // Auto-collapse on mobile
+      function checkMobile() {
+        if (window.innerWidth <= 700) {
+          sidebar.classList.add('collapsed');
+          toggleBtn.innerHTML = '›';
+        } else {
+          sidebar.classList.remove('collapsed');
+          toggleBtn.innerHTML = '‹';
+        }
+      }
+
+      window.addEventListener('resize', checkMobile);
+      checkMobile();
+
+      // Category filter functionality
+      document.querySelectorAll('.category-filter').forEach(filter => {
+        filter.addEventListener('click', function() {
+          document.querySelectorAll('.category-filter').forEach(f => f.classList.remove('active'));
+          this.classList.add('active');
+          
+          const category = this.dataset.category;
+          filterTemplates(category);
+        });
+      });
+
+      // Search functionality
+      const searchInput = document.querySelector('.search-input');
+      if (searchInput) {
+        searchInput.addEventListener('input', function() {
+          const searchTerm = this.value.toLowerCase();
+          searchTemplates(searchTerm);
+        });
+      }
+    });
+
+    function filterTemplates(category) {
+      const templates = document.querySelectorAll('.template-card');
+      templates.forEach(template => {
+        // For now, show all templates. In a real app, you'd filter based on data attributes
+        template.style.display = 'block';
+      });
+    }
+
+    function searchTemplates(searchTerm) {
+      const templates = document.querySelectorAll('.template-card');
+      templates.forEach(template => {
+        const title = template.querySelector('.template-title').textContent.toLowerCase();
+        const description = template.querySelector('.template-description').textContent.toLowerCase();
+        
+        const matches = title.includes(searchTerm) || description.includes(searchTerm);
+        template.style.display = matches ? 'block' : 'none';
+      });
+    }
+
+    function useTemplate(templateId) {
+      // Navigate to whiteboard with the selected template
+      window.location.href = `mainscreen.html?template=${templateId}`;
+    }
+
+    function previewTemplate(templateId) {
+      // For now, just use the template. In a real app, you might show a preview modal
+      alert(`Preview for ${templateId} template (feature coming soon)`);
+    }
+  </script>
+</body>
+</html>

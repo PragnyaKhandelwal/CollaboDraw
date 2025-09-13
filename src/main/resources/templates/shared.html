@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CollaboDraw - Shared with Me</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --main-green: #20b97c;
+      --sidebar-bg: #0e7e58;
+      --sidebar-text: #ccece1;
+      --sidebar-width: 240px;
+      --sidebar-collapsed-width: 60px;
+      --nav-height: 56px;
+      --shadow-green: rgba(32, 185, 124, 0.15);
+      --main-bg: #fafdff;
+      --white: #ffffff;
+      --gray: #666666;
+      --light-gray: #f3f4f6;
+      --border: #e5e7eb;
+      --text-dark: #1f2937;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+      --orange: #f59e0b;
+      --red: #ef4444;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      background: var(--main-bg);
+    }
+
+    /* Sidebar Styles */
+    .sidebar {
+      background: var(--sidebar-bg);
+      color: var(--sidebar-text);
+      width: var(--sidebar-width);
+      min-width: var(--sidebar-width);
+      height: 100vh;
+      transition: width 0.3s cubic-bezier(.4,0,.2,1);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      overflow: hidden;
+      z-index: 10;
+      position: fixed;
+    }
+
+    .sidebar.collapsed {
+      width: var(--sidebar-collapsed-width);
+      min-width: var(--sidebar-collapsed-width);
+      align-items: center;
+    }
+
+    .logo {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.6rem;
+      font-weight: 800;
+      font-family: 'Montserrat', sans-serif;
+      color: #fff;
+      margin: 20px 0 30px 0;
+      cursor: pointer;
+      padding: 0 10px;
+      white-space: nowrap;
+      transition: all 0.3s cubic-bezier(.4,0,.2,1);
+      box-sizing: border-box;
+    }
+
+    .logo img {
+      height: 36px;
+      border-radius: 8px;
+      transition: margin 0.3s cubic-bezier(.4,0,.2,1), opacity 0.3s;
+    }
+
+    .logo-text {
+      transition: opacity 0.3s cubic-bezier(.4,0,.2,1), width 0.3s cubic-bezier(.4,0,.2,1);
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .sidebar.collapsed .logo-text {
+      opacity: 0;
+      pointer-events: none;
+      width: 1px;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      width: 100%;
+    }
+
+    .sidebar-nav ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .sidebar-nav li {
+      margin-bottom: 6px;
+      width: 100%;
+    }
+
+    .sidebar-nav a {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: var(--sidebar-text);
+      text-decoration: none;
+      font-size: 1.13rem;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: 8px;
+      width: 100%;
+      box-sizing: border-box;
+      transition: background 0.2s cubic-bezier(.4,0,.2,1), color 0.2s;
+      white-space: nowrap;
+    }
+
+    .sidebar-nav a:hover,
+    .sidebar-nav a.active {
+      background: var(--main-green);
+      color: #fff;
+    }
+
+    .nav-icon {
+      width: 22px;
+      height: 22px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3em;
+      flex-shrink: 0;
+      transition: margin 0.3s cubic-bezier(.4,0,.2,1);
+    }
+
+    .nav-text {
+      transition: opacity 0.25s, width 0.25s;
+    }
+
+    .sidebar.collapsed .nav-text {
+      opacity: 0;
+      width: 0;
+      pointer-events: none;
+    }
+
+    /* Toggle Button */
+    .sidebar-toggle {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--main-green);
+      color: white;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+
+    .sidebar-toggle:hover {
+      background: #1a9966;
+      transform: translateX(-50%) scale(1.05);
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      min-height: 100vh;
+      margin-left: var(--sidebar-width);
+      background: var(--main-bg);
+      display: flex;
+      flex-direction: column;
+      transition: margin-left 0.3s cubic-bezier(.4,0,.2,1);
+    }
+
+    .sidebar.collapsed ~ .main-content {
+      margin-left: var(--sidebar-collapsed-width);
+    }
+
+    /* Header */
+    .header {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    .search-bar {
+      flex: 1;
+      max-width: 400px;
+      margin: 0 40px;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 12px 16px 12px 44px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 15px;
+      transition: all 0.3s;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--main-green);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .notification-btn {
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: var(--light-gray);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .notification-btn:hover {
+      background: var(--border);
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      background: var(--main-green);
+      border-radius: 50%;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Content */
+    .content {
+      flex: 1;
+      padding: 40px 32px;
+    }
+
+    /* Breadcrumb */
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+      font-size: 14px;
+      color: var(--gray);
+    }
+
+    .breadcrumb a {
+      color: var(--main-green);
+      text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+      text-decoration: underline;
+    }
+
+    /* Stats Bar */
+    .stats-bar {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 32px;
+      padding: 20px;
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      display: block;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--gray);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    /* Filter Pills */
+    .filter-pills {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+
+    .filter-pill {
+      padding: 8px 16px;
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      background: var(--white);
+      color: var(--gray);
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .filter-pill.active,
+    .filter-pill:hover {
+      border-color: var(--main-green);
+      color: var(--main-green);
+      background: rgba(32, 185, 124, 0.05);
+    }
+
+    /* Board Grid */
+    .boards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
+    }
+
+    /* Shared Board Card */
+    .shared-board-card {
+      background: var(--white);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      transition: all 0.3s;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .shared-board-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+    }
+
+    .board-preview {
+      height: 160px;
+      background: linear-gradient(135deg, #e6fffa 0%, #f0f9ff 100%);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray);
+      font-size: 40px;
+    }
+
+    .permission-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-view {
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--blue);
+    }
+
+    .badge-edit {
+      background: rgba(32, 185, 124, 0.1);
+      color: var(--main-green);
+    }
+
+    .badge-comment {
+      background: rgba(251, 191, 36, 0.1);
+      color: var(--orange);
+    }
+
+    .board-info {
+      padding: 20px;
+    }
+
+    .board-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .share-indicator {
+      width: 20px;
+      height: 20px;
+      background: var(--blue);
+      border-radius: 50%;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+    }
+
+    .board-owner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: var(--gray);
+    }
+
+    .owner-avatar {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--purple);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .board-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--gray);
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+
+    .last-activity {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .activity-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--main-green);
+    }
+
+    .board-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .action-btn {
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--white);
+      color: var(--gray);
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.3s;
+    }
+
+    .action-btn:hover {
+      border-color: var(--main-green);
+      color: var(--main-green);
+    }
+
+    .action-btn.primary {
+      background: var(--main-green);
+      color: white;
+      border-color: var(--main-green);
+    }
+
+    /* Collaboration Info */
+    .collaboration-info {
+      background: rgba(32, 185, 124, 0.05);
+      border-left: 4px solid var(--main-green);
+      padding: 16px;
+      border-radius: 0 8px 8px 0;
+      margin: 12px 0;
+    }
+
+    .collaboration-info h4 {
+      color: var(--main-green);
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .collaboration-info p {
+      font-size: 14px;
+      color: var(--text-dark);
+      margin: 0;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--gray);
+    }
+
+    .empty-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-dark);
+    }
+
+    .empty-state p {
+      margin-bottom: 24px;
+    }
+
+    .share-tip {
+      background: var(--white);
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      text-align: left;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .share-tip h4 {
+      color: var(--text-dark);
+      margin-bottom: 8px;
+    }
+
+    .share-tip p {
+      font-size: 14px;
+      color: var(--gray);
+      margin: 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      .main-content {
+        margin-left: var(--sidebar-collapsed-width);
+      }
+      .sidebar {
+        width: var(--sidebar-collapsed-width);
+        min-width: var(--sidebar-collapsed-width);
+      }
+      .sidebar .logo-text,
+      .sidebar .nav-text {
+        opacity: 0;
+        width: 0;
+        pointer-events: none;
+      }
+      .content {
+        padding: 20px 16px;
+      }
+      .search-bar {
+        display: none;
+      }
+      .header {
+        padding: 0 16px;
+      }
+      .boards-grid {
+        grid-template-columns: 1fr;
+      }
+      .stats-bar {
+        flex-direction: column;
+        gap: 12px;
+      }
+      .filter-pills {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar" id="sidebar" role="navigation" aria-label="Main sidebar navigation">
+    <div class="logo" id="sidebar-logo" tabindex="0" aria-label="CollaboDraw logo" onclick="window.location.href='home.html'">
+      <img src="/src/main/resources/static/images/Preview.png" alt="CollaboDraw logo" />
+      <span class="logo-text">CollaboDraw</span>
+    </div>
+    <nav class="sidebar-nav" role="menu" aria-label="Main menu">
+      <ul>
+        <li><a href="home.html"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 4.354l-7 5.688V20h4v-5h6v5h4V10.042z"/></svg></span><span class="nav-text">Home</span></a></li>
+        <li><a href="mainscreen.html"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg></span><span class="nav-text">Create</span></a></li>
+        <li><a href="my-content.html"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM13 9V3.5L18.5 9z"/></svg></span><span class="nav-text">My Content</span></a></li>
+        <li><a href="#" class="active"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M16,11A4,4 0 1,1 12,7A4,4 0 0,1 16,11M6,12A2,2 0 1,1 4,10A2,2 0 0,1 6,12M6,14A6,6 0 0,1 12,16C14.67,16 16,15.33 16,14V13C16,11.67 14.67,11 12,11A6,6 0 0,1 6,14Z"/></svg></span><span class="nav-text">Shared with Me</span></a></li>
+        <li><a href="settings.html"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" /></svg></span><span class="nav-text">Settings</span></a></li>
+      </ul>
+    </nav>
+    <button class="sidebar-toggle" id="toggleBtn" aria-label="Toggle sidebar">‹</button>
+  </div>
+
+  <div class="main-content" role="main">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="page-title">Shared with Me</h1>
+      </div>
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" placeholder="Search shared boards...">
+      </div>
+      <div class="header-right">
+        <button class="notification-btn">🔔</button>
+        <div class="avatar" onclick="window.location.href='settings.html'" th:text="${currentUser.initials ?: 'JD'}">JD</div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="content">
+      <!-- Breadcrumb -->
+      <nav class="breadcrumb">
+        <a href="home.html">Home</a>
+        <span>›</span>
+        <span>Shared with Me</span>
+      </nav>
+
+      <!-- Stats Bar -->
+      <div class="stats-bar">
+        <div class="stat-item">
+          <span class="stat-number" th:text="${sharedStats.totalSharedBoards ?: 12}">12</span>
+          <span class="stat-label">Shared Boards</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" th:text="${sharedStats.activeCollaborations ?: 8}">8</span>
+          <span class="stat-label">Active Collaborations</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" th:text="${sharedStats.pendingInvites ?: 3}">3</span>
+          <span class="stat-label">Pending Invites</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" th:text="${sharedStats.recentActivityTime ?: '24h'}">24h</span>
+          <span class="stat-label">Recent Activity</span>
+        </div>
+      </div>
+
+      <!-- Filter Pills -->
+      <div class="filter-pills">
+        <div class="filter-pill active" data-filter="all">All Boards</div>
+        <div class="filter-pill" data-filter="recent">Recently Active</div>
+        <div class="filter-pill" data-filter="can-edit">Can Edit</div>
+        <div class="filter-pill" data-filter="view-only">View Only</div>
+        <div class="filter-pill" data-filter="pending">Pending Invites</div>
+      </div>
+
+      <!-- Boards Grid -->
+      <div class="boards-grid" th:if="${sharedBoards != null and not #lists.isEmpty(sharedBoards)}">
+        <div class="shared-board-card" th:each="board : ${sharedBoards}" th:onclick="'openSharedBoard(\'' + ${board.id} + '\')'" th:data-permission="${board.userPermission}">
+          <div class="board-preview">
+            <span th:text="${board.icon ?: '📊'}">📊</span>
+            <div class="permission-badge" th:classappend="'badge-' + ${board.userPermission}" th:text="${#strings.capitalize(board.userPermission)}">Edit</div>
+          </div>
+          <div class="board-info">
+            <div class="board-title">
+              <div class="share-indicator">👥</div>
+              <span th:text="${board.title}">Product Roadmap Q4</span>
+            </div>
+            <div class="board-owner">
+              <div class="owner-avatar" th:text="${board.owner.initials}" th:style="'background: ' + ${board.owner.avatarColor ?: 'var(--purple)'}">SM</div>
+              <span>Shared by <span th:text="${board.owner.fullName}">Board Owner</span></span>
+            </div>
+            <div class="board-meta">
+              <div class="last-activity">
+                <div class="activity-dot" th:if="${board.hasRecentActivity}"></div>
+                <span th:text="${board.lastActivity}">Active 2h ago</span>
+              </div>
+              <span th:text="${#lists.size(board.collaborators) + ' collaborators'}">5 collaborators</span>
+            </div>
+            
+            <div class="collaboration-info" th:if="${board.recentActivityText}">
+              <h4>Recent Activity</h4>
+              <p th:text="${board.recentActivityText}">Sarah added new milestone for mobile app launch</p>
+            </div>
+
+            <div class="board-actions">
+              <button class="action-btn primary" th:onclick="'event.stopPropagation(); openSharedBoard(\'' + ${board.id} + '\')'" th:text="${board.userPermission == 'view' ? 'View' : 'Open'}">Open</button>
+              <button class="action-btn" th:onclick="'event.stopPropagation(); copySharedBoard(\'' + ${board.id} + '\')'">Copy</button>
+              <button class="action-btn" th:onclick="'event.stopPropagation(); leaveBoard(\'' + ${board.id} + '\')'">Leave</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Default Boards Grid (fallback when no data) -->
+      <div class="boards-grid" th:if="${sharedBoards == null or #lists.isEmpty(sharedBoards)}">
+        <div class="shared-board-card" onclick="openSharedBoard('shared-1')" data-permission="edit">
+          <div class="board-preview">
+            📊
+            <div class="permission-badge badge-edit">Edit</div>
+          </div>
+          <div class="board-info">
+            <div class="board-title">
+              <div class="share-indicator">👥</div>
+              <span>Product Roadmap Q4</span>
+            </div>
+            <div class="board-owner">
+              <div class="owner-avatar">SM</div>
+              <span>Shared by Sarah Miller</span>
+            </div>
+            <div class="board-meta">
+              <div class="last-activity">
+                <div class="activity-dot"></div>
+                <span>Active 2h ago</span>
+              </div>
+              <span>5 collaborators</span>
+            </div>
+            
+            <div class="collaboration-info">
+              <h4>Recent Activity</h4>
+              <p>Sarah added new milestone for mobile app launch</p>
+            </div>
+
+            <div class="board-actions">
+              <button class="action-btn primary" onclick="event.stopPropagation(); openSharedBoard('shared-1')">Open</button>
+              <button class="action-btn" onclick="event.stopPropagation(); copySharedBoard('shared-1')">Copy</button>
+              <button class="action-btn" onclick="event.stopPropagation(); leaveBoard('shared-1')">Leave</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="shared-board-card" onclick="openSharedBoard('shared-2')" data-permission="view">
+          <div class="board-preview">
+            🎨
+            <div class="permission-badge badge-view">View</div>
+          </div>
+          <div class="board-info">
+            <div class="board-title">
+              <div class="share-indicator">👥</div>
+              <span>Design System Guidelines</span>
+            </div>
+            <div class="board-owner">
+              <div class="owner-avatar" style="background: var(--orange);">MJ</div>
+              <span>Shared by Mike Johnson</span>
+            </div>
+            <div class="board-meta">
+              <div class="last-activity">
+                <span>Active yesterday</span>
+              </div>
+              <span>3 collaborators</span>
+            </div>
+
+            <div class="board-actions">
+              <button class="action-btn primary" onclick="event.stopPropagation(); openSharedBoard('shared-2')">View</button>
+              <button class="action-btn" onclick="event.stopPropagation(); copySharedBoard('shared-2')">Copy</button>
+              <button class="action-btn" onclick="event.stopPropagation(); leaveBoard('shared-2')">Leave</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="shared-board-card" onclick="openSharedBoard('shared-3')" data-permission="comment">
+          <div class="board-preview">
+            💡
+            <div class="permission-badge badge-comment">Comment</div>
+          </div>
+          <div class="board-info">
+            <div class="board-title">
+              <div class="share-indicator">👥</div>
+              <span>Innovation Workshop</span>
+            </div>
+            <div class="board-owner">
+              <div class="owner-avatar" style="background: var(--blue);">AL</div>
+              <span>Shared by Alex Lee</span>
+            </div>
+            <div class="board-meta">
+              <div class="last-activity">
+                <div class="activity-dot"></div>
+                <span>Active 1h ago</span>
+              </div>
+              <span>12 collaborators</span>
+            </div>
+
+            <div class="collaboration-info">
+              <h4>Recent Activity</h4>
+              <p>Team voted on top 3 innovative ideas for next quarter</p>
+            </div>
+
+            <div class="board-actions">
+              <button class="action-btn primary" onclick="event.stopPropagation(); openSharedBoard('shared-3')">Open</button>
+              <button class="action-btn" onclick="event.stopPropagation(); copySharedBoard('shared-3')">Copy</button>
+              <button class="action-btn" onclick="event.stopPropagation(); leaveBoard('shared-3')">Leave</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State (shown only when there are no shared boards) -->
+      <div class="empty-state" th:if="${(sharedBoards == null or #lists.isEmpty(sharedBoards)) and showEmptyState == true}" style="display: none;">
+        <div class="empty-icon">🤝</div>
+        <h3>No shared boards yet</h3>
+        <p>When others share boards with you, they'll appear here</p>
+        
+        <div class="share-tip">
+          <h4>💡 Tip: Start collaborating</h4>
+          <p>Ask your teammates to share their boards with you, or share your own boards from the "My Content" section.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Sidebar toggle functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const sidebar = document.getElementById('sidebar');
+      const toggleBtn = document.getElementById('toggleBtn');
+      
+      toggleBtn.addEventListener('click', function() {
+        sidebar.classList.toggle('collapsed');
+        toggleBtn.innerHTML = sidebar.classList.contains('collapsed') ? '›' : '‹';
+      });
+
+      // Auto-collapse on mobile
+      function checkMobile() {
+        if (window.innerWidth <= 700) {
+          sidebar.classList.add('collapsed');
+          toggleBtn.innerHTML = '›';
+        } else {
+          sidebar.classList.remove('collapsed');
+          toggleBtn.innerHTML = '‹';
+        }
+      }
+
+      window.addEventListener('resize', checkMobile);
+      checkMobile();
+
+      // Filter functionality
+      document.querySelectorAll('.filter-pill').forEach(pill => {
+        pill.addEventListener('click', function() {
+          document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+          this.classList.add('active');
+          
+          const filter = this.dataset.filter;
+          filterBoards(filter);
+        });
+      });
+
+      // Search functionality
+      const searchInput = document.querySelector('.search-input');
+      if (searchInput) {
+        searchInput.addEventListener('input', function() {
+          const searchTerm = this.value.toLowerCase();
+          searchBoards(searchTerm);
+        });
+      }
+    });
+
+    function filterBoards(filter) {
+      const boards = document.querySelectorAll('.shared-board-card');
+      boards.forEach(board => {
+        const permission = board.dataset.permission;
+        let show = true;
+
+        switch(filter) {
+          case 'can-edit':
+            show = permission === 'edit';
+            break;
+          case 'view-only':
+            show = permission === 'view';
+            break;
+          case 'pending':
+            show = permission === 'pending';
+            break;
+          case 'recent':
+            show = board.querySelector('.collaboration-info') !== null;
+            break;
+          case 'all':
+          default:
+            show = true;
+        }
+
+        board.style.display = show ? 'block' : 'none';
+      });
+    }
+
+    function searchBoards(searchTerm) {
+      const boards = document.querySelectorAll('.shared-board-card');
+      boards.forEach(board => {
+        const title = board.querySelector('.board-title span').textContent.toLowerCase();
+        const owner = board.querySelector('.board-owner span').textContent.toLowerCase();
+        
+        const matches = title.includes(searchTerm) || owner.includes(searchTerm);
+        board.style.display = matches ? 'block' : 'none';
+      });
+    }
+
+    function openSharedBoard(boardId) {
+      // Navigate to whiteboard with shared board context
+      window.location.href = `mainscreen.html?shared=${boardId}`;
+    }
+
+    function copySharedBoard(boardId) {
+      if (confirm('Create a copy of this shared board in your workspace?')) {
+        // Navigate to whiteboard with copied board
+        window.location.href = `mainscreen.html?copy-shared=${boardId}`;
+      }
+    }
+
+    function leaveBoard(boardId) {
+      if (confirm('Are you sure you want to leave this shared board?')) {
+        // Remove the board card from the UI
+        const boardCard = document.querySelector(`[onclick*="${boardId}"]`);
+        if (boardCard) {
+          boardCard.remove();
+          
+          // Update stats
+          const totalShared = document.querySelector('.stat-number');
+          const currentCount = parseInt(totalShared.textContent);
+          totalShared.textContent = currentCount - 1;
+          
+          // Show success message
+          alert('You have left the shared board');
+          
+          // If no more boards, show empty state
+          const remainingBoards = document.querySelectorAll('.shared-board-card');
+          if (remainingBoards.length === 0) {
+            document.querySelector('.boards-grid').style.display = 'none';
+            document.querySelector('.empty-state').style.display = 'block';
+          }
+        }
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CollaboDraw - Whiteboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://www.flaticon.com/uicons/interface-icons" rel="stylesheet">
+  <style>
+    /* Basic Reset */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* Main Colors */
+    :root {
+      --green: #20b97c;
+      --dark-green: #0e7e58;
+      --light-bg: #f8fffe;
+      --white: #ffffff;
+      --gray: #666666;
+      --border: #e5e7eb;
+      --yellow: #fde68a;
+      --light-green: #a7f3d0;
+      --blue: #3b82f6;
+      --red: #ef4444;
+      --purple: #8b5cf6;
+      --orange: #f59e0b;
+      --text-dark: #1f2937;
+      --tooltip-bg: #1f2937;
+    }
+
+    /* Body Layout */
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--light-bg);
+      display: flex;
+      min-height: 100vh;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* Tooltip System */
+    .tooltip {
+      position: absolute;
+      background: var(--tooltip-bg);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: all 0.2s ease;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .tooltip.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .tooltip::after {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-bottom: 4px solid var(--tooltip-bg);
+    }
+
+    .tooltip.bottom::after {
+      top: auto;
+      bottom: -4px;
+      border-bottom: none;
+      border-top: 4px solid var(--tooltip-bg);
+    }
+
+    .tooltip.left::after {
+      top: 50%;
+      left: auto;
+      right: -4px;
+      transform: translateY(-50%);
+      border-left: 4px solid var(--tooltip-bg);
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+      border-right: none;
+    }
+
+    .tooltip.right::after {
+      top: 50%;
+      left: -4px;
+      right: auto;
+      transform: translateY(-50%);
+      border-right: 4px solid var(--tooltip-bg);
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+      border-left: none;
+    }
+
+    .tooltip-shortcut {
+      background: rgba(255,255,255,0.2);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 11px;
+      margin-left: 8px;
+    }
+
+    /* Tooltippable elements */
+    [data-tooltip] {
+      position: relative;
+    }
+
+    /* Top Header */
+    .top-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: var(--dark-green);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .logo:hover {
+      transform: translateY(-1px);
+    }
+
+    .logo-icon img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+
+    .board-name {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: white;
+      font-size: 14px;
+      min-width: 120px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .board-name:hover,
+    .board-name:focus {
+      background: rgba(255,255,255,0.2);
+      outline: none;
+    }
+
+    .header-center {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .save-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .save-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-btn {
+      width: 36px;
+      height: 36px;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: transparent;
+      color: white;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 16px;
+    }
+
+    .header-btn:hover {
+      background: rgba(255,255,255,0.1);
+      transform: translateY(-1px);
+    }
+
+    .user-avatars {
+      display: flex;
+      gap: -6px;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid var(--dark-green);
+      margin-left: -6px;
+      cursor: pointer;
+      transition: transform 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .avatar:first-child { margin-left: 0; }
+    .avatar:hover { transform: scale(1.1); }
+
+    /* Floating Traybar */
+    .floating-traybar {
+      position: fixed;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: white;
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 900;
+      transition: all 0.3s ease;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    /* Toggle Button */
+    .traybar-toggle {
+      position: fixed;
+      left: 20px;
+      bottom: 20px;
+      width: 44px;
+      height: 44px;
+      background: var(--dark-green);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      z-index: 950;
+      transition: all 0.3s ease;
+    }
+
+    .traybar-toggle:hover {
+      transform: scale(1.05);
+      background: var(--green);
+    }
+
+    .tool-btn {
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 12px;
+      background: transparent;
+      color: var(--gray);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .tool-btn:hover {
+      background: var(--light-bg);
+      color: var(--dark-green);
+      transform: scale(1.05);
+    }
+
+    .tool-btn.active {
+      background: var(--green);
+      color: white;
+      box-shadow: 0 4px 12px rgba(32, 185, 124, 0.3);
+    }
+
+    .tool-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+
+    /* Color Picker */
+    .color-picker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 8px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      position: absolute;
+      left: 60px;
+      top: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s;
+    }
+
+    .color-picker.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .color-option {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.2s;
+    }
+
+    .color-option:hover {
+      transform: scale(1.1);
+    }
+
+    .color-option.selected {
+      border-color: var(--gray);
+      transform: scale(1.2);
+    }
+
+    /* Traybar Hidden State */
+    .floating-traybar.hidden {
+      transform: translateY(-50%) translateX(-80px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Main Canvas */
+    .main-canvas {
+      margin-top: 60px;
+      margin-right: 280px;
+      height: calc(100vh - 60px);
+      background: white;
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      cursor: crosshair;
+    }
+
+    .main-canvas.select-mode {
+      cursor: default;
+    }
+
+    .main-canvas.hand-mode {
+      cursor: grab;
+    }
+
+    .main-canvas.hand-mode:active {
+      cursor: grabbing;
+    }
+
+    /* Canvas Drawing Layer */
+    .drawing-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .drawing-canvas.active {
+      pointer-events: all;
+    }
+
+    /* Canvas Toolbar */
+    .canvas-toolbar {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      gap: 8px;
+      background: white;
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 850;
+      transition: left 0.3s ease;
+    }
+
+    .traybar-visible .canvas-toolbar {
+      left: 85px;
+    }
+
+    .toolbar-btn {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: all 0.2s;
+    }
+
+    .toolbar-btn:hover {
+      background: rgba(32,185,124,0.1);
+    }
+
+    .toolbar-btn.active {
+      background: var(--green);
+      color: white;
+    }
+
+    /* Zoom Controls */
+    .zoom-controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      gap: 8px;
+      background: white;
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 850;
+    }
+
+    .zoom-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .zoom-btn:hover {
+      background: var(--light-bg);
+    }
+
+    .zoom-level {
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gray);
+    }
+
+    /* Timer Widget */
+    .timer-widget {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: var(--dark-green);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    .timer-widget:hover {
+      transform: translateY(-2px);
+    }
+
+    /* Canvas Elements */
+    .canvas-element {
+      position: absolute;
+      user-select: none;
+      transition: all 0.2s;
+    }
+
+    .canvas-element:hover {
+      transform: scale(1.02);
+    }
+
+    .canvas-element.selected {
+      box-shadow: 0 0 0 2px var(--blue), 0 4px 16px rgba(59, 130, 246, 0.2);
+    }
+
+    .canvas-element.dragging {
+      transform: scale(1.05);
+      z-index: 1000;
+    }
+
+    /* Resize Handles */
+    .resize-handle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: var(--blue);
+      border: 1px solid white;
+      border-radius: 50%;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .canvas-element.selected .resize-handle {
+      opacity: 1;
+    }
+
+    .resize-handle.nw { top: -4px; left: -4px; cursor: nw-resize; }
+    .resize-handle.ne { top: -4px; right: -4px; cursor: ne-resize; }
+    .resize-handle.sw { bottom: -4px; left: -4px; cursor: sw-resize; }
+    .resize-handle.se { bottom: -4px; right: -4px; cursor: se-resize; }
+
+    /* Context Menu */
+    .context-menu {
+      position: absolute;
+      background: white;
+      color: var(--gray);
+      border-radius: 12px;
+      padding: 8px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+      border: 1px solid var(--border);
+      z-index: 1000;
+      min-width: 160px;
+      opacity: 0;
+      transform: scale(0.9);
+      transition: all 0.2s;
+      pointer-events: none;
+    }
+
+    .context-menu.show {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: all;
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      border-radius: 8px;
+      font-size: 14px;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+
+    .menu-item:hover {
+      background: var(--light-bg);
+      color: var(--dark-green);
+    }
+
+    .menu-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+
+    /* User Cursors */
+    .user-cursor {
+      position: absolute;
+      pointer-events: none;
+      z-index: 999;
+      transition: all 0.1s;
+    }
+
+    .cursor-pointer {
+      width: 16px;
+      height: 16px;
+      border-radius: 50% 0 50% 50%;
+      transform: rotate(-45deg);
+    }
+
+    .cursor-label {
+      background: #1f2937;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-top: 4px;
+      transform: rotate(45deg);
+      white-space: nowrap;
+    }
+
+    /* Right Panel */
+    .right-panel {
+      position: fixed;
+      right: 0;
+      top: 60px;
+      width: 280px;
+      bottom: 0;
+      background: var(--light-bg);
+      border-left: 1px solid var(--border);
+      padding: 20px;
+      overflow-y: auto;
+      z-index: 800;
+      transform: translateX(0);
+      transition: transform 0.3s;
+    }
+
+    .right-panel.hidden {
+      transform: translateX(100%);
+    }
+
+    .panel-section {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .panel-title {
+      font-weight: 600;
+      font-size: 16px;
+      margin-bottom: 12px;
+      color: var(--dark-green);
+    }
+
+    .property-group {
+      margin-bottom: 12px;
+    }
+
+    .property-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--gray);
+      margin-bottom: 4px;
+    }
+
+    .property-input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .property-slider {
+      width: 100%;
+      margin: 8px 0;
+    }
+
+    /* Notifications */
+    .notification {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      z-index: 1100;
+      transform: translateX(320px);
+      transition: transform 0.3s;
+    }
+
+    .notification.show {
+      transform: translateX(0);
+    }
+
+    /* Loading State */
+    .loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255,255,255,0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .loading.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border);
+      border-top: 3px solid var(--green);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Keyboard Shortcuts Help */
+    .shortcuts-help {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      z-index: 2000;
+      max-width: 400px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s;
+    }
+
+    .shortcuts-help.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .shortcut-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .shortcut-key {
+      background: var(--light-bg);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .right-panel { 
+        width: 100vw;
+        transform: translateX(100%);
+      }
+      .main-canvas { margin-right: 0; }
+      .floating-traybar { left: 10px; }
+      .traybar-toggle { left: 10px; }
+      .canvas-toolbar { left: 10px; }
+      .traybar-visible .canvas-toolbar { left: 65px; }
+      .header-center { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Tooltip Element -->
+  <div class="tooltip" id="tooltip"></div>
+
+  <!-- Loading Screen -->
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Top Header -->
+  <div class="top-header">
+    <div class="header-left">
+      <div class="logo" onclick="goHome()" data-tooltip="Go to Dashboard">
+        <div class="logo-icon"><img src="/src/main/resources/static/images/Preview.png" alt="CollaboDraw"></div>
+        CollaboDraw
+      </div>
+      <input type="text" class="board-name" value="Untitled Board" id="boardName" 
+             data-tooltip="Click to rename your board">
+    </div>
+    <div class="header-center">
+      <div class="save-status" data-tooltip="Board automatically saves every 30 seconds">
+        <div class="save-indicator"></div>
+        <span id="saveStatus">Auto-saved</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="header-btn" onclick="undo()" 
+              data-tooltip="Undo last action<span class='tooltip-shortcut'>Ctrl+Z</span>"><img src="/src/main/resources/static/images/undo-alt.png"></button>
+      <button class="header-btn" onclick="redo()" 
+              data-tooltip="Redo last undone action<span class='tooltip-shortcut'>Ctrl+Y</span>"><img src="/src/main/resources/static/images/redo-alt.png"></button>
+      <button class="header-btn" onclick="shareBoard()" 
+              data-tooltip="Share board with others"><img src="/src/main/resources/static/images/link-alt.png"></button>
+      <button class="header-btn" onclick="exportBoard()" 
+              data-tooltip="Export board as PNG image"><img src="/src/main/resources/static/images/file-export.png"></button>
+      <button class="header-btn" onclick="showHelp()" 
+              data-tooltip="Keyboard shortcuts help<span class='tooltip-shortcut'>F1</span>"><img src="/src/main/resources/static/images/interrogation.png"></button>
+      <div class="user-avatars" id="userAvatars">
+        <!-- Dynamic user avatars will be inserted here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Traybar Toggle Button -->
+  <button class="traybar-toggle" onclick="toggleTraybar()" 
+          data-tooltip="Toggle tools panel<span class='tooltip-shortcut'>T</span>">🔧</button>
+
+  <!-- Floating Traybar -->
+  <div class="floating-traybar" id="traybar">
+    <button class="tool-btn active" data-tool="select" 
+            data-tooltip="Select and move objects<span class='tooltip-shortcut'>V</span>">◆</button>
+    <button class="tool-btn" data-tool="pen" 
+            data-tooltip="Draw freehand lines<span class='tooltip-shortcut'>P</span>"><img src="/src/main/resources/static/images/pencil.png"></button>
+    <button class="tool-btn" data-tool="highlighter" 
+            data-tooltip="Highlight with semi-transparent ink<span class='tooltip-shortcut'>H</span>"><img src="/src/main/resources/static/images/pen-nib.png"></button>
+    <div class="tool-divider"></div>
+    <button class="tool-btn" data-tool="rectangle" 
+            data-tooltip="Draw rectangles and squares<span class='tooltip-shortcut'>R</span>"><img src="/src/main/resources/static/images/rectangle-horizontal (1).png"></button>
+    <button class="tool-btn" data-tool="circle" 
+            data-tooltip="Draw circles and ellipses<span class='tooltip-shortcut'>O</span>"><img src="/src/main/resources/static/images/circle (1).png"></button>
+    <button class="tool-btn" data-tool="arrow" 
+            data-tooltip="Draw arrows and connectors<span class='tooltip-shortcut'>A</span>"><img src="/src/main/resources/static/images/arrow-up-right.png"></button>
+    <button class="tool-btn" data-tool="line" 
+            data-tooltip="Draw straight lines<span class='tooltip-shortcut'>L</span>"><img src="/src/main/resources/static/images/slash (2).png"></button>
+    <div class="tool-divider"></div>
+    <button class="tool-btn" data-tool="text" 
+            data-tooltip="Add text labels<span class='tooltip-shortcut'>T</span>"><img src="/src/main/resources/static/images/text (1).png"></button>
+    <button class="tool-btn" data-tool="sticky" 
+            data-tooltip="Add sticky notes<span class='tooltip-shortcut'>S</span>"><img src="/src/main/resources/static/images/file-edit.png"></button>
+    <div class="tool-divider"></div>
+    <button class="tool-btn" data-tool="hand" 
+            data-tooltip="Pan and navigate canvas<span class='tooltip-shortcut'>Space</span>"><img src="/src/main/resources/static/images/hand-paper.png"></button>
+    <button class="tool-btn" data-tool="zoom" 
+            data-tooltip="Zoom in on specific areas<span class='tooltip-shortcut'>Z</span>"><img src="/src/main/resources/static/images/search.png"></button>
+    
+    <!-- Color Picker -->
+    <div class="color-picker" id="colorPicker">
+      <div class="color-option selected" style="background: #000000" data-color="#000000" 
+           data-tooltip="Black"></div>
+      <div class="color-option" style="background: #ef4444" data-color="#ef4444" 
+           data-tooltip="Red"></div>
+      <div class="color-option" style="background: #3b82f6" data-color="#3b82f6" 
+           data-tooltip="Blue"></div>
+      <div class="color-option" style="background: #10b981" data-color="#10b981" 
+           data-tooltip="Green"></div>
+      <div class="color-option" style="background: #f59e0b" data-color="#f59e0b" 
+           data-tooltip="Orange"></div>
+      <div class="color-option" style="background: #8b5cf6" data-color="#8b5cf6" 
+           data-tooltip="Purple"></div>
+    </div>
+  </div>
+
+  <!-- Main Canvas -->
+  <div class="main-canvas traybar-visible" id="mainCanvas">
+    <!-- Drawing Canvas -->
+    <canvas class="drawing-canvas" id="drawingCanvas" width="2000" height="1500"></canvas>
+
+    <!-- Canvas Toolbar -->
+    <div class="canvas-toolbar">
+      <button class="toolbar-btn" data-action="move" 
+              data-tooltip="Move and pan canvas<span class='tooltip-shortcut'>M</span>"><img src="/src/main/resources/static/images/move.png"></button>
+      <button class="toolbar-btn" data-action="zoom-in" 
+              data-tooltip="Zoom in<span class='tooltip-shortcut'>+</span>"><img src="/src/main/resources/static/images/search.png"></button>
+      <button class="toolbar-btn" data-action="fit" 
+              data-tooltip="Fit canvas to screen<span class='tooltip-shortcut'>0</span>"><img src="/src/main/resources/static/images/apps.png"></button>
+    </div>
+
+    <!-- Timer Widget -->
+    <div class="timer-widget" onclick="toggleTimer()" 
+         data-tooltip="Session timer - Click to start/stop">
+      <span id="timerDisplay">00:00</span>
+      <span>•••</span>
+    </div>
+
+    <!-- Zoom Controls -->
+    <div class="zoom-controls">
+      <button class="zoom-btn" onclick="zoomOut()" 
+              data-tooltip="Zoom out<span class='tooltip-shortcut'>-</span>"><img src="/src/main/resources/static/images/minus-small.png"></button>
+      <div class="zoom-level" id="zoomLevel" 
+           data-tooltip="Current zoom level">100%</div>
+      <button class="zoom-btn" onclick="zoomIn()" 
+              data-tooltip="Zoom in<span class='tooltip-shortcut'>+</span>"><img src="/src/main/resources/static/images/plus.png"></button>
+    </div>
+
+    <!-- User Cursors Container -->
+    <div id="userCursors">
+      <!-- Dynamic user cursors will be inserted here -->
+    </div>
+
+    <!-- Canvas Elements Container -->
+    <div id="canvasElements">
+      <!-- Dynamic canvas elements will be inserted here -->
+    </div>
+  </div>
+
+  <!-- Context Menu -->
+  <div class="context-menu" id="contextMenu">
+    <div class="menu-item" data-action="edit" 
+         data-tooltip="Edit selected element">✏️ Edit</div>
+    <div class="menu-item" data-action="duplicate" 
+         data-tooltip="Create a copy">📋 Duplicate</div>
+    <div class="menu-item" data-action="copy" 
+         data-tooltip="Copy to clipboard<span class='tooltip-shortcut'>Ctrl+C</span>">📄 Copy</div>
+    <div class="menu-item" data-action="paste" 
+         data-tooltip="Paste from clipboard<span class='tooltip-shortcut'>Ctrl+V</span>">📥 Paste</div>
+    <div class="menu-divider"></div>
+    <div class="menu-item" data-action="bring-front" 
+         data-tooltip="Move to front layer">⬆️ Bring to Front</div>
+    <div class="menu-item" data-action="send-back" 
+         data-tooltip="Move to back layer">⬇️ Send to Back</div>
+    <div class="menu-divider"></div>
+    <div class="menu-item" data-action="group" 
+         data-tooltip="Group selected elements">👥 Group</div>
+    <div class="menu-item" data-action="ungroup" 
+         data-tooltip="Ungroup selected elements">💥 Ungroup</div>
+    <div class="menu-divider"></div>
+    <div class="menu-item" data-action="delete" 
+         data-tooltip="Delete selected<span class='tooltip-shortcut'>Del</span>">🗑️ Delete</div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="right-panel" id="rightPanel">
+    <!-- Properties Panel -->
+    <div class="panel-section properties-panel">
+      <div class="panel-title" data-tooltip="Modify selected element properties">Properties</div>
+      <div class="property-group">
+        <div class="property-label">Background Color</div>
+        <input type="color" class="property-input" id="bgColor" value="#ffffff" 
+               data-tooltip="Change background color">
+      </div>
+      <div class="property-group">
+        <div class="property-label">Border Color</div>
+        <input type="color" class="property-input" id="borderColor" value="#000000" 
+               data-tooltip="Change border color">
+      </div>
+      <div class="property-group">
+        <div class="property-label">Opacity</div>
+        <input type="range" class="property-slider" id="opacity" min="0" max="100" value="100" 
+               data-tooltip="Adjust transparency (0-100%)">
+      </div>
+    </div>
+
+    <!-- Version History -->
+    <div class="panel-section">
+      <div class="panel-title" data-tooltip="View and restore previous versions">Version history</div>
+      <div id="versionHistory">
+        <!-- Dynamic version history will be inserted here -->
+      </div>
+    </div>
+
+    <!-- Collaboration -->
+    <div class="panel-section">
+      <div class="panel-title" data-tooltip="See who's currently working on this board">Active Users</div>
+      <div id="activeUsers">
+        <!-- Dynamic user list will be inserted here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications -->
+  <div class="notification" id="notification"></div>
+
+  <!-- Keyboard Shortcuts Help -->
+  <div class="shortcuts-help" id="shortcutsHelp">
+    <h3 style="margin-bottom: 16px;">Keyboard Shortcuts</h3>
+    <div class="shortcut-item">
+      <span>Select Tool</span>
+      <span class="shortcut-key">V</span>
+    </div>
+    <div class="shortcut-item">
+      <span>Pen Tool</span>
+      <span class="shortcut-key">P</span>
+    </div>
+    <div class="shortcut-item">
+      <span>Text Tool</span>
+      <span class="shortcut-key">T</span>
+    </div>
+    <div class="shortcut-item">
+      <span>Hand Tool</span>
+      <span class="shortcut-key">Space</span>
+    </div>
+    <div class="shortcut-item">
+      <span>Undo</span>
+      <span class="shortcut-key">Ctrl+Z</span>
+    </div>
+    <div class="shortcut-item">
+      <span>Redo</span>
+      <span class="shortcut-key">Ctrl+Y</span>
+    </div>
+    <div class="shortcut-item">
+      <span>Copy</span>
+      <span class="shortcut-key">Ctrl+C</span>
+    </div>
+    <div class="shortcut-item">
+      <span>Paste</span>
+      <span class="shortcut-key">Ctrl+V</span>
+    </div>
+    <div class="shortcut-item">
+      <span>Delete</span>
+      <span class="shortcut-key">Del</span>
+    </div>
+    <div class="shortcut-item">
+      <span>Zoom In</span>
+      <span class="shortcut-key">+</span>
+    </div>
+    <div class="shortcut-item">
+      <span>Zoom Out</span>
+      <span class="shortcut-key">-</span>
+    </div>
+    <div class="shortcut-item">
+      <span>Fit to Screen</span>
+      <span class="shortcut-key">0</span>
+    </div>
+  </div>
+
+  <!-- External JavaScript -->
+  <script src="/src/main/resources/static/whiteboard.js"></script>
+  
+</body>
+</html>
