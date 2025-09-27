@@ -1,3 +1,8 @@
+# Cloud SQL proxy & credentials
+scripts/cloud-sql-proxy/
+*.json
+*.pem
+*.p12
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
@@ -31,3 +36,32 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### System and Cache Files ###
+Backups/
+Cache/
+CachedConfigurations/
+CachedData/
+CachedProfilesData/
+Code Cache/
+Crashpad/
+DIPS
+DawnGraphiteCache/
+DawnWebGPUCache/
+GPUCache/
+Local State
+Local Storage/
+Network/
+Preferences
+Session Storage/
+Shared Dictionary/
+User/
+languagepacks.json
+logs/
+machineid
+*.log
+*.tmp
+hs_err_pid*.log
+
+# Local environment overrides
+.env

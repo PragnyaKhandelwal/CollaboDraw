@@ -42,7 +42,6 @@ public class UserService {
         if (result <= 0) {
             throw new RuntimeException("Failed to save user");
         }
-    
         return user;
     }
 
@@ -56,5 +55,13 @@ public class UserService {
 
     public User findById(Long id) {
         return userRepository.findById(id);
+    }
+    
+    public User updateUser(User user) {
+        int result = userRepository.update(user);
+        if (result <= 0) {
+            throw new RuntimeException("Failed to update user");
+        }
+        return user;
     }
 }

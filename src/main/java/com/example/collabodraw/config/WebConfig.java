@@ -11,14 +11,32 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
-        // Let Spring Boot's default static resource handling work
+        // Static resources
         if (!registry.hasMappingForPattern("/static/**")) {
             registry.addResourceHandler("/static/**")
-                    .addResourceLocations("classpath:/static/");
+                    .addResourceLocations("classpath:/static/")
+                    .setCachePeriod(3600);
         }
+        
+        // Images
         if (!registry.hasMappingForPattern("/images/**")) {
             registry.addResourceHandler("/images/**")
-                    .addResourceLocations("classpath:/static/images/");
+                    .addResourceLocations("classpath:/static/images/")
+                    .setCachePeriod(3600);
+        }
+        
+        // Favicon
+        if (!registry.hasMappingForPattern("/favicon.ico")) {
+            registry.addResourceHandler("/favicon.ico")
+                    .addResourceLocations("classpath:/static/")
+                    .setCachePeriod(3600);
+        }
+        
+        // JavaScript files
+        if (!registry.hasMappingForPattern("/*.js")) {
+            registry.addResourceHandler("/*.js")
+                    .addResourceLocations("classpath:/static/")
+                    .setCachePeriod(3600);
         }
     }
 

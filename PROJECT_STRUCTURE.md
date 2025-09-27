@@ -1,177 +1,206 @@
 # CollaboDraw - Project Structure
 
-## 🏗️ **New Organized Project Structure**
+This document outlines the current project structure after cleanup and Java backend migration.
+
+## 📁 Current Directory Structure
 
 ```
-src/main/java/com/example/collabodraw/
-├── CollaboDrawApplication.java          # Main Spring Boot application
-├── config/                              # Configuration classes
-│   └── DatabaseConfig.java             # Database configuration
-├── controller/                          # REST/Web controllers
-│   ├── AuthController.java             # Authentication endpoints
-│   └── HomeController.java             # Home page and main features
-├── service/                            # Business logic layer
-│   ├── UserService.java                # User business logic
-│   └── WhiteboardService.java          # Whiteboard business logic
-├── repository/                         # Data access layer
-│   ├── UserRepository.java             # User data operations
-│   ├── WhiteboardRepository.java       # Whiteboard data operations
-│   └── ParticipantRepository.java      # Participant data operations
-├── model/                              # Data models
-│   ├── entity/                         # JPA entities (if needed later)
-│   │   ├── User.java                   # User entity
-│   │   ├── Whiteboard.java             # Whiteboard entity
-│   │   └── Participant.java            # Participant entity
-│   └── dto/                            # Data Transfer Objects
-│       ├── UserRegistrationDto.java    # User registration DTO
-│       ├── UserLoginDto.java           # User login DTO
-│       └── WhiteboardDto.java          # Whiteboard DTO
-├── security/                           # Security configuration
-│   ├── SecurityConfig.java             # Spring Security config
-│   └── MyUserDetailsService.java       # Custom user details service
-└── exception/                          # Exception handling
-    ├── GlobalExceptionHandler.java     # Global exception handler
-    └── UserAlreadyExistsException.java # Custom exceptions
+CollaboDraw/
+├── src/
+│   ├── main/
+│   │   ├── java/com/example/collabodraw/
+│   │   │   ├── CollaboDrawApplication.java          # Main Spring Boot application
+│   │   │   ├── config/
+│   │   │   │   ├── DatabaseConfig.java             # Database configuration
+│   │   │   │   └── WebConfig.java                  # Web MVC configuration
+│   │   │   ├── controller/
+│   │   │   │   ├── AuthController.java             # Authentication endpoints
+│   │   │   │   ├── BoardController.java            # Board operations (create, share, duplicate, delete)
+│   │   │   │   ├── HomeController.java             # Home page dashboard
+│   │   │   │   ├── MainScreenController.java       # Whiteboard interface
+│   │   │   │   ├── MyContentController.java        # User's personal content
+│   │   │   │   ├── RootController.java             # Root redirect handler
+│   │   │   │   ├── SettingsController.java         # User settings and profile management
+│   │   │   │   ├── SharedController.java           # Shared whiteboards
+│   │   │   │   ├── TemplateController.java         # Template operations (use, preview)
+│   │   │   │   └── TemplatesController.java        # Templates gallery page
+│   │   │   ├── exception/
+│   │   │   │   ├── GlobalExceptionHandler.java     # Global exception handler
+│   │   │   │   └── UserAlreadyExistsException.java # Custom user exceptions
+│   │   │   ├── model/
+│   │   │   │   ├── UserProfile.java                # User profile entity
+│   │   │   │   └── dto/
+│   │   │   │       ├── UserLoginDto.java           # Login form DTO
+│   │   │   │       ├── UserRegistrationDto.java    # Registration form DTO
+│   │   │   │       └── WhiteboardDto.java          # Whiteboard creation DTO
+│   │   │   ├── repository/
+│   │   │   │   ├── BoardMembershipRepository.java  # Board membership operations
+│   │   │   │   ├── BoardRepository.java            # Board data operations
+│   │   │   │   ├── ElementRepository.java          # Board elements operations
+│   │   │   │   └── UserRepository.java             # User data operations
+│   │   │   ├── security/
+│   │   │   │   ├── MyUserDetailsService.java       # Custom user details service
+│   │   │   │   └── SecurityConfig.java             # Spring Security configuration
+│   │   │   └── service/
+│   │   │       ├── UserService.java                # User business logic
+│   │   │       └── WhiteboardService.java          # Whiteboard business logic
+│   │   └── resources/
+│   │       ├── application.properties               # Application configuration
+│   │       ├── static/
+│   │       │   ├── auth.js                         # Authentication JavaScript
+│   │       │   ├── board-operations.js             # Board navigation (simplified)
+│   │       │   ├── favicon.ico                     # Site favicon
+│   │       │   ├── sidebar-toggle.js               # Sidebar functionality
+│   │       │   ├── whiteboard.js                   # Whiteboard canvas logic
+│   │       │   └── images/                         # UI icons and assets
+│   │       │       ├── apps.png
+│   │       │       ├── arrow-up-right.png
+│   │       │       ├── circle (1).png
+│   │       │       ├── clone.png
+│   │       │       ├── duplicate.png
+│   │       │       ├── file-edit.png
+│   │       │       ├── file-export.png
+│   │       │       ├── file.png
+│   │       │       ├── hand-paper.png
+│   │       │       ├── house-chimney.png
+│   │       │       ├── interrogation.png
+│   │       │       ├── link-alt.png
+│   │       │       ├── minus-small.png
+│   │       │       ├── move.png
+│   │       │       ├── pen-nib.png
+│   │       │       ├── pencil.png
+│   │       │       ├── plus.png
+│   │       │       ├── Preview.png
+│   │       │       ├── rectangle-horizontal (1).png
+│   │       │       ├── redo-alt.png
+│   │       │       ├── refer-arrow.png
+│   │       │       ├── search.png
+│   │       │       ├── settings.png
+│   │       │       ├── slash (2).png
+│   │       │       ├── text (1).png
+│   │       │       ├── undo-alt.png
+│   │       │       └── user.png
+│   │       └── templates/
+│   │           ├── auth.html                       # Authentication page
+│   │           ├── home.html                       # Home page dashboard
+│   │           ├── mainscreen.html                 # Main whiteboard interface
+│   │           ├── my-content.html                 # User's personal content
+│   │           ├── settings.html                   # User settings and profile
+│   │           ├── shared.html                     # Shared whiteboards
+│   │           └── templates.html                  # Templates gallery
+│   └── test/
+│       └── java/com/example/collabodraw/
+│           └── whiteboard/
+│               └── WhiteboardApplicationTests.java # Spring Boot tests
+├── target/                                         # Maven build output (excluded from source control)
+├── .gitignore                                      # Git ignore rules
+├── mvnw                                            # Maven wrapper (Unix)
+├── mvnw.cmd                                        # Maven wrapper (Windows)
+├── pom.xml                                         # Maven project configuration
+├── README.md                                       # Project documentation
+├── ENDPOINT_IMPLEMENTATION_SUMMARY.md             # Endpoint implementation history
+└── JAVA_BACKEND_MIGRATION_SUMMARY.md              # Backend migration history
 ```
 
-## 🎯 **Key Improvements Made**
+## 🚀 Architecture Overview
 
-### **1. Layered Architecture**
-- **Controller Layer**: Handles HTTP requests and responses
-- **Service Layer**: Contains business logic and validation
-- **Repository Layer**: Handles data access operations
-- **Model Layer**: Defines entities and DTOs
+### **Clean Java Backend Architecture**
+- **Pure Java Business Logic**: All business operations moved from JavaScript to Java controllers
+- **Proper MVC Pattern**: Clear separation between controllers, services, and repositories
+- **Spring Boot Best Practices**: Dependency injection, configuration management, and security
+- **Simplified Frontend**: JavaScript reduced to navigation and UI interactions only
 
-### **2. Separation of Concerns**
-- Controllers only handle HTTP concerns
-- Services contain business logic
-- Repositories handle data access
-- Models define data structures
+### **Key Components**
 
-### **3. Enhanced Validation**
-- Added Bean Validation annotations
-- Custom validation messages
-- Global exception handling
+#### **Controllers (Web Layer)**
+- **AuthController**: Handles user authentication (login/signup)
+- **HomeController**: Main dashboard with user boards and recent activity
+- **BoardController**: Board CRUD operations (create, open, share, duplicate, delete)
+- **TemplateController**: Template operations (use, preview)
+- **TemplatesController**: Templates gallery page
+- **SettingsController**: User profile and settings management
+- **MyContentController**: User's personal content management
+- **SharedController**: Shared whiteboards management
+- **RootController**: Root URL redirection
 
-### **4. Better Error Handling**
-- Global exception handler
-- Custom exceptions for specific cases
-- User-friendly error messages
+#### **Services (Business Layer)**
+- **UserService**: User management, authentication, profile operations
+- **WhiteboardService**: Board creation, management, and collaboration logic
 
-### **5. Scalable Database Schema**
-- Optimized table structure
-- Proper foreign key relationships
-- Indexes for performance
-- Timestamps for audit trails
+#### **Repositories (Data Layer)**
+- **UserRepository**: User data persistence
+- **BoardRepository**: Board data operations
+- **BoardMembershipRepository**: Board sharing and collaboration
+- **ElementRepository**: Board content and drawing elements
 
-## 🚀 **Benefits of New Structure**
+#### **Security**
+- **SecurityConfig**: Spring Security configuration for authentication and authorization
+- **MyUserDetailsService**: Custom user authentication service
 
-### **Maintainability**
-- Clear separation of concerns
-- Easy to locate and modify code
-- Consistent naming conventions
+#### **Models & DTOs**
+- **UserProfile**: User entity for profile management
+- **DTOs**: Data transfer objects for form handling and API communication
 
-### **Scalability**
-- Easy to add new features
-- Modular design allows independent development
-- Clear interfaces between layers
+## 🗑️ Cleaned Up Components
 
-### **Testability**
-- Each layer can be tested independently
-- Mock dependencies easily
-- Clear boundaries for unit tests
+### **Removed Unused Classes**
+- ~~`ModelImports.java`~~ - Utility class not referenced anywhere
+- ~~`DatabaseProcedureService.java`~~ - Service not used by any component
+- ~~`SessionRepository.java`~~ - Repository not referenced by any service
+- ~~`CursorRepository.java`~~ - Repository not used in current implementation
+- ~~`ActivityLogRepository.java`~~ - Repository not integrated with business logic
+- ~~`util/` package~~ - Entire package removed as it contained only unused utilities
 
-### **Code Reusability**
-- Services can be reused across controllers
-- Repository methods can be shared
-- DTOs provide consistent data contracts
+### **Cleaned Files**
+- ~~`hs_err_pid14328.log`~~ - JVM error log removed from source control
+- **target/** directory properly managed (build artifacts not tracked)
 
-## 📝 **How to Add New Features**
+## 🔄 Migration Summary
 
-### **Adding a New Entity**
-1. Create entity in `model/entity/`
-2. Create DTO in `model/dto/`
-3. Create repository in `repository/`
-4. Create service in `service/`
-5. Create controller in `controller/`
+### **Before Cleanup**
+- Mixed JavaScript/Java business logic
+- Multiple unused repository classes
+- Utility classes without references
+- Error logs in source control
+- Complex frontend with business logic
 
-### **Adding New Business Logic**
-1. Add methods to appropriate service class
-2. Add corresponding repository methods if needed
-3. Update controller to use new service methods
+### **After Cleanup**
+- **Pure Java backend** with Spring Boot best practices
+- **Simplified JavaScript** for navigation only
+- **Clean architecture** with proper layer separation
+- **No unused components** cluttering the codebase
+- **Proper separation of concerns** between frontend and backend
 
-### **Adding New Endpoints**
-1. Add methods to appropriate controller
-2. Use existing services or create new ones
-3. Add validation using DTOs
+## 🎯 Current Status
 
-## 🔧 **Configuration**
+### **✅ Completed**
+- Complete endpoint coverage for all user operations
+- Profile management with initials display and database integration
+- Template navigation fixed with proper user authentication
+- Clean Java backend architecture with business logic properly separated
+- Project cleanup with removal of all unused components
 
-### **Database Configuration**
-- Located in `config/DatabaseConfig.java`
-- Database properties in `application.properties`
-- Schema initialization in `schema.sql`
+### **🚀 Ready for Development**
+- Proper foundation for adding new features
+- Clean, maintainable codebase
+- Well-structured Spring Boot application
+- Documentation updated to reflect current state
 
-### **Security Configuration**
-- Located in `security/SecurityConfig.java`
-- Custom user details service
-- OAuth2 configuration
+## 📋 Development Guidelines
 
-### **Exception Handling**
-- Global handler in `exception/GlobalExceptionHandler.java`
-- Custom exceptions for specific cases
-- User-friendly error messages
+### **Adding New Features**
+1. **Controller**: Add endpoint in appropriate controller class
+2. **Service**: Implement business logic in service layer
+3. **Repository**: Add data operations if needed
+4. **Frontend**: Update templates and add minimal JavaScript for navigation
+5. **Testing**: Add unit tests for service layer logic
 
-## 📊 **Database Schema**
+### **Code Organization**
+- Keep business logic in Java services
+- Use JavaScript only for UI interactions and navigation
+- Follow established patterns for authentication and error handling
+- Maintain proper separation between layers
 
-### **Tables**
-- `users`: User accounts and authentication
-- `whiteboards`: Collaborative whiteboards
-- `participants`: User participation in whiteboards
+---
 
-### **Relationships**
-- Users can own multiple whiteboards
-- Users can participate in multiple whiteboards
-- Whiteboards can have multiple participants
-
-## 🎨 **Frontend Structure**
-```
-src/main/resources/
-├── templates/                          # Thymeleaf templates
-│   ├── auth.html                      # Authentication page
-│   └── home.html                      # Home page
-├── static/                            # Static resources
-│   ├── auth.js                        # Authentication JavaScript
-│   ├── sidebar-toggle.js              # Sidebar functionality
-│   └── images/                        # Images and assets
-└── application.properties             # Application configuration
-```
-
-## 🚀 **Getting Started**
-
-1. **Run the application**: `mvn spring-boot:run`
-2. **Access the app**: `http://localhost:8080/auth`
-3. **Register a user**: Use the signup form
-4. **Login**: Use your credentials
-5. **Access home**: Redirected after successful login
-
-## 🔮 **Future Enhancements**
-
-### **Easy to Add**
-- Real-time collaboration features
-- File upload/download
-- User profiles and settings
-- Whiteboard sharing and permissions
-- Drawing tools and canvas functionality
-- Chat and messaging features
-- Version control for whiteboards
-
-### **Architecture Supports**
-- Microservices migration
-- API versioning
-- Caching layers
-- Message queues
-- External integrations
-- Mobile app support
-
-This structure provides a solid foundation for building a scalable, maintainable collaborative drawing application! 🎉
+This structure represents a clean, maintainable Spring Boot application following Java best practices with a clear separation between backend business logic and frontend presentation.

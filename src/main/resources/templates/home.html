@@ -561,17 +561,17 @@
 </head>
 <body>
   <div class="sidebar" id="sidebar" role="navigation" aria-label="Main sidebar navigation">
-    <div class="logo" id="sidebar-logo" tabindex="0" aria-label="CollaboDraw logo" onclick="window.location.href='home.html'">
-      <img src="/src/main/resources/static/images/Preview.png" alt="CollaboDraw logo" />
+    <div class="logo" id="sidebar-logo" tabindex="0" aria-label="CollaboDraw logo" onclick="window.location.href='/home'">
+      <img th:src="@{/images/Preview.png}" alt="CollaboDraw logo" />
       <span class="logo-text">CollaboDraw</span>
     </div>
     <nav class="sidebar-nav" role="menu" aria-label="Main menu">
       <ul>
-        <li><a href="home.html" class="active"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 4.354l-7 5.688V20h4v-5h6v5h4V10.042z"/></svg></span><span class="nav-text">Home</span></a></li>
-        <li><a href="mainscreen.html"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg></span><span class="nav-text">Create</span></a></li>
-        <li><a href="my-content.html"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM13 9V3.5L18.5 9z"/></svg></span><span class="nav-text">My Content</span></a></li>
-        <li><a href="shared.html"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M16,11A4,4 0 1,1 12,7A4,4 0 0,1 16,11M6,12A2,2 0 1,1 4,10A2,2 0 0,1 6,12M6,14A6,6 0 0,1 12,16C14.67,16 16,15.33 16,14V13C16,11.67 14.67,11 12,11A6,6 0 0,1 6,14Z"/></svg></span><span class="nav-text">Shared with Me</span></a></li>
-        <li><a href="settings.html"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" /></svg></span><span class="nav-text">Settings</span></a></li>
+        <li><a href="/home" class="active"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 4.354l-7 5.688V20h4v-5h6v5h4V10.042z"/></svg></span><span class="nav-text">Home</span></a></li>
+        <li><a href="/mainscreen"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg></span><span class="nav-text">Create</span></a></li>
+        <li><a href="/my-content"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM13 9V3.5L18.5 9z"/></svg></span><span class="nav-text">My Content</span></a></li>
+        <li><a href="/shared"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M16,11A4,4 0 1,1 12,7A4,4 0 0,1 16,11M6,12A2,2 0 1,1 4,10A2,2 0 0,1 6,12M6,14A6,6 0 0,1 12,16C14.67,16 16,15.33 16,14V13C16,11.67 14.67,11 12,11A6,6 0 0,1 6,14Z"/></svg></span><span class="nav-text">Shared with Me</span></a></li>
+        <li><a href="/settings"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" /></svg></span><span class="nav-text">Settings</span></a></li>
       </ul>
     </nav>
     <button class="sidebar-toggle" id="toggleBtn" aria-label="Toggle sidebar">‹</button>
@@ -584,12 +584,12 @@
         <h1 class="page-title">Dashboard</h1>
       </div>
       <div class="search-bar">
-        <span class="search-icon">🔍</span>
+        <span class="search-icon"><svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></span>
         <input type="text" class="search-input" placeholder="Search boards, templates, or teammates...">
       </div>
       <div class="header-right">
-        <button class="notification-btn">🔔</button>
-        <div class="avatar" onclick="window.location.href='settings.html'" th:text="${currentUser.initials ?: 'JD'}">JD</div>
+        <button class="notification-btn"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg></button>
+        <div class="avatar" onclick="window.location.href='/settings'" th:text="${currentUser?.username?.substring(0,2)?.toUpperCase() ?: 'JD'}">JD</div>
       </div>
     </header>
 
@@ -598,10 +598,10 @@
       <!-- Welcome Section -->
       <div class="welcome-section">
         <div class="welcome-text">
-          <h1 th:text="'Welcome back, ' + ${currentUser.firstName ?: 'User'} + '!'">Welcome back, John!</h1>
+          <h1 th:text="'Welcome back, ' + (${currentUser?.username} ?: 'User') + '!'">Welcome back, User!</h1>
           <p>Ready to create something amazing today?</p>
         </div>
-        <a href="mainscreen.html" class="new-board-btn">
+        <a href="/mainscreen" class="new-board-btn">
           <span>+</span>
           New Board
         </a>
@@ -609,12 +609,12 @@
 
       <!-- Quick Actions -->
       <div class="quick-actions">
-        <div class="action-card" onclick="window.location.href='mainscreen.html'">
-          <div class="action-icon">🎨</div>
+        <div class="action-card" onclick="window.location.href='/mainscreen'">
+          <div class="action-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0L19.2 12l-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg></div>
           <div class="action-title">Blank Board</div>
           <div class="action-description">Start with a clean canvas</div>
         </div>
-        <div class="action-card" onclick="window.location.href='templates.html'">
+        <div class="action-card" onclick="window.location.href='/templates'">
           <div class="action-icon">📊</div>
           <div class="action-title">From Template</div>
           <div class="action-description">Choose from pre-made layouts</div>
@@ -625,7 +625,7 @@
           <div class="action-description">Upload existing documents</div>
         </div>
         <div class="action-card" onclick="showJoinDialog()">
-          <div class="action-icon">👥</div>
+          <div class="action-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zM4 18v-4h3v4h2v-4h2v4h2v-5c0-2.21-1.79-4-4-4H5c-2.21 0-4 1.79-4 4v5h3zm0-6c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7-4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></div>
           <div class="action-title">Join Session</div>
           <div class="action-description">Enter collaboration code</div>
         </div>
@@ -635,17 +635,17 @@
       <section>
         <div class="section-header">
           <h2 class="section-title">Recent Boards</h2>
-          <a href="my-content.html" class="view-all-btn">View All →</a>
+          <a href="/my-content" class="view-all-btn">View All →</a>
         </div>
-        <div class="boards-grid" th:if="${recentBoards != null and not #lists.isEmpty(recentBoards)}">
-          <div class="board-card" th:each="board : ${recentBoards}" th:onclick="'openBoard(\'' + ${board.id} + '\')'">
-            <div class="board-preview" th:text="${board.icon ?: '🎯'}">🎯</div>
+        <div class="boards-grid" th:if="${whiteboards != null and not #lists.isEmpty(whiteboards)}">
+          <div class="board-card" th:each="board : ${whiteboards}" th:attr="onclick='openBoard(' + ${board?.boardId ?: 'board-1'} + ')'">
+            <div class="board-preview">🎯</div>
             <div class="board-info">
-              <div class="board-title" th:text="${board.title}">Product Strategy Meeting</div>
+              <div class="board-title" th:text="${board?.boardName ?: 'Board Name'}">Board Name</div>
               <div class="board-meta">
-                <span th:text="${board.lastModified}">2 hours ago</span>
+                <span th:text="${board?.lastModified ?: 'Recently created'}">Recently created</span>
                 <div class="board-collaborators">
-                  <div class="collaborator-avatar" th:each="collaborator, iterStat : ${board.collaborators}" th:if="${iterStat.index < 3}"></div>
+                  <div class="collaborator-avatar"></div>
                 </div>
               </div>
             </div>
@@ -653,7 +653,7 @@
         </div>
         
         <!-- Default Recent Boards (fallback when no data) -->
-        <div class="boards-grid" th:if="${recentBoards == null or #lists.isEmpty(recentBoards)}">
+        <div class="boards-grid" th:if="${whiteboards == null or #lists.isEmpty(whiteboards)}">
           <div class="board-card" onclick="openBoard('board-1')">
             <div class="board-preview">🎯</div>
             <div class="board-info">
@@ -717,18 +717,10 @@
       <section>
         <div class="section-header">
           <h2 class="section-title">Popular Templates</h2>
-          <a href="templates.html" class="view-all-btn">View All →</a>
+          <a href="/templates" class="view-all-btn">View All →</a>
         </div>
-        <div class="templates-grid" th:if="${popularTemplates != null and not #lists.isEmpty(popularTemplates)}">
-          <div class="template-card" th:each="template : ${popularTemplates}" th:onclick="'useTemplate(\'' + ${template.id} + '\')'">
-            <div class="template-icon" th:text="${template.icon ?: '🧠'}">🧠</div>
-            <div class="template-title" th:text="${template.title}">Mind Map</div>
-            <div class="template-description" th:text="${template.description}">Organize ideas and concepts visually</div>
-          </div>
-        </div>
-
-        <!-- Default Popular Templates (fallback when no data) -->
-        <div class="templates-grid" th:if="${popularTemplates == null or #lists.isEmpty(popularTemplates)}">
+        <!-- Show default templates for now -->
+        <div class="templates-grid">
           <div class="template-card" onclick="useTemplate('mindmap')">
             <div class="template-icon">🧠</div>
             <div class="template-title">Mind Map</div>
@@ -794,12 +786,12 @@
     // Navigation functions
     function openBoard(boardId) {
       // Navigate to whiteboard with specific board ID
-      window.location.href = `mainscreen.html?board=${boardId}`;
+      window.location.href = '/mainscreen?board=' + boardId;
     }
 
     function useTemplate(templateId) {
       // Navigate to whiteboard with template
-      window.location.href = `mainscreen.html?template=${templateId}`;
+      window.location.href = '/mainscreen?template=' + templateId;
     }
 
     function showImportDialog() {
@@ -810,7 +802,7 @@
         const file = e.target.files[0];
         if (file) {
           // Navigate to whiteboard with import parameter
-          window.location.href = `mainscreen.html?import=${encodeURIComponent(file.name)}`;
+          window.location.href = '/mainscreen?import=' + encodeURIComponent(file.name);
         }
       };
       input.click();
@@ -820,7 +812,7 @@
       const sessionCode = prompt('Enter collaboration session code:');
       if (sessionCode && sessionCode.trim()) {
         // Navigate to whiteboard with session parameter
-        window.location.href = `mainscreen.html?session=${encodeURIComponent(sessionCode.trim())}`;
+        window.location.href = '/mainscreen?session=' + encodeURIComponent(sessionCode.trim());
       }
     }
 
@@ -830,10 +822,11 @@
         const query = this.value.trim();
         if (query) {
           // Navigate to search results
-          window.location.href = `my-content.html?search=${encodeURIComponent(query)}`;
+          window.location.href = '/my-content?search=' + encodeURIComponent(query);
         }
       }
     });
   </script>
+  <script th:src="@{/board-operations.js}"></script>
 </body>
 </html>

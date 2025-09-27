@@ -1152,7 +1152,7 @@ function showHelp() {
 
 function goHome() {
   if (confirm('Are you sure you want to leave? Unsaved changes will be lost.')) {
-    window.location.href = 'home.html';
+    window.location.href = '/home';
   }
 }
 

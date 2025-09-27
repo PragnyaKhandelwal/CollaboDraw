@@ -26,10 +26,26 @@ public class HomeController {
     public String home(Authentication authentication, Model model) {
         if (authentication != null && authentication.isAuthenticated()) {
             String username = authentication.getName();
-            User user = userService.findByUsername(username);
-            if (user != null) {
-                model.addAttribute("user", user);
-                model.addAttribute("whiteboards", whiteboardService.getWhiteboardsByOwner(user.getId()));
+            
+            try {
+                // Get user information
+                User currentUser = userService.findByUsername(username);
+                if (currentUser != null) {
+                    model.addAttribute("currentUser", currentUser);
+                    
+                    // Get user's whiteboards
+                    var whiteboards = whiteboardService.getWhiteboardsByOwner(currentUser.getUserId());
+                    model.addAttribute("whiteboards", whiteboards);
+                } else {
+                    // Fallback if user not found
+                    model.addAttribute("username", username);
+                    model.addAttribute("whiteboards", java.util.Collections.emptyList());
+                }
+            } catch (Exception e) {
+                // Log error and provide fallback
+                System.err.println("Error loading user data: " + e.getMessage());
+                model.addAttribute("username", username);
+                model.addAttribute("whiteboards", java.util.Collections.emptyList());
             }
         }
         return "home";

@@ -13,6 +13,7 @@ public class WhiteboardDto {
     private String name;
 
     private Long ownerId;
+    private Boolean isPublic = false;
 
     // Constructors
     public WhiteboardDto() {}
@@ -20,6 +21,13 @@ public class WhiteboardDto {
     public WhiteboardDto(String name, Long ownerId) {
         this.name = name;
         this.ownerId = ownerId;
+        this.isPublic = false;
+    }
+
+    public WhiteboardDto(String name, Long ownerId, Boolean isPublic) {
+        this.name = name;
+        this.ownerId = ownerId;
+        this.isPublic = isPublic;
     }
 
     // Getters and Setters
@@ -28,4 +36,7 @@ public class WhiteboardDto {
 
     public Long getOwnerId() { return ownerId; }
     public void setOwnerId(Long ownerId) { this.ownerId = ownerId; }
+
+    public Boolean getIsPublic() { return isPublic; }
+    public void setIsPublic(Boolean isPublic) { this.isPublic = isPublic; }
 }
