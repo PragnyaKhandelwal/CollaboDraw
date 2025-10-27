@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>CollaboDraw - Whiteboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link href="https://www.flaticon.com/uicons/interface-icons" rel="stylesheet">
+  <link href="https://www.flaticon.com/uicons/interface-icons" rel="stylesheet">
   <style>
     /* Basic Reset */
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -60,6 +60,31 @@
       opacity: 1;
       transform: translateY(0);
     }
+/* Fix canvas visibility */
+#drawingCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10 !important;
+    background: transparent !important;
+    pointer-events: all !important;
+    display: block !important;
+}
+
+/* Fix color picker visibility - make it always visible for testing */
+#colorPicker {
+    opacity: 1 !important;
+    pointer-events: all !important;
+    position: relative !important; /* Change from absolute to relative */
+    left: 0 !important;
+    top: 8px !important;
+}
+
+/* Make main canvas area visible */
+#mainCanvas {
+    background: white !important;
+    position: relative !important;
+}
 
     .tooltip::after {
       content: '';
@@ -820,7 +845,11 @@
   <div class="top-header">
     <div class="header-left">
       <div class="logo" onclick="goHome()" data-tooltip="Go to Dashboard">
+<<<<<<< HEAD
                 <div class="logo-icon"><img th:src="@{/images/Preview.png}" alt="CollabDraw"></div>
+=======
+        <div class="logo-icon"><img th:src="@{/images/Preview.png}" /></div>
+>>>>>>> c52324823d0a0c2d7a2c828b7bfaa7a6ebe4d282
         CollaboDraw
       </div>
       <input type="text" class="board-name" value="Untitled Board" id="boardName" 
@@ -834,6 +863,7 @@
     </div>
     <div class="header-right">
       <button class="header-btn" onclick="undo()" 
+<<<<<<< HEAD
               data-tooltip="Undo last action<span class='tooltip-shortcut'>Ctrl+Z</span>"><img th:src="@{/images/undo-alt.png}"></button>
       <button class="header-btn" onclick="redo()" 
               data-tooltip="Redo last undone action<span class='tooltip-shortcut'>Ctrl+Y</span>"><img th:src="@{/images/redo-alt.png}"></button>
@@ -843,6 +873,27 @@
               data-tooltip="Export board as PNG image"><img th:src="@{/images/file-export.png}"></button>
       <button class="header-btn" onclick="showHelp()" 
               data-tooltip="Keyboard shortcuts help<span class='tooltip-shortcut'>F1</span>"><img th:src="@{/images/interrogation.png}"></button>
+=======
+              data-tooltip="Undo last action<span class='tooltip-shortcut'>Ctrl+Z</span>">
+        <img th:src="@{/images/undo-alt.png}">
+      </button>
+      <button class="header-btn" onclick="redo()" 
+              data-tooltip="Redo last undone action<span class='tooltip-shortcut'>Ctrl+Y</span>">
+        <img th:src="@{/images/redo-alt.png}">
+      </button>
+      <button class="header-btn" onclick="shareBoard()" 
+              data-tooltip="Share board with others">
+        <img th:src="@{/images/link-alt.png}">
+      </button>
+      <button class="header-btn" onclick="exportBoard()" 
+              data-tooltip="Export board as PNG image">
+        <img th:src="@{/images/file-export.png}">
+      </button>
+      <button class="header-btn" onclick="showHelp()" 
+              data-tooltip="Keyboard shortcuts help<span class='tooltip-shortcut'>F1</span>">
+        <img th:src="@{/images/interrogation.png}">
+      </button>
+>>>>>>> c52324823d0a0c2d7a2c828b7bfaa7a6ebe4d282
       <div class="user-avatars" id="userAvatars">
         <!-- Dynamic user avatars will be inserted here -->
       </div>
@@ -858,6 +909,7 @@
     <button class="tool-btn active" data-tool="select" 
             data-tooltip="Select and move objects<span class='tooltip-shortcut'>V</span>">◆</button>
     <button class="tool-btn" data-tool="pen" 
+<<<<<<< HEAD
             data-tooltip="Draw freehand lines<span class='tooltip-shortcut'>P</span>"><img th:src="@{/images/pencil.png}"></button>
     <button class="tool-btn" data-tool="highlighter" 
             data-tooltip="Highlight with semi-transparent ink<span class='tooltip-shortcut'>H</span>"><img th:src="@{/images/pen-nib.png}"></button>
@@ -880,6 +932,50 @@
             data-tooltip="Pan and navigate canvas<span class='tooltip-shortcut'>Space</span>"><img th:src="@{/images/hand-paper.png}"></button>
     <button class="tool-btn" data-tool="zoom" 
             data-tooltip="Zoom in on specific areas<span class='tooltip-shortcut'>Z</span>"><img th:src="@{/images/search.png}"></button>
+=======
+            data-tooltip="Draw freehand lines<span class='tooltip-shortcut'>P</span>">
+      <img th:src="@{/images/pencil.png}">
+    </button>
+    <button class="tool-btn" data-tool="highlighter" 
+            data-tooltip="Highlight with semi-transparent ink<span class='tooltip-shortcut'>H</span>">
+      <img th:src="@{/images/pen-nib.png}">
+    </button>
+    <div class="tool-divider"></div>
+    <button class="tool-btn" data-tool="rectangle" 
+            data-tooltip="Draw rectangles and squares<span class='tooltip-shortcut'>R</span>">
+      <img th:src="@{/images/rectangle-horizontal (1).png}">
+    </button>
+    <button class="tool-btn" data-tool="circle" 
+            data-tooltip="Draw circles and ellipses<span class='tooltip-shortcut'>O</span>">
+      <img th:src="@{/images/circle (1).png}">
+    </button>
+    <button class="tool-btn" data-tool="arrow" 
+            data-tooltip="Draw arrows and connectors<span class='tooltip-shortcut'>A</span>">
+      <img th:src="@{/images/arrow-up-right.png}">
+    </button>
+    <button class="tool-btn" data-tool="line" 
+            data-tooltip="Draw straight lines<span class='tooltip-shortcut'>L</span>">
+      <img th:src="@{/images/slash (2).png}">
+    </button>
+    <div class="tool-divider"></div>
+    <button class="tool-btn" data-tool="text" 
+            data-tooltip="Add text labels<span class='tooltip-shortcut'>T</span>">
+      <img th:src="@{/images/text (1).png}">
+    </button>
+    <button class="tool-btn" data-tool="sticky" 
+            data-tooltip="Add sticky notes<span class='tooltip-shortcut'>S</span>">
+      <img th:src="@{/images/file-edit.png}">
+    </button>
+    <div class="tool-divider"></div>
+    <button class="tool-btn" data-tool="hand" 
+            data-tooltip="Pan and navigate canvas<span class='tooltip-shortcut'>Space</span>">
+      <img th:src="@{/images/hand-paper.png}">
+    </button>
+    <button class="tool-btn" data-tool="zoom" 
+            data-tooltip="Zoom in on specific areas<span class='tooltip-shortcut'>Z</span>">
+      <img th:src="@{/images/search.png}">
+    </button>
+>>>>>>> c52324823d0a0c2d7a2c828b7bfaa7a6ebe4d282
     
     <!-- Color Picker -->
     <div class="color-picker" id="colorPicker">
@@ -906,11 +1002,25 @@
     <!-- Canvas Toolbar -->
     <div class="canvas-toolbar">
       <button class="toolbar-btn" data-action="move" 
+<<<<<<< HEAD
               data-tooltip="Move and pan canvas<span class='tooltip-shortcut'>M</span>"><img th:src="@{/images/move.png}"></button>
       <button class="toolbar-btn" data-action="zoom-in" 
               data-tooltip="Zoom in<span class='tooltip-shortcut'>+</span>"><img th:src="@{/images/search.png}"></button>
       <button class="toolbar-btn" data-action="fit" 
               data-tooltip="Fit canvas to screen<span class='tooltip-shortcut'>0</span>"><img th:src="@{/images/apps.png}"></button>
+=======
+              data-tooltip="Move and pan canvas<span class='tooltip-shortcut'>M</span>">
+        <img th:src="@{/images/move.png}">
+      </button>
+      <button class="toolbar-btn" data-action="zoom-in" 
+              data-tooltip="Zoom in<span class='tooltip-shortcut'>+</span>">
+        <img th:src="@{/images/search.png}">
+      </button>
+      <button class="toolbar-btn" data-action="fit" 
+              data-tooltip="Fit canvas to screen<span class='tooltip-shortcut'>0</span>">
+        <img th:src="@{/images/apps.png}">
+      </button>
+>>>>>>> c52324823d0a0c2d7a2c828b7bfaa7a6ebe4d282
     </div>
 
     <!-- Timer Widget -->
@@ -923,11 +1033,23 @@
     <!-- Zoom Controls -->
     <div class="zoom-controls">
       <button class="zoom-btn" onclick="zoomOut()" 
+<<<<<<< HEAD
               data-tooltip="Zoom out<span class='tooltip-shortcut'>-</span>"><img th:src="@{/images/minus-small.png}" src="/images/minus-small.png"></button>
       <div class="zoom-level" id="zoomLevel" 
            data-tooltip="Current zoom level">100%</div>
       <button class="zoom-btn" onclick="zoomIn()" 
               data-tooltip="Zoom in<span class='tooltip-shortcut'>+</span>"><img th:src="@{/images/plus.png}" src="/images/plus.png"></button>
+=======
+              data-tooltip="Zoom out<span class='tooltip-shortcut'>-</span>">
+        <img th:src="@{/images/minus-small.png}">
+      </button>
+      <div class="zoom-level" id="zoomLevel" 
+           data-tooltip="Current zoom level">100%</div>
+      <button class="zoom-btn" onclick="zoomIn()" 
+              data-tooltip="Zoom in<span class='tooltip-shortcut'>+</span>">
+        <img th:src="@{/images/plus.png}">
+      </button>
+>>>>>>> c52324823d0a0c2d7a2c828b7bfaa7a6ebe4d282
     </div>
 
     <!-- User Cursors Container -->
@@ -1061,8 +1183,21 @@
     </div>
   </div>
 
+  <script>
+    // Modified goHome function to use Spring controller route
+    function goHome() {
+      window.location.href = '/home';  // Changed from 'home.html'
+    }
+
+    // All other JavaScript functions remain the same...
+  </script>
+
   <!-- External JavaScript -->
+<<<<<<< HEAD
   <script th:src="@{/whiteboard.js}"></script>
+=======
+  <script th:src="@{/js/whiteboard.js}"></script>
+>>>>>>> c52324823d0a0c2d7a2c828b7bfaa7a6ebe4d282
   
   <script th:src="@{/board-operations.js}"></script>
   
