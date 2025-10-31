@@ -103,6 +103,32 @@ public class ElementRepository {
         return count != null ? count : 0;
     }
 
+    // Snapshot helpers for storing full-board state in a single JSON row
+    public String findLatestSnapshotData(Long boardId) {
+        String sql = "SELECT data FROM elements WHERE board_id = ? AND type = 'snapshot' ORDER BY updated_at DESC, created_at DESC LIMIT 1";
+        try {
+            return jdbcTemplate.queryForObject(sql, String.class, boardId);
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
+    public void replaceSnapshot(Long boardId, Long userId, String dataJson) {
+        // Remove old snapshots and insert a fresh one
+        String del = "DELETE FROM elements WHERE board_id = ? AND type = 'snapshot'";
+        jdbcTemplate.update(del, boardId);
+
+        String ins = "INSERT INTO elements (board_id, creator_id, type, z_order, data) VALUES (?, ?, 'snapshot', 0, ?)";
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(ins, Statement.RETURN_GENERATED_KEYS);
+            ps.setLong(1, boardId);
+            ps.setLong(2, userId);
+            ps.setString(3, dataJson);
+            return ps;
+        }, keyHolder);
+    }
+
     private static class ElementRowMapper implements RowMapper<Element> {
         @Override
         public Element mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {

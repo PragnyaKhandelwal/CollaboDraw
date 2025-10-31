@@ -41,12 +41,14 @@ param(
   [switch]$SkipRun
 )
 
-$ErrorActionPreference = 'Stop'
+# Avoid assigning to the automatic variable $ErrorActionPreference to satisfy ScriptAnalyzer.
+# Instead, set default ErrorAction for all cmdlets.
+$PSDefaultParameterValues['*:ErrorAction'] = 'Stop'
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $rootDir = Resolve-Path (Join-Path $scriptDir '..')
 Set-Location $rootDir
 
-function Load-DotEnv {
+function Import-DotEnv {
   $envFile = Join-Path $rootDir '.env'
   if (Test-Path $envFile) {
     Write-Host "Loading .env" -ForegroundColor Cyan
@@ -66,11 +68,15 @@ function Load-DotEnv {
   }
 }
 
-Load-DotEnv
+Import-DotEnv
 
 # Defaults if not provided
 if (-not $Env:DB_HOST) { $Env:DB_HOST = '127.0.0.1' }
 if (-not $Env:DB_PORT) { $Env:DB_PORT = '3307' }
+
+# Do not force a Spring profile here. Default profile uses MySQL via proxy.
+# To run with H2 dev profile manually, set before running:
+#   $Env:SPRING_PROFILES_ACTIVE = 'dev'
 
 $missing = @()
 foreach ($req in 'CLOUD_SQL_INSTANCE','DB_NAME','DB_USER','DB_PASS') {

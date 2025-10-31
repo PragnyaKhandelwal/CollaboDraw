@@ -69,9 +69,20 @@ public class BoardRepository {
         return jdbcTemplate.query(sql, boardRowMapper);
     }
 
+    public int countByOwnerInDays(Long ownerId, int days) {
+        String sql = "SELECT COUNT(*) FROM boards WHERE owner_id = ? AND created_at >= NOW() - INTERVAL ? DAY";
+        Integer c = jdbcTemplate.queryForObject(sql, Integer.class, ownerId, days);
+        return c != null ? c : 0;
+    }
+
     public void updateLastModified(Long boardId) {
         String sql = "UPDATE boards SET last_modified = CURRENT_TIMESTAMP WHERE board_id = ?";
         jdbcTemplate.update(sql, boardId);
+    }
+
+    public void updateName(Long boardId, String name) {
+        String sql = "UPDATE boards SET board_name = ?, last_modified = CURRENT_TIMESTAMP WHERE board_id = ?";
+        jdbcTemplate.update(sql, name, boardId);
     }
 
     public void delete(Long boardId) {

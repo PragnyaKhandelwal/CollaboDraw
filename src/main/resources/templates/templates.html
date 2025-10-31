@@ -23,7 +23,8 @@
       --blue: #3b82f6;
       --purple: #8b5cf6;
       --orange: #f59e0b;
-      --red: #    // Template functions are now handled by board-operations.js    }
+      --red: #ef4444;
+    }
 
     body {
       margin: 0;
@@ -592,28 +593,16 @@
 <body>
   <div class="sidebar" id="sidebar" role="navigation" aria-label="Main sidebar navigation">
     <div class="logo" id="sidebar-logo" tabindex="0" aria-label="CollaboDraw logo" onclick="window.location.href='/home'">
-<<<<<<< HEAD
       <img th:src="@{/images/Preview.png}" alt="CollaboDraw logo" />
-=======
-      <img th:src="@{/images/Preview.png}" />
->>>>>>> c52324823d0a0c2d7a2c828b7bfaa7a6ebe4d282
       <span class="logo-text">CollaboDraw</span>
     </div>
     <nav class="sidebar-nav" role="menu" aria-label="Main menu">
       <ul>
-<<<<<<< HEAD
-        <li><a href="/home"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 4.354l-7 5.688V20h4v-5h6v5h4V10.042z"/></svg></span><span class="nav-text">Home</span></a></li>
-        <li><a href="/mainscreen"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg></span><span class="nav-text">Create</span></a></li>
-        <li><a href="/my-content"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2-2V8zM13 9V3.5L18.5 9z"/></svg></span><span class="nav-text">My Content</span></a></li>
-        <li><a href="/shared"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M16,11A4,4 0 1,1 12,7A4,4 0 0,1 16,11M6,12A2,2 0 1,1 4,10A2,2 0 0,1 6,12M6,14A6,6 0 0,1 12,16C14.67,16 16,15.33 16,14V13C16,11.67 14.67,11 12,11A6,6 0 0,1 6,14Z"/></svg></span><span class="nav-text">Shared with Me</span></a></li>
-                <li><a href="/settings"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7......
-=======
         <li><a th:href="@{/home}"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 4.354l-7 5.688V20h4v-5h6v5h4V10.042z"/></svg></span><span class="nav-text">Home</span></a></li>
         <li><a th:href="@{/mainscreen}"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg></span><span class="nav-text">Create</span></a></li>
         <li><a th:href="@{/my-content}"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM13 9V3.5L18.5 9z"/></svg></span><span class="nav-text">My Content</span></a></li>
         <li><a th:href="@{/shared}"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M16,11A4,4 0 1,1 12,7A4,4 0 0,1 16,11M6,12A2,2 0 1,1 4,10A2,2 0 0,1 6,12M6,14A6,6 0 0,1 12,16C14.67,16 16,15.33 16,14V13C16,11.67 14.67,11 12,11A6,6 0 0,1 6,14Z"/></svg></span><span class="nav-text">Shared with Me</span></a></li>
         <li><a th:href="@{/settings}"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" /></svg></span><span class="nav-text">Settings</span></a></li>
->>>>>>> c52324823d0a0c2d7a2c828b7bfaa7a6ebe4d282
       </ul>
     </nav>
     <button class="sidebar-toggle" id="toggleBtn" aria-label="Toggle sidebar">‹</button>
@@ -631,11 +620,7 @@
       </div>
       <div class="header-right">
         <button class="notification-btn">🔔</button>
-<<<<<<< HEAD
         <div class="avatar" onclick="window.location.href='/settings'" th:text="${currentUser?.username?.substring(0,2)?.toUpperCase() ?: 'JD'}">JD</div>
-=======
-        <div class="avatar" onclick="window.location.href='/settings'">JD</div>
->>>>>>> c52324823d0a0c2d7a2c828b7bfaa7a6ebe4d282
       </div>
     </header>
 
@@ -643,11 +628,7 @@
     <main class="templates-content">
       <!-- Breadcrumb -->
       <nav class="breadcrumb">
-<<<<<<< HEAD
-        <a href="/home">Home</a>
-=======
         <a th:href="@{/home}">Home</a>
->>>>>>> c52324823d0a0c2d7a2c828b7bfaa7a6ebe4d282
         <span>›</span>
         <span>Templates</span>
       </nav>
@@ -668,186 +649,41 @@
         <div class="category-filter" data-category="planning">Planning</div>
       </div>
 
-      <!-- Popular Templates -->
+      <!-- Templates Grid (dynamic from DB) -->
       <div class="template-section">
         <div class="section-header">
-          <h2 class="section-title">Popular Templates</h2>
-          <span class="section-count">8 templates</span>
+          <h2 class="section-title">All Templates</h2>
+          <span class="section-count" th:text="${totalTemplates} + ' templates'"></span>
         </div>
-        
         <div class="templates-grid">
-          <!-- Blank Canvas -->
-          <div class="template-card" onclick="useTemplate('blank')">
-            <div class="template-icon">✨</div>
-            <h3 class="template-title">Blank Canvas</h3>
-            <p class="template-description">Start from scratch with unlimited possibilities</p>
+          <div class="template-card" th:each="t : ${templates}"
+               th:onclick="|useTemplate('${t.templateKey}')|">
+            <div class="template-icon" th:text="${t.icon != null ? t.icon : '📄'}">📄</div>
+            <h3 class="template-title" th:text="${t.name}">Template Name</h3>
+            <p class="template-description" th:text="${t.description}">Description</p>
             <div class="template-meta">
-              <div class="template-usage">👥 ∞ uses</div>
-              <div class="template-badge badge-free">Free</div>
+              <div class="template-usage" th:text="'👥 ' + ${t.usageCount} + ' uses'">👥 0 uses</div>
+              <div class="template-badge"
+                   th:classappend="${t.plan == 'PRO'} ? ' badge-pro' : ' badge-free'"
+                   th:text="${t.plan == 'PRO'} ? 'Pro' : 'Free'">Free</div>
             </div>
             <div class="template-actions">
-              <button class="template-btn btn-primary" onclick="event.stopPropagation(); useTemplate('blank')">Use Template</button>
+              <button class="template-btn btn-primary"
+                      th:onclick="|event.stopPropagation(); useTemplate('${t.templateKey}')|">Use Template</button>
+              <button class="template-btn btn-secondary"
+                      th:onclick="|event.stopPropagation(); previewTemplate('${t.templateKey}')|">Preview</button>
             </div>
-          </div>
-
-          <!-- Mind Map -->
-          <div class="template-card" onclick="useTemplate('mindmap')">
-            <div class="template-icon">🧠</div>
-            <h3 class="template-title">Mind Map</h3>
-            <p class="template-description">Organize ideas and concepts in a visual hierarchy. Perfect for brainstorming and knowledge mapping.</p>
-            <div class="template-meta">
-              <div class="template-usage">👥 12.5k uses</div>
-              <div class="template-badge badge-free">Free</div>
-            </div>
-            <div class="template-actions">
-              <button class="template-btn btn-primary" onclick="event.stopPropagation(); useTemplate('mindmap')">Use Template</button>
-              <button class="template-btn btn-secondary" onclick="event.stopPropagation(); previewTemplate('mindmap')">Preview</button>
-            </div>
-          </div>
-
-          <!-- Kanban Board -->
-          <div class="template-card" onclick="useTemplate('kanban')">
-            <div class="template-icon">📋</div>
-            <h3 class="template-title">Kanban Board</h3>
-            <p class="template-description">Visualize work progress with customizable columns for task management and workflow optimization.</p>
-            <div class="template-meta">
-              <div class="template-usage">👥 8.2k uses</div>
-              <div class="template-badge badge-free">Free</div>
-            </div>
-            <div class="template-actions">
-              <button class="template-btn btn-primary" onclick="event.stopPropagation(); useTemplate('kanban')">Use Template</button>
-              <button class="template-btn btn-secondary" onclick="event.stopPropagation(); previewTemplate('kanban')">Preview</button>
-            </div>
-          </div>
-
-          <!-- Brainstorming Session -->
-          <div class="template-card" onclick="useTemplate('brainstorm')">
-            <div class="template-icon">💡</div>
-            <h3 class="template-title">Brainstorming Session</h3>
-            <p class="template-description">Structured framework for creative ideation with sticky notes and voting areas.</p>
-            <div class="template-meta">
-              <div class="template-usage">👥 15.1k uses</div>
-              <div class="template-badge badge-new">New</div>
-            </div>
-            <div class="template-actions">
-              <button class="template-btn btn-primary" onclick="event.stopPropagation(); useTemplate('brainstorm')">Use Template</button>
-              <button class="template-btn btn-secondary" onclick="event.stopPropagation(); previewTemplate('brainstorm')">Preview</button>
-            </div>
-          </div>
-
-          <!-- Process Flowchart -->
-          <div class="template-card" onclick="useTemplate('flowchart')">
-            <div class="template-icon">🔄</div>
-            <h3 class="template-title">Process Flowchart</h3>
-            <p class="template-description">Map out processes and workflows with decision points, actions, and flow directions.</p>
-            <div class="template-meta">
-              <div class="template-usage">👥 9.8k uses</div>
-              <div class="template-badge badge-free">Free</div>
-            </div>
-            <div class="template-actions">
-              <button class="template-btn btn-primary" onclick="event.stopPropagation(); useTemplate('flowchart')">Use Template</button>
-              <button class="template-btn btn-secondary" onclick="event.stopPropagation(); previewTemplate('flowchart')">Preview</button>
-            </div>
-          </div>
-
-          <!-- SWOT Analysis -->
-          <div class="template-card" onclick="useTemplate('swot')">
-            <div class="template-icon">⚖️</div>
-            <h3 class="template-title">SWOT Analysis</h3>
-            <p class="template-description">Strategic planning framework to evaluate Strengths, Weaknesses, Opportunities, and Threats.</p>
-            <div class="template-meta">
-              <div class="template-usage">👥 6.4k uses</div>
-              <div class="template-badge badge-pro">Pro</div>
-            </div>
-            <div class="template-actions">
-              <button class="template-btn btn-primary" onclick="event.stopPropagation(); useTemplate('swot')">Use Template</button>
-              <button class="template-btn btn-secondary" onclick="event.stopPropagation(); previewTemplate('swot')">Preview</button>
-            </div>
-          </div>
-
-          <!-- UI Wireframe -->
-          <div class="template-card" onclick="useTemplate('wireframe')">
-            <div class="template-icon">📱</div>
-            <h3 class="template-title">UI Wireframe</h3>
-            <p class="template-description">Design app and web layouts with pre-built UI components and responsive grids.</p>
-            <div class="template-meta">
-              <div class="template-usage">👥 11.2k uses</div>
-              <div class="template-badge badge-free">Free</div>
-            </div>
-            <div class="template-actions">
-              <button class="template-btn btn-primary" onclick="event.stopPropagation(); useTemplate('wireframe')">Use Template</button>
-              <button class="template-btn btn-secondary" onclick="event.stopPropagation(); previewTemplate('wireframe')">Preview</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Business & Strategy -->
-      <div class="template-section">
-        <div class="section-header">
-          <h2 class="section-title">Business &amp; Strategy</h2>
-          <span class="section-count">3 templates</span>
-        </div>
-        
-        <div class="templates-grid">
-          <!-- Business Model Canvas -->
-          <div class="template-card" onclick="useTemplate('business-model')">
-            <div class="template-icon">💼</div>
-            <h3 class="template-title">Business Model Canvas</h3>
-            <p class="template-description">Comprehensive framework for developing and analyzing business models.</p>
-            <div class="template-meta">
-              <div class="template-usage">👥 7.3k uses</div>
-              <div class="template-badge badge-pro">Pro</div>
-            </div>
-            <div class="template-actions">
-              <button class="template-btn btn-primary" onclick="event.stopPropagation(); useTemplate('business-model')">Use Template</button>
-              <button class="template-btn btn-secondary" onclick="event.stopPropagation(); previewTemplate('business-model')">Preview</button>
-            </div>
-          </div>
-
-          <!-- User Journey Map -->
-          <div class="template-card" onclick="useTemplate('user-journey')">
-            <div class="template-icon">🗺️</div>
-            <h3 class="template-title">User Journey Map</h3>
-            <p class="template-description">Visualize customer touchpoints and experiences across all interaction stages.</p>
-            <div class="template-meta">
-              <div class="template-usage">👥 5.9k uses</div>
-              <div class="template-badge badge-free">Free</div>
-            </div>
-            <div class="template-actions">
-              <button class="template-btn btn-primary" onclick="event.stopPropagation(); useTemplate('user-journey')">Use Template</button>
-              <button class="template-btn btn-secondary" onclick="event.stopPropagation(); previewTemplate('user-journey')">Preview</button>
-            </div>
+            <div class="featured-badge" th:if="${t.featured}">Featured</div>
           </div>
         </div>
       </div>
     </main>
   </div>
 
+  <script th:src="@{/sidebar-toggle.js}"></script>
   <script>
-    // Sidebar toggle functionality
     document.addEventListener('DOMContentLoaded', function() {
-      const sidebar = document.getElementById('sidebar');
-      const toggleBtn = document.getElementById('toggleBtn');
       
-      toggleBtn.addEventListener('click', function() {
-        sidebar.classList.toggle('collapsed');
-        toggleBtn.innerHTML = sidebar.classList.contains('collapsed') ? '›' : '‹';
-      });
-
-      // Auto-collapse on mobile
-      function checkMobile() {
-        if (window.innerWidth <= 700) {
-          sidebar.classList.add('collapsed');
-          toggleBtn.innerHTML = '›';
-        } else {
-          sidebar.classList.remove('collapsed');
-          toggleBtn.innerHTML = '‹';
-        }
-      }
-
-      window.addEventListener('resize', checkMobile);
-      checkMobile();
 
       // Category filter functionality
       document.querySelectorAll('.category-filter').forEach(filter => {
@@ -891,7 +727,7 @@
 
     function useTemplate(templateId) {
       // Navigate to whiteboard with the selected template
-      window.location.href = `/mainscreen?template=${templateId}`;
+      window.location.href = '/mainscreen?template=' + encodeURIComponent(templateId);
     }
 
     function previewTemplate(templateId) {

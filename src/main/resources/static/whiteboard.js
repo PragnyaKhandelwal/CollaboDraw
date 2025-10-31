@@ -71,6 +71,40 @@ function initializeApp() {
   setTimeout(() => {
     document.getElementById('loading').classList.remove('show');
   }, 1000);
+
+  // Wire import input change handler
+  const importInput = document.getElementById('importInput');
+  if (importInput && !importInput.__wired) {
+    importInput.addEventListener('change', handleImportSelection);
+    importInput.__wired = true;
+  }
+
+  // If a pre-import payload exists (set by Home page), consume it first, else honor ?import to open picker here
+  try {
+    const pre = sessionStorage.getItem('collabodraw-pre-import');
+    const params = new URLSearchParams(window.location.search);
+    if (pre) {
+      sessionStorage.removeItem('collabodraw-pre-import');
+      const payload = JSON.parse(pre);
+      if (payload && payload.kind === 'json' && typeof payload.data === 'string') {
+        try {
+          importBoardFromJSON(payload.data);
+        } catch(_) {}
+        const base = inferNameFromFile(payload.name || 'Imported Board');
+        ensureServerBoardAndSave(base);
+      } else if (payload && payload.kind === 'image' && typeof payload.data === 'string') {
+        addImageToCanvas(payload.data, payload.name);
+        const base = inferNameFromFile(payload.name || 'Imported Image');
+        ensureServerBoardAndSave(base);
+      } else if (params.has('import')) {
+        // Fallback to in-app picker if payload invalid
+        setTimeout(() => importFile(), 300);
+      }
+    } else if (params.has('import')) {
+      // Delay slightly to ensure DOM ready
+      setTimeout(() => importFile(), 300);
+    }
+  } catch(e) { /* no-op */ }
 }
 
 /**
@@ -86,12 +120,14 @@ function initializeUI() {
   // Initialize active users
   updateActiveUsers();
   
-  // Set up board name editing
+  // Set up board name editing (kept for fallback flows). If disabled, skip.
   const boardNameInput = document.getElementById('boardName');
-  boardNameInput.addEventListener('blur', function() {
-    boardData.name = this.value;
-    saveState();
-  });
+  if (boardNameInput && !boardNameInput.disabled) {
+    boardNameInput.addEventListener('blur', function() {
+      boardData.name = this.value;
+      saveState();
+    });
+  }
 }
 
 /**
@@ -119,21 +155,33 @@ function updateUserAvatars() {
  * Get current user information
  */
 function getCurrentUser() {
-  // Try to get from localStorage or create default
+  // Prefer server-provided identity for consistent initials across pages
+  const injected = (window.CD && (window.CD.currentUserName || window.CD.currentUserInitials))
+    ? {
+        name: window.CD.currentUserName || 'User',
+        initials: (window.CD.currentUserInitials || (window.CD.currentUserName ? window.CD.currentUserName.substring(0,2) : 'U')).toUpperCase(),
+      }
+    : null;
+
+  // Fallback to hidden DOM dataset if available
+  const dataEl = document.getElementById('currentUserData');
+  const ds = dataEl ? dataEl.dataset : null;
+  const injected2 = (!injected && ds && (ds.name || ds.initials))
+    ? { name: ds.name || 'User', initials: (ds.initials || (ds.name ? ds.name.substring(0,2) : 'U')).toUpperCase() }
+    : null;
+
+  // Load or initialize local profile
   let user = JSON.parse(localStorage.getItem('collabodraw-user') || '{}');
-  
   if (!user.id) {
-    // Create default user
-    user = {
-      id: generateId(),
-      name: 'User',
-      initials: 'U',
-      color: '#3b82f6'
-    };
-    localStorage.setItem('collabodraw-user', JSON.stringify(user));
+    user = { id: generateId(), name: 'User', initials: 'U', color: '#3b82f6' };
   }
-  
-  return user;
+
+  // Apply injected identity if present and persist for consistency
+  const chosen = injected || injected2 || user;
+  // Normalize initials
+  chosen.initials = (chosen.initials || (chosen.name ? chosen.name.substring(0,2) : 'U')).toUpperCase();
+  localStorage.setItem('collabodraw-user', JSON.stringify({ ...user, ...chosen }));
+  return { ...user, ...chosen };
 }
 
 /**
@@ -245,6 +293,185 @@ function selectTool(tool) {
     colorPicker.classList.add('show');
   } else {
     colorPicker.classList.remove('show');
+  }
+}
+
+/**
+ * Trigger file import dialog
+ */
+function importFile() {
+  const input = document.getElementById('importInput');
+  if (!input) return showNotification('Import not available');
+  input.value = '';
+  input.click();
+}
+
+/**
+ * Handle selected file(s) from hidden input
+ */
+function handleImportSelection(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  const type = file.type || '';
+  if (type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      addImageToCanvas(reader.result, file.name);
+      await ensureServerBoardAndSave(inferNameFromFile(file.name));
+    };
+    reader.readAsDataURL(file);
+  } else if (type === 'application/json' || file.name.toLowerCase().endsWith('.json')) {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      importBoardFromJSON(reader.result);
+      // Try to read name from JSON, else use filename
+      let name = inferNameFromFile(file.name);
+      try {
+        const parsed = JSON.parse(reader.result);
+        if (parsed && parsed.name) name = parsed.name;
+        if (parsed && parsed.board && parsed.board.name) name = parsed.board.name;
+      } catch {}
+      await ensureServerBoardAndSave(name);
+    };
+    reader.readAsText(file);
+  } else if (file.name.toLowerCase().endsWith('.svg')) {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      addImageToCanvas(reader.result, file.name);
+      await ensureServerBoardAndSave(inferNameFromFile(file.name));
+    };
+    reader.readAsDataURL(file);
+  } else {
+    showNotification('Unsupported file. Please import an image or JSON.');
+  }
+}
+
+async function ensureServerBoardAndSave(name) {
+  try {
+    if (!window.CD) window.CD = {};
+    if (!window.CD.boardId) {
+      const res = await fetch('/api/boards/new', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name || document.getElementById('boardName').value || 'Untitled Board' })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.id) {
+          window.CD.boardId = data.id;
+          // Reflect final name and lock editing
+          try {
+            const bn = document.getElementById('boardName');
+            if (bn) {
+              bn.value = (name || data.name || bn.value || 'Untitled Board');
+              bn.disabled = true;
+            }
+          } catch(_) {}
+          // update URL to include board for refresh continuity
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.set('board', data.id);
+            window.history.replaceState({}, '', url);
+          } catch {}
+        }
+      }
+    }
+    // Save snapshot now that we (likely) have a board id
+    saveBoardState();
+  } catch (e) {
+    console.warn('Failed to ensure server board:', e);
+  }
+}
+
+function inferNameFromFile(name) {
+  if (!name) return 'Imported Board';
+  return name.replace(/\.[^.]+$/, '').slice(0, 100) || 'Imported Board';
+}
+
+/**
+ * Add an imported image onto the canvas area as a movable element
+ */
+function addImageToCanvas(dataUrl, name) {
+  const container = document.getElementById('canvasElements');
+  if (!container) return;
+
+  const id = generateId();
+  const wrapper = document.createElement('div');
+  wrapper.className = 'canvas-element image-element';
+  wrapper.dataset.id = id;
+  // place near center-ish
+  const rect = document.getElementById('mainCanvas').getBoundingClientRect();
+  wrapper.style.left = Math.max(40, Math.floor(rect.width / 2 - 200)) + 'px';
+  wrapper.style.top = Math.max(40, Math.floor(rect.height / 2 - 150)) + 'px';
+
+  const img = document.createElement('img');
+  img.src = dataUrl;
+  img.alt = name || 'imported-image';
+  img.style.maxWidth = '400px';
+  img.style.maxHeight = '300px';
+  img.style.display = 'block';
+  img.style.borderRadius = '8px';
+  img.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+
+  // Add resize handles for parity with other elements
+  wrapper.appendChild(img);
+  ['nw','ne','sw','se'].forEach(pos => {
+    const h = document.createElement('div');
+    h.className = 'resize-handle ' + pos;
+    wrapper.appendChild(h);
+  });
+
+  container.appendChild(wrapper);
+  setupElementInteraction(wrapper);
+  saveState();
+  showNotification('Image imported');
+}
+
+/**
+ * Import a board from a JSON string
+ */
+function importBoardFromJSON(jsonText) {
+  try {
+    const parsed = JSON.parse(jsonText);
+    // Two supported shapes: our boardData object or {elements: html}
+    if (parsed && parsed.elements) {
+      const container = document.getElementById('canvasElements');
+      container.innerHTML = parsed.elements;
+      container.querySelectorAll('.canvas-element').forEach(setupElementInteraction);
+      if (parsed.name) {
+        const nameInput = document.getElementById('boardName');
+        if (nameInput) nameInput.value = parsed.name;
+      }
+      saveState();
+      showNotification('Board imported');
+      return;
+    }
+    if (parsed && parsed.board && parsed.board.elements) {
+      const container = document.getElementById('canvasElements');
+      container.innerHTML = parsed.board.elements;
+      container.querySelectorAll('.canvas-element').forEach(setupElementInteraction);
+      saveState();
+      showNotification('Board imported');
+      return;
+    }
+    // Fallback: if looks like our saved boardData
+    if (parsed && (parsed.settings || parsed.name)) {
+      boardData = parsed;
+      document.getElementById('canvasElements').innerHTML = boardData.elements || '';
+      document.querySelectorAll('.canvas-element').forEach(setupElementInteraction);
+      if (boardData.name) {
+        const nameInput = document.getElementById('boardName');
+        if (nameInput) nameInput.value = boardData.name;
+      }
+      showNotification('Board imported');
+      saveState();
+    } else {
+      showNotification('Unrecognized JSON format');
+    }
+  } catch (e) {
+    console.error('Failed to import JSON:', e);
+    showNotification('Failed to import JSON');
   }
 }
 
@@ -1011,6 +1238,22 @@ function saveBoardState() {
   };
   
   localStorage.setItem('collabodraw-board', JSON.stringify(boardData));
+  
+  // Persist to server if a board is loaded via controller (window.CD is set in mainscreen)
+  try {
+    if (window.CD && window.CD.boardId) {
+      const id = window.CD.boardId;
+      fetch(`/api/boards/${id}/content`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          elements: boardData.elements,
+          settings: boardData.settings,
+          name: boardData.name
+        })
+      }).catch(() => {/* ignore background errors */});
+    }
+  } catch (e) { /* ignore */ }
   
   // Add to version history
   addToVersionHistory();

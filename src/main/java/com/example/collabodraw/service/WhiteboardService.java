@@ -92,6 +92,15 @@ public class WhiteboardService {
         return elementRepository.countByBoardId(boardId);
     }
 
+    public String getBoardSnapshot(Long boardId) {
+        return elementRepository.findLatestSnapshotData(boardId);
+    }
+
+    public void saveBoardSnapshot(Long boardId, Long userId, String dataJson) {
+        elementRepository.replaceSnapshot(boardId, userId, dataJson);
+        boardRepository.updateLastModified(boardId);
+    }
+
     @Transactional
     public Board duplicateBoard(Long boardId, Long userId) {
         Board originalBoard = boardRepository.findById(boardId);

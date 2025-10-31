@@ -266,7 +266,8 @@ function copyToClipboard(text) {
  * Show import dialog
  */
 function showImportDialog() {
-    alert('Import functionality coming soon!');
+    // Open mainscreen with import parameter; mainscreen will prompt for file and handle saving
+    window.location.href = '/mainscreen?import=1';
 }
 
 /**
@@ -326,6 +327,7 @@ async function loadBoardData(boardId) {
                 const boardNameInput = document.getElementById('boardName');
                 if (boardNameInput) {
                     boardNameInput.value = receivedBoardData.name;
+                    boardNameInput.disabled = true; // lock editing for server-backed boards
                 }
             }
             
@@ -333,6 +335,28 @@ async function loadBoardData(boardId) {
             if (receivedBoardData.settings) {
                 applyBoardSettings(receivedBoardData.settings);
             }
+
+            // Load persisted content snapshot if available
+            try {
+                const contentRes = await fetch(`/api/boards/${boardId}/content`, { headers: { 'Content-Type': 'application/json' } });
+                if (contentRes.ok) {
+                    const content = await contentRes.json();
+                    if (content && typeof content.elements !== 'undefined') {
+                        const container = document.getElementById('canvasElements');
+                        if (container) {
+                            container.innerHTML = content.elements || '';
+                            document.querySelectorAll('.canvas-element').forEach(element => {
+                                if (typeof setupElementInteraction === 'function') {
+                                    setupElementInteraction(element);
+                                }
+                            });
+                        }
+                        if (content.settings) {
+                            applyBoardSettings(content.settings);
+                        }
+                    }
+                }
+            } catch (_) { /* ignore missing snapshot */ }
             
         } else {
             console.error('Failed to load board:', response.statusText);
@@ -387,6 +411,7 @@ async function loadSharedBoardData(boardId) {
                 const boardNameInput = document.getElementById('boardName');
                 if (boardNameInput) {
                     boardNameInput.value = receivedBoardData.name + ' (Shared)';
+                    boardNameInput.disabled = true;
                 }
             }
             
@@ -399,6 +424,26 @@ async function loadSharedBoardData(boardId) {
             if (receivedBoardData.readOnly) {
                 setReadOnlyMode(true);
             }
+
+            // Load read-only content snapshot
+            try {
+                const contentRes = await fetch(`/api/boards/${boardId}/content`, { headers: { 'Content-Type': 'application/json' } });
+                if (contentRes.ok) {
+                    const content = await contentRes.json();
+                    if (content && typeof content.elements !== 'undefined') {
+                        const container = document.getElementById('canvasElements');
+                        if (container) {
+                            container.innerHTML = content.elements || '';
+                            document.querySelectorAll('.canvas-element').forEach(element => {
+                                if (typeof setupElementInteraction === 'function') {
+                                    setupElementInteraction(element);
+                                }
+                            });
+                        }
+                        setReadOnlyMode(true);
+                    }
+                }
+            } catch (_) { /* ignore */ }
             
         } else {
             console.error('Failed to load shared board:', response.statusText);
@@ -432,7 +477,15 @@ async function loadTemplateData(templateId) {
             // Create new board data based on template
             if (typeof boardData !== 'undefined') {
                 boardData.id = generateId ? generateId() : 'board_' + Date.now();
-                boardData.name = templateData.title ? 'New Board from ' + templateData.title : 'New Board';
+                // Prefer name from URL parameter; for blank fallback to 'Untitled Board'
+                let preferredName = null;
+                try { const p = new URLSearchParams(window.location.search); preferredName = p.get('name'); } catch(_) {}
+                const finalName = (preferredName && preferredName.trim())
+                  ? preferredName.trim()
+                  : ((String(templateId).toLowerCase() === 'blank')
+                      ? 'Untitled Board'
+                      : (templateData.title ? ('New Board from ' + templateData.title) : 'New Board'));
+                boardData.name = finalName;
                 boardData.elements = templateData.elements || '';
                 boardData.settings = templateData.settings || {};
                 boardData.isTemplate = false;
@@ -454,14 +507,35 @@ async function loadTemplateData(templateId) {
             
             // Update board name
             const boardNameInput = document.getElementById('boardName');
-            if (boardNameInput && templateData.title) {
-                boardNameInput.value = 'New Board from ' + templateData.title;
+            if (boardNameInput) {
+                let preferredName = null;
+                try { const p = new URLSearchParams(window.location.search); preferredName = p.get('name'); } catch(_) {}
+                const finalName = (preferredName && preferredName.trim())
+                  ? preferredName.trim()
+                  : ((String(templateId).toLowerCase() === 'blank')
+                      ? 'Untitled Board'
+                      : (templateData.title ? ('New Board from ' + templateData.title) : 'New Board'));
+                boardNameInput.value = finalName;
             }
             
             // Apply template settings if available
             if (templateData.settings) {
                 applyBoardSettings(templateData.settings);
             }
+
+            // If this navigation came from the New Board dialog (has name param),
+            // create a server board with that name and immediately persist snapshot
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const desiredName = params.get('name');
+                if (desiredName) {
+                    if (typeof ensureServerBoardAndSave === 'function') {
+                        await ensureServerBoardAndSave(desiredName);
+                        const bn = document.getElementById('boardName');
+                        if (bn) bn.disabled = true; // lock title editing
+                    }
+                }
+            } catch(_) { /* ignore */ }
             
         } else {
             console.error('Failed to load template:', response.statusText);

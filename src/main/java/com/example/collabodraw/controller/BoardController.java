@@ -45,15 +45,29 @@ public class BoardController {
             if (user != null) {
                 model.addAttribute("currentUser", user);
             }
-            
-            // TODO: Load actual board data from database using whiteboardService
-            // For now, pass board ID to mainscreen
-            model.addAttribute("boardId", boardId);
-            model.addAttribute("boardName", "Board " + boardId);
-            
+
+            // Load actual board data and check access
+            Long numericBoardId = resolveBoardId(boardId);
+            var board = whiteboardService.getWhiteboardById(numericBoardId);
+            if (board == null) {
+                return "redirect:/home?error=" + encodeMessage("Board not found");
+            }
+
+            String role = whiteboardService.getUserRoleInWhiteboard(
+                    user != null ? user.getUserId() : null,
+                    board.getBoardId());
+            boolean isOwner = board.getOwnerId() != null && user != null && board.getOwnerId().equals(user.getUserId());
+            boolean hasAccess = isOwner || (role != null);
+            if (!hasAccess) {
+                return "redirect:/home?error=" + encodeMessage("You do not have access to this board");
+            }
+
+            model.addAttribute("boardId", formatBoardId(board.getBoardId()));
+            model.addAttribute("boardName", board.getBoardName());
+            model.addAttribute("isShared", !isOwner);
+
             return "mainscreen";
         } catch (Exception e) {
-            // TODO: Add flash message for error handling
             return "redirect:/home?error=Failed to load board: " + e.getMessage();
         }
     }
@@ -73,13 +87,26 @@ public class BoardController {
             if (user != null) {
                 model.addAttribute("currentUser", user);
             }
-            
-            // TODO: Load actual shared board data from database using whiteboardService
-            // For now, pass shared board ID to mainscreen
-            model.addAttribute("sharedBoardId", boardId);
-            model.addAttribute("boardName", "Shared Board " + boardId);
-            model.addAttribute("isShared", true);
-            
+
+            Long numericBoardId = resolveBoardId(boardId);
+            var board = whiteboardService.getWhiteboardById(numericBoardId);
+            if (board == null) {
+                return "redirect:/shared?error=" + encodeMessage("Shared board not found");
+            }
+
+            String role = whiteboardService.getUserRoleInWhiteboard(
+                    user != null ? user.getUserId() : null,
+                    board.getBoardId());
+            boolean isOwner = board.getOwnerId() != null && user != null && board.getOwnerId().equals(user.getUserId());
+            boolean hasAccess = isOwner || (role != null);
+            if (!hasAccess) {
+                return "redirect:/shared?error=" + encodeMessage("You do not have access to this shared board");
+            }
+
+            model.addAttribute("sharedBoardId", formatBoardId(board.getBoardId()));
+            model.addAttribute("boardName", board.getBoardName());
+            model.addAttribute("isShared", !isOwner);
+
             return "mainscreen";
         } catch (Exception e) {
             return "redirect:/shared?error=Failed to load shared board: " + e.getMessage();
@@ -101,12 +128,21 @@ public class BoardController {
             if (user != null) {
                 model.addAttribute("currentUser", user);
             }
-            
-            // TODO: Implement board sharing logic
-            model.addAttribute("boardId", boardId);
-            model.addAttribute("shareUrl", "http://localhost:8080/boards/shared/open/" + boardId);
-            model.addAttribute("successMessage", "Board shared successfully! Share the link below:");
-            
+
+            Long numericBoardId = resolveBoardId(boardId);
+            var board = whiteboardService.getWhiteboardById(numericBoardId);
+            if (board == null) {
+                return "redirect:/my-content?error=" + encodeMessage("Board not found");
+            }
+            boolean isOwner = user != null && board.getOwnerId() != null && board.getOwnerId().equals(user.getUserId());
+            if (!isOwner) {
+                return "redirect:/my-content?error=" + encodeMessage("Only the owner can generate share links");
+            }
+
+            // Basic share link that opens the shared view; access is still enforced server-side
+            model.addAttribute("boardId", formatBoardId(board.getBoardId()));
+            model.addAttribute("shareUrl", "/boards/shared/open/" + formatBoardId(board.getBoardId()));
+
             return "redirect:/my-content?success=" + encodeMessage("Board shared successfully");
         } catch (Exception e) {
             return "redirect:/my-content?error=" + encodeMessage("Failed to share board: " + e.getMessage());

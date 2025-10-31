@@ -722,28 +722,15 @@
 </head>
 <body>
   <div class="sidebar" id="sidebar" role="navigation" aria-label="Main sidebar navigation">
-<<<<<<< HEAD
-        <div class="logo" id="sidebar-logo" tabindex="0" aria-label="CollaboDraw logo" onclick="window.location.href='/home'">
-=======
-    <div class="logo" id="sidebar-logo" tabindex="0" aria-label="CollaboDraw logo" onclick="window.location.href='/home'">
->>>>>>> c52324823d0a0c2d7a2c828b7bfaa7a6ebe4d282
-      <img th:src="@{/images/Preview.png}" alt="CollaboDraw logo" />
+        <div class="logo" id="sidebar-logo" tabindex="0" aria-label="CollaboDraw logo" onclick="window.location.href='/home'">      <img th:src="@{/images/Preview.png}" alt="CollaboDraw logo" />
       <span class="logo-text">CollaboDraw</span>
     </div>
     <nav class="sidebar-nav" role="menu" aria-label="Main menu">
       <ul>
-<<<<<<< HEAD
         <li><a href="/home"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 4.354l-7 5.688V20h4v-5h6v5h4V10.042z"/></svg></span><span class="nav-text">Home</span></a></li>
         <li><a href="/mainscreen"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg></span><span class="nav-text">Create</span></a></li>
         <li><a href="/my-content"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM13 9V3.5L18.5 9z"/></svg></span><span class="nav-text">My Content</span></a></li>
-        <li><a href="/shared"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M16,11A4,4 0 1,1 12,7A4,4 0 0,1 16,11M6,12A2,2 0 1,1 4,10A2,2 0 0,1 6,12M6,14A6,6 0 0,1 12,16C14.67,16 16,15.33 16,14V13C16,11.67 14.67,11 12,11A6,6 0 0,1 6,14Z"/></svg></span><span class="nav-text">Shared with Me</span></a></li>
-=======
-        <li><a th:href="@{/home}"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 4.354l-7 5.688V20h4v-5h6v5h4V10.042z"/></svg></span><span class="nav-text">Home</span></a></li>
-        <li><a th:href="@{/mainscreen}"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg></span><span class="nav-text">Create</span></a></li>
-        <li><a th:href="@{/my-content}"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM13 9V3.5L18.5 9z"/></svg></span><span class="nav-text">My Content</span></a></li>
-        <li><a th:href="@{/shared}"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M16,11A4,4 0 1,1 12,7A4,4 0 0,1 16,11M6,12A2,2 0 1,1 4,10A2,2 0 0,1 6,12M6,14A6,6 0 0,1 12,16C14.67,16 16,15.33 16,14V13C16,11.67 14.67,11 12,11A6,6 0 0,1 6,14Z"/></svg></span><span class="nav-text">Shared with Me</span></a></li>
->>>>>>> c52324823d0a0c2d7a2c828b7bfaa7a6ebe4d282
-        <li><a href="#" class="active"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" /></svg></span><span class="nav-text">Settings</span></a></li>
+        <li><a href="/shared"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M16,11A4,4 0 1,1 12,7A4,4 0 0,1 16,11M6,12A2,2 0 1,1 4,10A2,2 0 0,1 6,12M6,14A6,6 0 0,1 12,16C14.67,16 16,15.33 16,14V13C16,11.67 14.67,11 12,11A6,6 0 0,1 6,14Z"/></svg></span><span class="nav-text">Shared with Me</span></a></li>        <li><a href="#" class="active"><span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" /></svg></span><span class="nav-text">Settings</span></a></li>
       </ul>
     </nav>
     <button class="sidebar-toggle" id="toggleBtn" aria-label="Toggle sidebar">‹</button>
@@ -756,7 +743,14 @@
         <h1 class="page-title">Settings</h1>
       </div>
       <div class="header-right">
-        <button class="notification-btn">🔔</button>
+        <button class="notification-btn" id="settingsNotifBtn">🔔</button>
+        <div id="settingsNotifDropdown" style="display:none; position:absolute; top:70px; right:32px; background:#ffffff; color:#111827; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); width:280px; z-index:50;">
+          <div style="padding:12px 16px; font-weight:600; border-bottom:1px solid #f3f4f6;">Notifications</div>
+          <div style="padding:12px 16px; font-size:14px;">
+            <div style="margin-bottom:8px;">No new notifications</div>
+            <div style="color:#6b7280;">You're all caught up.</div>
+          </div>
+        </div>
         <div class="avatar" th:text="${currentUser?.username?.substring(0,2)?.toUpperCase() ?: 'JD'}">JD</div>
       </div>
     </header>
@@ -765,12 +759,7 @@
     <main class="settings-content">
       <!-- Breadcrumb -->
       <nav class="breadcrumb">
-<<<<<<< HEAD
-        <a href="/home">Home</a>
-=======
-        <a th:href="@{/home}">Home</a>
->>>>>>> c52324823d0a0c2d7a2c828b7bfaa7a6ebe4d282
-        <span>›</span>
+        <a href="/home">Home</a>        <span>›</span>
         <span>Settings</span>
       </nav>
 
@@ -782,9 +771,7 @@
             <li><a href="#account"><span class="settings-nav-icon">🔐</span>Account Security</a></li>
             <li><a href="#notifications"><span class="settings-nav-icon">🔔</span>Notifications</a></li>
             <li><a href="#team"><span class="settings-nav-icon">👥</span>Team Management</a></li>
-            <li><a href="#billing"><span class="settings-nav-icon">💳</span>Billing</a></li>
-            <li><a href="#privacy"><span class="settings-nav-icon">🔒</span>Privacy</a></li>
-            <li><a href="#advanced"><span class="settings-nav-icon">⚙️</span>Advanced</a></li>
+            <li><a href="#collab"><span class="settings-nav-icon">🧑‍🤝‍🧑</span>Collaboration</a></li>
           </ul>
         </div>
 
@@ -885,14 +872,92 @@
             </div>
           </section>
 
+          <!-- Notifications Section -->
+          <section class="settings-section" id="notifications" style="display: none;">
+            <h2 class="section-title">Notifications</h2>
+            <p class="section-description">Control what updates you receive and review recent notifications</p>
+
+            <form th:action="@{/settings/preferences}" method="post" th:object="${userSettings}">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Email Notifications</label>
+                  <label class="toggle-switch">
+                    <input type="checkbox" th:field="*{emailNotifications}">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Push Notifications</label>
+                  <label class="toggle-switch">
+                    <input type="checkbox" th:field="*{pushNotifications}">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Board Updates</label>
+                  <label class="toggle-switch">
+                    <input type="checkbox" th:field="*{boardUpdates}">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Mentions</label>
+                  <label class="toggle-switch">
+                    <input type="checkbox" th:field="*{mentions}">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Marketing Emails</label>
+                <label class="toggle-switch">
+                  <input type="checkbox" th:field="*{marketingEmails}">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <button type="submit" class="btn btn-primary">Save notification preferences</button>
+            </form>
+
+            <div style="margin-top:24px">
+              <h3 style="margin:0 0 8px">Recent</h3>
+              <div th:if="${notifications != null and !#lists.isEmpty(notifications)}">
+                <div class="security-item" th:each="n : ${notifications}">
+                  <div class="security-info">
+                    <h3 th:text="${n.title}">Title</h3>
+                    <p th:text="${n.message}">Message</p>
+                  </div>
+                  <div class="btn-group">
+                    <a class="btn btn-secondary btn-small" th:if="${n.linkUrl}" th:href="${n.linkUrl}">Open</a>
+                    <form th:action="@{'/settings/notifications/' + ${n.id} + '/read'}" method="post">
+                      <button class="btn btn-primary btn-small" th:text="${n.read} ? 'Read' : 'Mark as read'" th:disabled="${n.read}"></button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+              <div th:if="${notifications == null or #lists.isEmpty(notifications)}" class="alert">No notifications yet.</div>
+            </div>
+          </section>
+
           <!-- Team Management Section -->
           <section class="settings-section" id="team" style="display: none;">
             <h2 class="section-title">Team Management</h2>
             <p class="section-description">Manage team members and collaboration settings</p>
             
-            <div class="btn-group" style="margin-bottom: 24px;">
-              <button class="btn btn-primary">Invite Team Member</button>
-              <button class="btn btn-secondary">Import from CSV</button>
+            <div class="btn-group" style="margin-bottom: 24px; align-items:center; gap:12px; flex-wrap:wrap;">
+              <form th:action="@{/settings/team/invite}" method="post" style="display:flex; gap:8px; align-items:center;">
+                <input class="form-input" type="email" name="email" placeholder="member@email.com" style="width:240px" />
+                <span style="color:#6b7280;">or</span>
+                <input class="form-input" type="text" name="username" placeholder="username" style="width:180px" />
+                <select class="form-input" name="role" style="width:140px">
+                  <option value="member">Member</option>
+                  <option value="admin">Admin</option>
+                  <option value="viewer">Viewer</option>
+                </select>
+                <button class="btn btn-primary" type="submit">Invite</button>
+              </form>
+              <button class="btn btn-secondary" type="button" onclick="alert('CSV import not implemented yet')">Import from CSV</button>
             </div>
 
             <div class="team-members" th:if="${teamMembers != null and not #lists.isEmpty(teamMembers)}">
@@ -906,11 +971,46 @@
                 </div>
                 <div class="member-role" th:text="${member.role}">Admin</div>
                 <div class="member-actions">
-                  <button class="btn btn-secondary btn-small">Edit</button>
-                  <button class="btn btn-danger btn-small">Remove</button>
+                  <form th:action="@{'/settings/team/' + ${member.userId} + '/remove'}" method="post" onsubmit="return confirm('Remove this member?')">
+                    <button class="btn btn-danger btn-small" type="submit">Remove</button>
+                  </form>
                 </div>
               </div>
             </div>
+          <!-- Collaboration Section -->
+          <section class="settings-section" id="collab" style="display: none;">
+            <h2 class="section-title">Collaboration</h2>
+            <p class="section-description">Join a whiteboard session (room) to collaborate in real-time.</p>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Room / Board ID</label>
+                <input type="number" class="form-input" id="collabBoardId" placeholder="Enter Board ID e.g. 1">
+              </div>
+            </div>
+
+            <div class="btn-group" style="margin-bottom: 16px;">
+              <button class="btn btn-primary" type="button" id="btnJoin">Join Session</button>
+              <button class="btn btn-secondary" type="button" id="btnLeave">Leave Session</button>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Participants (Active)</label>
+              <div id="participants" style="border:1px solid var(--border); border-radius:8px; padding:12px; min-height:44px;">No participants yet.</div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Cursor X</label>
+                <input type="number" class="form-input" id="cursorX" placeholder="x">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Cursor Y</label>
+                <input type="number" class="form-input" id="cursorY" placeholder="y">
+              </div>
+            </div>
+            <button class="btn btn-secondary" type="button" id="btnCursor">Update Cursor</button>
+          </section>
 
             <!-- Default Team Members (fallback when no data) -->
             <div class="team-members" th:if="${teamMembers == null or #lists.isEmpty(teamMembers)}">
@@ -965,11 +1065,16 @@
     </main>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+  <script src="/static/js/collab-socket.js"></script>
   <script>
     // Sidebar toggle functionality
     document.addEventListener('DOMContentLoaded', function() {
       const sidebar = document.getElementById('sidebar');
       const toggleBtn = document.getElementById('toggleBtn');
+      const sBtn = document.getElementById('settingsNotifBtn');
+      const sDd = document.getElementById('settingsNotifDropdown');
       
       toggleBtn.addEventListener('click', function() {
         sidebar.classList.toggle('collapsed');
@@ -989,6 +1094,17 @@
 
       window.addEventListener('resize', checkMobile);
       checkMobile();
+
+      // Notifications dropdown
+      if(sBtn && sDd){
+        sBtn.addEventListener('click', function(e){
+          e.stopPropagation();
+          sDd.style.display = sDd.style.display === 'none' ? 'block' : 'none';
+        });
+        document.addEventListener('click', function(){
+          sDd.style.display = 'none';
+        });
+      }
 
       // Settings navigation
       document.querySelectorAll('.settings-nav a').forEach(link => {
@@ -1012,30 +1128,10 @@
         });
       });
 
-      // Form submission handlers
-      document.querySelectorAll('form').forEach(form => {
+      // Optional: only intercept forms explicitly marked as data-local
+      document.querySelectorAll('form[data-local="true"]').forEach(form => {
         form.addEventListener('submit', function(e) {
           e.preventDefault();
-          
-          // Simple form validation
-          const inputs = this.querySelectorAll('input[required]');
-          let isValid = true;
-          
-          inputs.forEach(input => {
-            if (!input.value.trim()) {
-              input.style.borderColor = 'var(--red)';
-              isValid = false;
-            } else {
-              input.style.borderColor = 'var(--border)';
-            }
-          });
-          
-          if (isValid) {
-            // In a real app, this would submit to the server
-            alert('Settings saved successfully!');
-          } else {
-            alert('Please fill in all required fields.');
-          }
         });
       });
 
@@ -1061,6 +1157,54 @@
           }
         };
         input.click();
+
+      // Collaboration via WebSockets (STOMP)
+      const boardInput = document.getElementById('collabBoardId');
+      const btnJoin = document.getElementById('btnJoin');
+      const btnLeave = document.getElementById('btnLeave');
+      const btnCursor = document.getElementById('btnCursor');
+      const participantsDiv = document.getElementById('participants');
+      let subs = { participants: null, cursors: null };
+
+      btnJoin?.addEventListener('click', async () => {
+        const boardId = boardInput?.value;
+        if (!boardId) { alert('Enter a board ID'); return; }
+        CollaboSocket.connect(() => {
+          // subscribe to participants and cursors
+          subs.participants = CollaboSocket.subscribeParticipants(boardId, (items) => {
+            if (!Array.isArray(items) || items.length === 0) {
+              participantsDiv.textContent = 'No participants yet.';
+            } else {
+              participantsDiv.innerHTML = items.map(p => `<span style='display:inline-block; padding:4px 8px; border:1px solid var(--border); border-radius:12px; margin:2px;'>${p.username}</span>`).join('');
+            }
+          });
+          subs.cursors = CollaboSocket.subscribeCursors(boardId, (evt) => {
+            // For demo: no canvas here; you could reflect last cursor under Participants title
+            // console.log('Cursor', evt);
+          });
+          // join and start heartbeat
+          CollaboSocket.joinBoard(boardId);
+          CollaboSocket.startHeartbeat(boardId, 15000);
+        });
+      });
+
+      btnLeave?.addEventListener('click', async () => {
+        const boardId = boardInput?.value;
+        if (!boardId) { alert('Enter a board ID'); return; }
+        CollaboSocket.leaveBoard(boardId);
+        if (subs.participants) { subs.participants.unsubscribe(); subs.participants = null; }
+        if (subs.cursors) { subs.cursors.unsubscribe(); subs.cursors = null; }
+        CollaboSocket.disconnect();
+        participantsDiv.textContent = 'No participants yet.';
+      });
+
+      btnCursor?.addEventListener('click', async () => {
+        const boardId = boardInput?.value;
+        const x = document.getElementById('cursorX')?.value || 0;
+        const y = document.getElementById('cursorY')?.value || 0;
+        if (!boardId) { alert('Enter a board ID'); return; }
+        CollaboSocket.updateCursor(boardId, x, y);
+      });
       });
     });
   </script>

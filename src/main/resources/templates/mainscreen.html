@@ -845,11 +845,7 @@
   <div class="top-header">
     <div class="header-left">
       <div class="logo" onclick="goHome()" data-tooltip="Go to Dashboard">
-<<<<<<< HEAD
-                <div class="logo-icon"><img th:src="@{/images/Preview.png}" alt="CollabDraw"></div>
-=======
-        <div class="logo-icon"><img th:src="@{/images/Preview.png}" /></div>
->>>>>>> c52324823d0a0c2d7a2c828b7bfaa7a6ebe4d282
+        <div class="logo-icon"><img th:src="@{/images/Preview.png}" alt="CollaboDraw" /></div>
         CollaboDraw
       </div>
       <input type="text" class="board-name" value="Untitled Board" id="boardName" 
@@ -863,17 +859,6 @@
     </div>
     <div class="header-right">
       <button class="header-btn" onclick="undo()" 
-<<<<<<< HEAD
-              data-tooltip="Undo last action<span class='tooltip-shortcut'>Ctrl+Z</span>"><img th:src="@{/images/undo-alt.png}"></button>
-      <button class="header-btn" onclick="redo()" 
-              data-tooltip="Redo last undone action<span class='tooltip-shortcut'>Ctrl+Y</span>"><img th:src="@{/images/redo-alt.png}"></button>
-      <button class="header-btn" onclick="shareBoard()" 
-              data-tooltip="Share board with others"><img th:src="@{/images/link-alt.png}"></button>
-      <button class="header-btn" onclick="exportBoard()" 
-              data-tooltip="Export board as PNG image"><img th:src="@{/images/file-export.png}"></button>
-      <button class="header-btn" onclick="showHelp()" 
-              data-tooltip="Keyboard shortcuts help<span class='tooltip-shortcut'>F1</span>"><img th:src="@{/images/interrogation.png}"></button>
-=======
               data-tooltip="Undo last action<span class='tooltip-shortcut'>Ctrl+Z</span>">
         <img th:src="@{/images/undo-alt.png}">
       </button>
@@ -893,12 +878,24 @@
               data-tooltip="Keyboard shortcuts help<span class='tooltip-shortcut'>F1</span>">
         <img th:src="@{/images/interrogation.png}">
       </button>
->>>>>>> c52324823d0a0c2d7a2c828b7bfaa7a6ebe4d282
+      <!-- Notifications dropdown trigger and panel -->
+      <button class="header-btn" id="notifBtn" data-tooltip="Notifications">🔔</button>
+      <div id="notifDropdown" style="display:none; position:absolute; top:56px; right:16px; background:#ffffff; color:#111827; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); width:280px; z-index:1050;">
+        <div style="padding:12px 16px; font-weight:600; border-bottom:1px solid #f3f4f6;">Notifications</div>
+        <div style="padding:12px 16px; font-size:14px;">
+          <div style="margin-bottom:8px;">No new notifications</div>
+          <div style="color:#6b7280;">You're all caught up.</div>
+        </div>
+      </div>
       <div class="user-avatars" id="userAvatars">
         <!-- Dynamic user avatars will be inserted here -->
       </div>
     </div>
   </div>
+  <!-- Inject current user identity for consistent initials across pages -->
+  <div id="currentUserData" th:if="${currentUser != null}"
+       th:attr="data-name=${currentUser.username},data-initials=${#strings.toUpperCase(currentUser.username.substring(0,2))}"
+       style="display:none"></div>
 
   <!-- Traybar Toggle Button -->
   <button class="traybar-toggle" onclick="toggleTraybar()" 
@@ -909,30 +906,6 @@
     <button class="tool-btn active" data-tool="select" 
             data-tooltip="Select and move objects<span class='tooltip-shortcut'>V</span>">◆</button>
     <button class="tool-btn" data-tool="pen" 
-<<<<<<< HEAD
-            data-tooltip="Draw freehand lines<span class='tooltip-shortcut'>P</span>"><img th:src="@{/images/pencil.png}"></button>
-    <button class="tool-btn" data-tool="highlighter" 
-            data-tooltip="Highlight with semi-transparent ink<span class='tooltip-shortcut'>H</span>"><img th:src="@{/images/pen-nib.png}"></button>
-    <div class="tool-divider"></div>
-    <button class="tool-btn" data-tool="rectangle" 
-            data-tooltip="Draw rectangles and squares<span class='tooltip-shortcut'>R</span>"><img th:src="@{/images/rectangle-horizontal (1).png}"></button>
-    <button class="tool-btn" data-tool="circle" 
-            data-tooltip="Draw circles and ellipses<span class='tooltip-shortcut'>O</span>"><img th:src="@{/images/circle (1).png}"></button>
-    <button class="tool-btn" data-tool="arrow" 
-            data-tooltip="Draw arrows and connectors<span class='tooltip-shortcut'>A</span>"><img th:src="@{/images/arrow-up-right.png}"></button>
-    <button class="tool-btn" data-tool="line" 
-            data-tooltip="Draw straight lines<span class='tooltip-shortcut'>L</span>"><img th:src="@{/images/slash (2).png}"></button>
-    <div class="tool-divider"></div>
-    <button class="tool-btn" data-tool="text" 
-            data-tooltip="Add text labels<span class='tooltip-shortcut'>T</span>"><img th:src="@{/images/text (1).png}"></button>
-    <button class="tool-btn" data-tool="sticky" 
-            data-tooltip="Add sticky notes<span class='tooltip-shortcut'>S</span>"><img th:src="@{/images/file-edit.png}"></button>
-    <div class="tool-divider"></div>
-    <button class="tool-btn" data-tool="hand" 
-            data-tooltip="Pan and navigate canvas<span class='tooltip-shortcut'>Space</span>"><img th:src="@{/images/hand-paper.png}"></button>
-    <button class="tool-btn" data-tool="zoom" 
-            data-tooltip="Zoom in on specific areas<span class='tooltip-shortcut'>Z</span>"><img th:src="@{/images/search.png}"></button>
-=======
             data-tooltip="Draw freehand lines<span class='tooltip-shortcut'>P</span>">
       <img th:src="@{/images/pencil.png}">
     </button>
@@ -975,7 +948,7 @@
             data-tooltip="Zoom in on specific areas<span class='tooltip-shortcut'>Z</span>">
       <img th:src="@{/images/search.png}">
     </button>
->>>>>>> c52324823d0a0c2d7a2c828b7bfaa7a6ebe4d282
+    
     
     <!-- Color Picker -->
     <div class="color-picker" id="colorPicker">
@@ -996,19 +969,14 @@
 
   <!-- Main Canvas -->
   <div class="main-canvas traybar-visible" id="mainCanvas">
+    <!-- Hidden file input for imports -->
+    <input type="file" id="importInput" accept="image/png,image/jpeg,image/jpg,image/svg+xml,application/json" style="display:none" />
     <!-- Drawing Canvas -->
     <canvas class="drawing-canvas" id="drawingCanvas" width="2000" height="1500"></canvas>
 
     <!-- Canvas Toolbar -->
     <div class="canvas-toolbar">
       <button class="toolbar-btn" data-action="move" 
-<<<<<<< HEAD
-              data-tooltip="Move and pan canvas<span class='tooltip-shortcut'>M</span>"><img th:src="@{/images/move.png}"></button>
-      <button class="toolbar-btn" data-action="zoom-in" 
-              data-tooltip="Zoom in<span class='tooltip-shortcut'>+</span>"><img th:src="@{/images/search.png}"></button>
-      <button class="toolbar-btn" data-action="fit" 
-              data-tooltip="Fit canvas to screen<span class='tooltip-shortcut'>0</span>"><img th:src="@{/images/apps.png}"></button>
-=======
               data-tooltip="Move and pan canvas<span class='tooltip-shortcut'>M</span>">
         <img th:src="@{/images/move.png}">
       </button>
@@ -1020,7 +988,6 @@
               data-tooltip="Fit canvas to screen<span class='tooltip-shortcut'>0</span>">
         <img th:src="@{/images/apps.png}">
       </button>
->>>>>>> c52324823d0a0c2d7a2c828b7bfaa7a6ebe4d282
     </div>
 
     <!-- Timer Widget -->
@@ -1033,13 +1000,6 @@
     <!-- Zoom Controls -->
     <div class="zoom-controls">
       <button class="zoom-btn" onclick="zoomOut()" 
-<<<<<<< HEAD
-              data-tooltip="Zoom out<span class='tooltip-shortcut'>-</span>"><img th:src="@{/images/minus-small.png}" src="/images/minus-small.png"></button>
-      <div class="zoom-level" id="zoomLevel" 
-           data-tooltip="Current zoom level">100%</div>
-      <button class="zoom-btn" onclick="zoomIn()" 
-              data-tooltip="Zoom in<span class='tooltip-shortcut'>+</span>"><img th:src="@{/images/plus.png}" src="/images/plus.png"></button>
-=======
               data-tooltip="Zoom out<span class='tooltip-shortcut'>-</span>">
         <img th:src="@{/images/minus-small.png}">
       </button>
@@ -1049,7 +1009,6 @@
               data-tooltip="Zoom in<span class='tooltip-shortcut'>+</span>">
         <img th:src="@{/images/plus.png}">
       </button>
->>>>>>> c52324823d0a0c2d7a2c828b7bfaa7a6ebe4d282
     </div>
 
     <!-- User Cursors Container -->
@@ -1193,42 +1152,56 @@
   </script>
 
   <!-- External JavaScript -->
-<<<<<<< HEAD
   <script th:src="@{/whiteboard.js}"></script>
-=======
-  <script th:src="@{/js/whiteboard.js}"></script>
->>>>>>> c52324823d0a0c2d7a2c828b7bfaa7a6ebe4d282
   
   <script th:src="@{/board-operations.js}"></script>
   
   <!-- Handle URL Parameters -->
   <script th:inline="javascript">
     document.addEventListener('DOMContentLoaded', function() {
-      // Get parameters from Thymeleaf model
+      // Get parameters from Thymeleaf model and expose a small global context
       const boardId = /*[[${boardId}]]*/ null;
       const sharedBoardId = /*[[${sharedBoardId}]]*/ null;
       const templateId = /*[[${templateId}]]*/ null;
       const previewId = /*[[${previewId}]]*/ null;
+      // Also expose current user info for JS to unify initials
+      const currentUserName = /*[[${currentUser != null ? currentUser.username : null}]]*/ null;
+      const currentUserInitials = /*[[${currentUser != null ? #strings.toUpperCase(currentUser.username.substring(0,2)) : null}]]*/ null;
+      window.CD = { boardId, sharedBoardId, templateId, previewId, currentUserName, currentUserInitials };
       
       // Handle different parameter scenarios
       if (boardId) {
-        console.log('Loading board:', boardId);
-        // Load specific board
-        openBoard(boardId);
+        console.log('Loading board (API):', boardId);
+        loadBoardData(boardId);
       } else if (sharedBoardId) {
-        console.log('Loading shared board:', sharedBoardId);
-        // Load shared board
-        openSharedBoard(sharedBoardId);
+        console.log('Loading shared board (API):', sharedBoardId);
+        loadSharedBoardData(sharedBoardId);
       } else if (templateId) {
         console.log('Using template:', templateId);
-        // Use template
-        useTemplate(templateId);
+        // Load template data directly
+        loadTemplateData(templateId);
       } else if (previewId) {
         console.log('Previewing template:', previewId);
         // Preview template (read-only mode)
-        previewTemplate(previewId);
+        loadTemplatePreview(previewId);
       }
     });
+  </script>
+  <script>
+    // Notifications dropdown toggle
+    (function(){
+      const btn = document.getElementById('notifBtn');
+      const dd = document.getElementById('notifDropdown');
+      if(btn && dd){
+        btn.addEventListener('click', function(e){
+          e.stopPropagation();
+          dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+        });
+        document.addEventListener('click', function(){
+          dd.style.display = 'none';
+        });
+      }
+    })();
   </script>
 </body>
 </html>

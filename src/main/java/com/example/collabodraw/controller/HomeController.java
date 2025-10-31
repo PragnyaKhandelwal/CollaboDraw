@@ -22,6 +22,12 @@ public class HomeController {
         this.whiteboardService = whiteboardService;
     }
 
+    // Root mapping - redirects to home page
+    @GetMapping("/")
+    public String root() {
+        return "redirect:/home";
+    }
+
     @GetMapping("/home")
     public String home(Authentication authentication, Model model) {
         if (authentication != null && authentication.isAuthenticated()) {
@@ -47,7 +53,31 @@ public class HomeController {
                 model.addAttribute("username", username);
                 model.addAttribute("whiteboards", java.util.Collections.emptyList());
             }
+        } else {
+            // Unauthenticated: still show real stats from DB when possible
+            try {
+                var allBoards = whiteboardService.getAllWhiteboards();
+                model.addAttribute("totalBoards", allBoards != null ? allBoards.size() : 0);
+            } catch (Exception e) {
+                model.addAttribute("totalBoards", 0);
+            }
+            // Recent/shared can be refined later; keep minimal non-hardcoded defaults
+            model.addAttribute("recentBoards", 0);
+            model.addAttribute("sharedBoards", 0);
+            model.addAttribute("templates", 0);
         }
         return "home";
+    }
+
+    // Dashboard redirect (alternative)
+    @GetMapping("/dashboard")
+    public String dashboard() {
+        return "redirect:/home";
+    }
+
+    // Legacy route support
+    @GetMapping("/home.html")
+    public String homeLegacy() {
+        return "redirect:/home";
     }
 }
