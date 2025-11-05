@@ -61,6 +61,9 @@ function initializeApp() {
   // Initialize user interface
   initializeUI();
   
+  // ✅ ADDED: Load board name from server
+  loadBoardName();
+  
   // Setup auto-save
   setInterval(autoSave, CONFIG.AUTO_SAVE_INTERVAL);
   
@@ -105,6 +108,43 @@ function initializeApp() {
       setTimeout(() => importFile(), 300);
     }
   } catch(e) { /* no-op */ }
+}
+async function loadBoardName() {
+  try {
+    // ✅ FIX: Handle boardId as either string or number
+    let boardId = window.CD?.boardId;
+    
+    if (!boardId) return;
+    
+    // Remove "board-" prefix if it exists, then parse as integer
+    if (typeof boardId === 'string') {
+      boardId = parseInt(boardId.replace(/^board-/, ''), 10);
+    } else if (typeof boardId === 'number') {
+      // Already a number, just use it
+      boardId = parseInt(boardId, 10);
+    }
+    
+    if (isNaN(boardId)) {
+      console.error('❌ Invalid board ID:', boardId);
+      return;
+    }
+    
+    const response = await fetch(`/api/boards/${boardId}`);
+    if (!response.ok) return;
+    
+    const data = await response.json();
+    
+    if (data && data.name) {
+      boardData.name = data.name;
+      const boardNameInput = document.getElementById('boardName');
+      if (boardNameInput) {
+        boardNameInput.value = data.name;
+      }
+      console.log(`✅ Board name loaded: ${data.name}`);
+    }
+  } catch (error) {
+    console.error('❌ Failed to load board name:', error);
+  }
 }
 
 /**
@@ -232,12 +272,23 @@ function saveDrawingToDatabase() {
   const canvas = document.getElementById('drawingCanvas');
   if (!canvas) return;
   
-  // Extract numeric ID from "board-6" → 6
-  const boardIdString = window.CD?.boardId || 'board-6';
-  const boardId = parseInt(boardIdString.replace('board-', ''), 10);  // ✅ FIXED
+  // ✅ FIX: Handle boardId as either string or number
+  let boardId = window.CD?.boardId;
+  
+  if (!boardId) {
+    console.error('❌ Board ID not available');
+    return;
+  }
+  
+  // Remove "board-" prefix if it exists
+  if (typeof boardId === 'string') {
+    boardId = parseInt(boardId.replace(/^board-/, ''), 10);
+  } else if (typeof boardId === 'number') {
+    boardId = parseInt(boardId, 10);
+  }
   
   if (isNaN(boardId)) {
-      console.error('❌ Invalid board ID:', boardIdString);
+      console.error('❌ Invalid board ID:', boardId);
       return;
   }
   
@@ -266,12 +317,23 @@ function saveDrawingToDatabase() {
 * Load drawing from database
 */
 function loadDrawingFromDatabase() {
-  // Extract numeric ID from "board-6" → 6
-  const boardIdString = window.CD?.boardId || 'board-6';
-  const boardId = parseInt(boardIdString.replace('board-', ''), 10);  // ✅ FIXED
+  // ✅ FIX: Handle boardId as either string or number
+  let boardId = window.CD?.boardId;
+  
+  if (!boardId) {
+    console.error('❌ Board ID not available');
+    return;
+  }
+  
+  // Remove "board-" prefix if it exists
+  if (typeof boardId === 'string') {
+    boardId = parseInt(boardId.replace(/^board-/, ''), 10);
+  } else if (typeof boardId === 'number') {
+    boardId = parseInt(boardId, 10);
+  }
   
   if (isNaN(boardId)) {
-      console.error('❌ Invalid board ID:', boardIdString);
+      console.error('❌ Invalid board ID:', boardId);
       return;
   }
   
@@ -1450,26 +1512,30 @@ function shareBoard() {
   }
 }
 
+/**
+ * ✅ FIXED: Export board as PNG with actual canvas content
+ */
 function exportBoard() {
   try {
-    const exportCanvas = document.createElement('canvas');
-    const exportCtx = exportCanvas.getContext('2d');
-    exportCanvas.width = 1920;
-    exportCanvas.height = 1080;
+    const drawingCanvas = document.getElementById('drawingCanvas');
+    if (!drawingCanvas) {
+      showNotification('Canvas not found');
+      return;
+    }
     
-    // Draw white background
-    exportCtx.fillStyle = 'white';
-    exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+    // Get actual canvas content
+    const dataURL = drawingCanvas.toDataURL('image/png');
     
-    // Export as image
+    // Create download link
     const link = document.createElement('a');
-    link.download = `${boardData.name || 'collabodraw-board'}.png`;
-    link.href = exportCanvas.toDataURL();
+    link.download = `${boardData.name || 'collabodraw-board'}-${Date.now()}.png`;
+    link.href = dataURL;
     link.click();
     
     showNotification('Board exported successfully!');
-  } catch (e) {
-    console.error('Export failed:', e);
+    console.log('✅ Board exported to PNG');
+  } catch (error) {
+    console.error('❌ Export failed:', error);
     showNotification('Export failed');
   }
 }
@@ -1565,6 +1631,7 @@ function handleCanvasMouseUp(e) {
 
 // Initialize the application when DOM is ready
 document.addEventListener('DOMContentLoaded', initializeApp);
+
 class TooltipManager {
     constructor() {
       this.tooltip = document.getElementById('tooltip');

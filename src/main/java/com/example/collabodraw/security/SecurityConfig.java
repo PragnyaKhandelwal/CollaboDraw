@@ -55,7 +55,11 @@ public class SecurityConfig {
                 .requestMatchers("/auth", "/login", "/register").permitAll()
                 .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**").permitAll()
                 .requestMatchers("/ws/**").permitAll()
-                .requestMatchers("/api/drawings/**").permitAll()  // ✅ CHANGED TO permitAll()
+                
+                // ✅ FIXED: API endpoints with specific access control
+                .requestMatchers("/api/drawings/**").permitAll()
+                .requestMatchers("/api/boards/create").authenticated()  // ✅ ADDED THIS
+                .requestMatchers("/api/boards/**").authenticated()
                 
                 // Protected endpoints
                 .requestMatchers("/home", "/board/**", "/my-content").authenticated()

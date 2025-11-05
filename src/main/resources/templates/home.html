@@ -837,68 +837,110 @@
     }
 
     // Guided New Board flow: ask for name and template (type)
-    function showNewBoardDialog(e){
-      if (e) e.preventDefault();
-      const modal = document.createElement('div');
-      modal.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:10000;`;
-      const dialog = document.createElement('div');
-      dialog.style.cssText = `background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.2);width:92%;max-width:520px;padding:20px 20px 16px;`;
-      dialog.innerHTML = `
-        <h2 style="margin:0 0 12px;color:#111827">Create new board</h2>
-        <div style="display:flex;flex-direction:column;gap:12px">
-          <label style="font-size:14px;color:#374151">Board Name
-            <input id="nb-name" type="text" placeholder="e.g. Sprint Planning" style="margin-top:6px;width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px"/>
-          </label>
-          <div style="font-size:14px;color:#374151">Type</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <label style="border:1px solid #e5e7eb;border-radius:10px;padding:10px;display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="radio" name="nb-type" value="blank" checked/> Blank
-            </label>
-            <label style="border:1px solid #e5e7eb;border-radius:10px;padding:10px;display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="radio" name="nb-type" value="template"/> From template
-            </label>
-          </div>
-          <div id="nb-template-row" style="display:none">
-            <label style="font-size:14px;color:#374151">Template
-              <select id="nb-template" style="margin-top:6px;width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px">
-                <option value="mindmap" selected>Mind Map</option>
-                <option value="kanban">Kanban Board</option>
-                <option value="flowchart">Flowchart</option>
-              </select>
-            </label>
-          </div>
-        </div>
-        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
-          <button id="nb-cancel" style="background:#e5e7eb;border:none;border-radius:10px;padding:10px 14px;cursor:pointer">Cancel</button>
-          <button id="nb-create" style="background:#20b97c;color:#fff;border:none;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600">Create</button>
-        </div>
-      `;
-      modal.appendChild(dialog);
-      document.body.appendChild(modal);
-
-      // Wire type toggle
-      const radios = dialog.querySelectorAll('input[name="nb-type"]');
-      const tplRow = dialog.querySelector('#nb-template-row');
-      radios.forEach(r=>r.addEventListener('change',()=>{
-        tplRow.style.display = (dialog.querySelector('input[name="nb-type"]:checked').value === 'template') ? 'block' : 'none';
-      }));
-      const close = ()=> modal.remove();
-      dialog.querySelector('#nb-cancel').addEventListener('click', (ev)=>{ ev.preventDefault(); close(); });
-      modal.addEventListener('click', (ev)=>{ if(ev.target===modal) close(); });
-
-      dialog.querySelector('#nb-create').addEventListener('click', async (ev)=>{
-        ev.preventDefault();
-        const name = (dialog.querySelector('#nb-name').value || '').trim() || 'Untitled Board';
-        const mode = dialog.querySelector('input[name="nb-type"]:checked').value;
-        const tpl = (mode === 'template') ? dialog.querySelector('#nb-template').value : 'blank';
-        // Route to mainscreen with template and name; mainscreen will apply template,
-        // then create and save the board with this name via ensureServerBoardAndSave()
-        const url = new URL(window.location.origin + '/mainscreen');
-        url.searchParams.set('template', tpl);
-        url.searchParams.set('name', name);
-        window.location.href = url.toString();
+    /**
+ * Guided New Board flow - ask for name and template type
+ * NOW WITH DATABASE CREATION
+ */
+async function showNewBoardDialog(e) {
+  if (e) e.preventDefault();
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:10000';
+  
+  const dialog = document.createElement('div');
+  dialog.style.cssText = 'background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.2);width:92%;max-width:520px;padding:20px 20px 16px';
+  
+  dialog.innerHTML = `
+    <h2 style="margin:0 0 12px;color:#111827">Create new board</h2>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <label style="font-size:14px;color:#374151">Board Name
+        <input id="nb-name" type="text" placeholder="e.g. Sprint Planning" 
+               style="margin-top:6px;width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px">
+      </label>
+      
+      <div style="font-size:14px;color:#374151">Type</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <label style="border:1px solid #e5e7eb;border-radius:10px;padding:10px;display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="radio" name="nb-type" value="blank" checked> Blank
+        </label>
+        <label style="border:1px solid #e5e7eb;border-radius:10px;padding:10px;display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="radio" name="nb-type" value="template"> From template
+        </label>
+      </div>
+      
+      <div id="nb-template-row" style="display:none">
+        <label style="font-size:14px;color:#374151">Template
+          <select id="nb-template" style="margin-top:6px;width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px">
+            <option value="mindmap" selected>Mind Map</option>
+            <option value="kanban">Kanban Board</option>
+            <option value="flowchart">Flowchart</option>
+          </select>
+        </label>
+      </div>
+    </div>
+    
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+      <button id="nb-cancel" style="background:#e5e7eb;border:none;border-radius:10px;padding:10px 14px;cursor:pointer">Cancel</button>
+      <button id="nb-create" style="background:#20b97c;color:#fff;border:none;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600">Create</button>
+    </div>
+  `;
+  
+  modal.appendChild(dialog);
+  document.body.appendChild(modal);
+  
+  // Wire type toggle
+  const radios = dialog.querySelectorAll('input[name="nb-type"]');
+  const tplRow = dialog.querySelector('#nb-template-row');
+  radios.forEach(r => r.addEventListener('change', () => {
+    tplRow.style.display = dialog.querySelector('input[name="nb-type"]:checked').value === 'template' ? 'block' : 'none';
+  }));
+  
+  const close = () => modal.remove();
+  dialog.querySelector('#nb-cancel').addEventListener('click', (ev) => {
+    ev.preventDefault();
+    close();
+  });
+  
+  modal.addEventListener('click', (ev) => {
+    if (ev.target === modal) close();
+  });
+  
+  // ✅ CREATE BOARD IN DATABASE FIRST
+  dialog.querySelector('#nb-create').addEventListener('click', async (ev) => {
+    ev.preventDefault();
+    
+    const name = dialog.querySelector('#nb-name').value.trim() || 'Untitled Board';
+    const mode = dialog.querySelector('input[name="nb-type"]:checked').value;
+    const tpl = mode === 'template' ? dialog.querySelector('#nb-template').value : 'blank';
+    
+    try {
+      // Create board in database
+      const response = await fetch('/api/boards/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `name=${encodeURIComponent(name)}`
       });
+      
+      const data = await response.json();
+      
+      if (data.success && data.id) {
+        // Navigate to the new board with template parameter
+        const url = new URL(`${window.location.origin}/board/${data.id}`);
+        if (tpl !== 'blank') {
+          url.searchParams.set('template', tpl);
+        }
+        window.location.href = url.toString();
+      } else {
+        alert('Failed to create board: ' + (data.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error creating board:', error);
+      alert('Failed to create board. Please try again.');
     }
+  });
+}
 
     function showJoinSessionDialog() {
       const sessionCode = prompt('Enter collaboration session code:');

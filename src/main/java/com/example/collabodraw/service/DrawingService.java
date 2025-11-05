@@ -21,32 +21,6 @@ public class DrawingService {
     @Autowired
     private UserRepository userRepository;
 
-    /**
-     * Save drawing elements for a board (replaces existing)
-     */
-    @Transactional
-    public void saveDrawing(Long boardId, List<DrawingElementDTO> elements, String username) {
-        Long userId = userRepository.findByUsername(username).getUserId();
-        
-        // Clear existing elements for this board
-        elementRepository.deleteByBoardId(boardId);
-        
-        // Save new elements
-        for (DrawingElementDTO dto : elements) {
-            Element element = new Element();
-            element.setBoardId(boardId);
-            element.setCreatorId(userId);
-            element.setType(dto.getType());
-            element.setData(dto.getData());
-            element.setZOrder(dto.getzOrder());
-            element.setCreatedAt(LocalDateTime.now());
-            element.setUpdatedAt(LocalDateTime.now());
-            
-            // Save returns the generated ID
-            Long elementId = elementRepository.save(element);
-            element.setElementId(elementId);
-        }
-    }
 
     /**
      * Load drawing elements for a board
