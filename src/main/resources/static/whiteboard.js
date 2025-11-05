@@ -226,6 +226,99 @@ function updateActiveUsers() {
 }
 
 /**
+ * Save drawing to database
+ */
+function saveDrawingToDatabase() {
+  const canvas = document.getElementById('drawingCanvas');
+  if (!canvas) return;
+  
+  // Extract numeric ID from "board-6" → 6
+  const boardIdString = window.CD?.boardId || 'board-6';
+  const boardId = parseInt(boardIdString.replace('board-', ''), 10);  // ✅ FIXED
+  
+  if (isNaN(boardId)) {
+      console.error('❌ Invalid board ID:', boardIdString);
+      return;
+  }
+  
+  const imageData = canvas.toDataURL('image/png');
+  
+  const formData = new FormData();
+  formData.append('boardId', boardId);
+  formData.append('imageData', imageData);
+  
+  fetch('/api/drawings/save-canvas', {
+      method: 'POST',
+      body: formData
+  })
+  .then(res => res.json())
+  .then(data => {
+      if (data.success) {
+          console.log('💾 Canvas saved - Board:', boardId);
+      } else {
+          console.error('❌ Save failed:', data.message);
+      }
+  })
+  .catch(err => console.error('❌ Save error:', err));
+}
+
+/**
+* Load drawing from database
+*/
+function loadDrawingFromDatabase() {
+  // Extract numeric ID from "board-6" → 6
+  const boardIdString = window.CD?.boardId || 'board-6';
+  const boardId = parseInt(boardIdString.replace('board-', ''), 10);  // ✅ FIXED
+  
+  if (isNaN(boardId)) {
+      console.error('❌ Invalid board ID:', boardIdString);
+      return;
+  }
+  
+  fetch(`/api/drawings/load-canvas/${boardId}`)
+  .then(res => res.json())
+  .then(data => {
+      if (data.success && data.imageData) {
+          const canvas = document.getElementById('drawingCanvas');
+          const ctx = canvas?.getContext('2d');
+          
+          if (ctx) {
+              const img = new Image();
+              img.onload = () => {
+                  ctx.clearRect(0, 0, canvas.width, canvas.height);
+                  ctx.drawImage(img, 0, 0);
+                  console.log('📥 Canvas loaded - Board:', boardId);
+              };
+              img.src = data.imageData;
+          }
+      } else {
+          console.log('ℹ️ No canvas found - Board:', boardId);
+      }
+  })
+  .catch(err => console.error('❌ Load error:', err));
+}
+
+/**
+* Auto-save drawing every 30 seconds
+*/
+function startAutoSaveDrawing() {
+  setInterval(() => {
+      saveDrawingToDatabase();
+  }, 30000);  // 30 seconds
+  
+  console.log('⏱️ Auto-save started (every 30s)');
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(() => {
+      loadDrawingFromDatabase();
+      startAutoSaveDrawing();
+      console.log('✅ Drawing system initialized with DB integration');
+  }, 2000);
+});
+
+/**
  * Resize canvas to match viewport
  */
 function resizeCanvas() {

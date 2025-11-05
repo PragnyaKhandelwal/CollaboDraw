@@ -129,6 +129,42 @@ public class ElementRepository {
         }, keyHolder);
     }
 
+    /**
+     * Find element by board ID and type (for canvas drawing)
+     */
+    public Element findByBoardIdAndType(Long boardId, String type) {
+        String sql = "SELECT * FROM elements WHERE board_id = ? AND type = ? LIMIT 1";
+        try {
+            return jdbcTemplate.queryForObject(sql, elementRowMapper, boardId, type);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Update existing element (for canvas updates)
+     */
+    public void updateElement(Element element) {
+        String sql = "UPDATE elements SET type = ?, z_order = ?, data = ?, updated_at = CURRENT_TIMESTAMP WHERE element_id = ?";
+        jdbcTemplate.update(sql, 
+            element.getType(),
+            element.getZOrder(),
+            element.getData(),
+            element.getElementId());
+    }
+
+    /**
+     * Save or update element (upsert for canvas)
+     */
+    public Long saveOrUpdate(Element element) {
+        if (element.getElementId() != null && existsById(element.getElementId())) {
+            updateElement(element);
+            return element.getElementId();
+        } else {
+            return save(element);
+        }
+    }
+
     private static class ElementRowMapper implements RowMapper<Element> {
         @Override
         public Element mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
