@@ -49,36 +49,54 @@ public class SecurityConfig {
             // Disable CSRF for REST API
             .csrf(csrf -> csrf.disable())
             
-            // Authorization rules
+            // Authorization rules - ORDER MATTERS!
             .authorizeHttpRequests(authz -> authz
-                // Public endpoints
-                .requestMatchers("/auth", "/login", "/register").permitAll()
-                .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**").permitAll()
-                .requestMatchers("/ws/**").permitAll()
+                // ✅ STATIC RESOURCES FIRST (Most Important!)
+                .requestMatchers("/static/**").permitAll()
+                .requestMatchers("/css/**").permitAll()
+                .requestMatchers("/js/**").permitAll()
+                .requestMatchers("/images/**").permitAll()
+                .requestMatchers("/fonts/**").permitAll()
+                .requestMatchers("/*.js").permitAll()
+                .requestMatchers("/*.css").permitAll()
+                .requestMatchers("/favicon.ico").permitAll()
+                .requestMatchers("/error").permitAll()
                 
-                // ✅ FIXED: API endpoints with specific access control
+                // ✅ PUBLIC ENDPOINTS
+                .requestMatchers("/auth", "/login", "/register").permitAll()
+                .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll() // ✅ OAuth2
+                
+                // ✅ API ENDPOINTS
                 .requestMatchers("/api/drawings/**").permitAll()
-                .requestMatchers("/api/boards/create").authenticated()  // ✅ ADDED THIS
+                .requestMatchers("/api/boards/create").authenticated()
                 .requestMatchers("/api/boards/**").authenticated()
                 
-                // Protected endpoints
-                .requestMatchers("/home", "/board/**", "/my-content").authenticated()
+                // ✅ PROTECTED ENDPOINTS
+                .requestMatchers("/home", "/board/**", "/my-content", "/settings", "/templates", "/shared").authenticated()
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().authenticated()
             )
             
-            // Form login
+            // ✅ OAUTH2 LOGIN CONFIGURATION
+            .oauth2Login(oauth2 -> oauth2
+                .loginPage("/auth")
+                .defaultSuccessUrl("/home", true)
+                .failureUrl("/auth?error=OAuth2%20login%20failed")
+            )
+            
+            // ✅ FORM LOGIN
             .formLogin(form -> form
                 .loginPage("/auth")
                 .loginProcessingUrl("/login")
                 .defaultSuccessUrl("/home", true)
-                .failureUrl("/auth?error=Invalid credentials")
+                .failureUrl("/auth?error=Invalid%20credentials")
                 .usernameParameter("username")
                 .passwordParameter("password")
                 .permitAll()
             )
             
-            // Logout
+            // ✅ LOGOUT
             .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/auth")
@@ -88,7 +106,7 @@ public class SecurityConfig {
                 .permitAll()
             )
             
-            // Remember me
+            // ✅ REMEMBER ME
             .rememberMe(remember -> remember
                 .key("collabodraw-secret-key")
                 .tokenValiditySeconds(604800) // 7 days
@@ -96,7 +114,7 @@ public class SecurityConfig {
                 .rememberMeCookieName("collabodraw-remember-me")
             )
             
-            // CORS
+            // ✅ CORS
             .cors(cors -> cors.configurationSource(corsConfigurationSource()));
             
         return http.build();
