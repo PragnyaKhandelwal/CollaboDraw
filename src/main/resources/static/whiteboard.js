@@ -24,9 +24,9 @@ let boardData = {
   elements: [],
   settings: {}
 };
-
-// Canvas and Context
-let canvas, ctx, mainCanvas;
+let mainCanvas = null;
+let canvas = null;
+let ctx = null;
 
 // Configuration
 const CONFIG = {
@@ -43,11 +43,18 @@ const CONFIG = {
  * Initialize the application
  */
 function initializeApp() {
-  // Get DOM elements
+  // Get DOM elements with safety checks
   canvas = document.getElementById('drawingCanvas');
-  ctx = canvas.getContext('2d');
+  ctx = canvas?.getContext('2d');
   mainCanvas = document.getElementById('mainCanvas');
   
+  // Guard: Exit if critical elements missing
+  if (!canvas || !ctx || !mainCanvas) {
+    console.error('❌ Critical DOM elements missing - cannot initialize');
+    return;
+  }
+  
+  console.log('✅ DOM elements loaded');
   // Set canvas size
   resizeCanvas();
   
@@ -55,13 +62,16 @@ function initializeApp() {
   initializeTools();
   setupEventListeners();
   
+  // ✅ Set initial tool AFTER setup complete
+  selectTool('select');
+  
   // Load saved state or create default
   loadBoardState();
   
   // Initialize user interface
   initializeUI();
   
-  // ✅ ADDED: Load board name from server
+  // ✅ Load board name from server
   loadBoardName();
   
   // Setup auto-save
@@ -72,7 +82,10 @@ function initializeApp() {
   
   // Hide loading screen
   setTimeout(() => {
-    document.getElementById('loading').classList.remove('show');
+    const loading = document.getElementById('loading');
+    if (loading) {
+      loading.classList.remove('show');
+    }
   }, 1000);
 
   // Wire import input change handler
@@ -82,33 +95,40 @@ function initializeApp() {
     importInput.__wired = true;
   }
 
-  // If a pre-import payload exists (set by Home page), consume it first, else honor ?import to open picker here
+  // Handle pre-import payload or URL import parameter
   try {
     const pre = sessionStorage.getItem('collabodraw-pre-import');
     const params = new URLSearchParams(window.location.search);
+    
     if (pre) {
       sessionStorage.removeItem('collabodraw-pre-import');
       const payload = JSON.parse(pre);
+      
       if (payload && payload.kind === 'json' && typeof payload.data === 'string') {
         try {
           importBoardFromJSON(payload.data);
-        } catch(_) {}
-        const base = inferNameFromFile(payload.name || 'Imported Board');
-        ensureServerBoardAndSave(base);
+          const base = inferNameFromFile(payload.name || 'Imported Board');
+          ensureServerBoardAndSave(base);
+        } catch(e) {
+          console.warn('⚠️ Failed to import JSON:', e);
+        }
       } else if (payload && payload.kind === 'image' && typeof payload.data === 'string') {
         addImageToCanvas(payload.data, payload.name);
         const base = inferNameFromFile(payload.name || 'Imported Image');
         ensureServerBoardAndSave(base);
       } else if (params.has('import')) {
-        // Fallback to in-app picker if payload invalid
         setTimeout(() => importFile(), 300);
       }
     } else if (params.has('import')) {
-      // Delay slightly to ensure DOM ready
       setTimeout(() => importFile(), 300);
     }
-  } catch(e) { /* no-op */ }
+    
+    console.log('✅ App initialization complete');
+  } catch(e) {
+    console.error('⚠️ Import handling error:', e);
+  }
 }
+
 async function loadBoardName() {
   try {
     // ✅ FIX: Handle boardId as either string or number
@@ -409,7 +429,11 @@ function initializeTools() {
       selectColor(this.dataset.color);
     });
   });
-
+// ✅ Add eraser tool button listener
+const eraserBtn = document.querySelector('[data-tool="eraser"]');
+if (eraserBtn) {
+    eraserBtn.addEventListener('click', activateEraser);
+}
   // Toolbar buttons
   document.querySelectorAll('.toolbar-btn').forEach(btn => {
     btn.addEventListener('click', function() {
@@ -420,6 +444,44 @@ function initializeTools() {
 }
 
 /**
+ * Update canvas cursor based on current tool
+ */
+function updateCanvasCursor() {
+  if (!mainCanvas) {
+    console.warn('⚠️ Main canvas not available for cursor update');
+    return;
+  }
+
+  try {
+    // Reset classes
+    mainCanvas.className = 'main-canvas';
+    
+    // Add traybar class if visible  
+    if (traybarVisible) {
+      mainCanvas.classList.add('traybar-visible');
+    }
+    
+    // Add tool-specific cursor classes
+    switch(currentTool) {
+      case 'hand':
+        mainCanvas.classList.add('hand-mode');
+        break;
+      case 'select':
+        mainCanvas.classList.add('select-mode');
+        break; 
+      case 'eraser':
+        mainCanvas.classList.add('eraser-mode');
+        mainCanvas.style.cursor = 'cell';
+        break;
+      default:
+        // Default cursor
+        mainCanvas.style.cursor = 'default';
+    }
+  } catch(err) {
+    console.error('❌ Error updating cursor:', err);
+  }
+}
+/**
  * Select drawing/editing tool
  */
 function selectTool(tool) {
@@ -429,28 +491,18 @@ function selectTool(tool) {
   document.querySelectorAll('.tool-btn').forEach(btn => {
     btn.classList.remove('active');
   });
-  document.querySelector(`[data-tool="${tool}"]`).classList.add('active');
   
-  // Update canvas cursor
+  const toolBtn = document.querySelector(`[data-tool="${tool}"]`);
+  if (toolBtn) {
+    toolBtn.classList.add('active');
+  }
+  
+  // Update cursor style
   updateCanvasCursor();
   
-  // Show/hide drawing canvas
-  const drawingCanvas = document.getElementById('drawingCanvas');
-  if (['pen', 'highlighter', 'line', 'rectangle', 'circle', 'arrow'].includes(tool)) {
-    drawingCanvas.classList.add('active');
-  } else {
-    drawingCanvas.classList.remove('active');
-  }
-  
-  // Show color picker for drawing tools
-  const colorPicker = document.getElementById('colorPicker');
-  if (['pen', 'highlighter', 'rectangle', 'circle', 'arrow', 'text'].includes(tool)) {
-    colorPicker.classList.add('show');
-  } else {
-    colorPicker.classList.remove('show');
-  }
+  // Log tool change
+  console.log(`🔧 Tool selected: ${tool}`);
 }
-
 /**
  * Trigger file import dialog
  */
@@ -644,17 +696,48 @@ function selectColor(color) {
 }
 
 /**
- * Update canvas cursor based on current tool
+ * Erase elements from canvas (DOM-based)
  */
-function updateCanvasCursor() {
-  mainCanvas.className = 'main-canvas' + (traybarVisible ? ' traybar-visible' : '');
+function activateEraser() {
+  selectTool('eraser');
   
-  if (currentTool === 'hand') {
-    mainCanvas.classList.add('hand-mode');
-  } else if (currentTool === 'select') {
-    mainCanvas.classList.add('select-mode');
+  // Add eraser mode styling
+  const mainCanvas = document.getElementById('mainCanvas');
+  mainCanvas.classList.add('eraser-mode');
+  
+  console.log('🧹 Eraser activated');
+}
+
+/**
+* Handle eraser click on canvas elements
+*/
+function eraserClick(e) {
+  if (currentTool !== 'eraser') return;
+  
+  const container = document.getElementById('canvasElements');
+  if (!container.contains(e.target)) return;
+  
+  // Find the closest canvas-element
+  let element = e.target.closest('.canvas-element');
+  
+  if (element) {
+      // Save state before erasing
+      saveState();
+      
+      // Remove with animation
+      element.style.opacity = '0';
+      element.style.transform = 'scale(0.95)';
+      
+      setTimeout(() => {
+          element.remove();
+          console.log(`🗑️ Erased element: ${element.dataset.id}`);
+      }, 200);
+      
+      // Save again after erasing
+      saveState();
   }
 }
+
 
 /**
  * Handle toolbar button actions
@@ -673,9 +756,6 @@ function handleToolbarAction(action) {
   }
 }
 
-/**
- * Setup all event listeners
- */
 function setupEventListeners() {
   // Canvas drawing events
   canvas.addEventListener('mousedown', startDrawing);
@@ -683,13 +763,26 @@ function setupEventListeners() {
   canvas.addEventListener('mouseup', stopDrawing);
   canvas.addEventListener('mouseout', stopDrawing);
 
-  // Canvas interaction events
-  mainCanvas.addEventListener('click', handleCanvasClick);
+  // ✅ FIXED: Canvas interaction events - Now with eraser support
+  mainCanvas.addEventListener('click', (e) => {
+    // ✅ CHECK ERASER FIRST
+    if (currentTool === 'eraser') {
+      handleEraserClick(e);
+      return; // Exit early, don't process other clicks
+    }
+    
+    // Handle other click events
+    handleCanvasClick(e);
+  });
+  
   mainCanvas.addEventListener('contextmenu', showContextMenu);
   mainCanvas.addEventListener('mousedown', handleCanvasMouseDown);
   mainCanvas.addEventListener('mousemove', handleCanvasMouseMove);
   mainCanvas.addEventListener('mouseup', handleCanvasMouseUp);
-
+  
+  // ✅ REMOVED: Eraser event listener (not valid)
+  // mainCanvas.addEventListener('eraser', handleCanvasClick);  ← DELETE THIS LINE
+  
   // Keyboard shortcuts
   document.addEventListener('keydown', handleKeyboard);
   
@@ -707,6 +800,55 @@ function setupEventListeners() {
     });
   });
 }
+/**
+ * Handle eraser click on canvas elements
+ */
+function handleEraserClick(e) {
+  console.log('🧹 Eraser click detected:', e.target);
+  
+  if (currentTool !== 'eraser') {
+      return;
+  }
+  
+  const container = document.getElementById('canvasElements');
+  if (!container) {
+      console.warn('⚠️ Canvas container not found');
+      return;
+  }
+  
+  // Find the closest canvas-element that was clicked
+  const element = e.target.closest('.canvas-element');
+  
+  if (element) {
+      console.log(`✂️ Erasing element`);
+      
+      // Save state before erasing
+      saveState();
+      
+      // Remove with animation
+      element.style.opacity = '0';
+      element.style.transform = 'scale(0.95)';
+      element.style.transition = 'all 0.2s ease';
+      
+      // Remove after animation
+      setTimeout(() => {
+          element.remove();
+          console.log(`✅ Element erased`);
+          
+          // Save state after erasing
+          saveState();
+          
+          // Broadcast to other users
+          broadcastChange('erase', {
+              elementId: element.dataset.id,
+              timestamp: Date.now()
+          });
+      }, 200);
+  } else {
+      console.log('ℹ️ Click on an element to erase it');
+  }
+}
+
 
 /**
  * Start drawing on canvas
@@ -745,41 +887,72 @@ function draw(e) {
   }
 }
 
-/**
- * Stop drawing on canvas
- */
 function stopDrawing() {
   if (!isDrawing) return;
+  
   isDrawing = false;
+  ctx.closePath();
   
-  // Save state for undo
-  saveState();
-  
-  // Broadcast changes to other users
-  broadcastChange('draw', {
+  // ✅ Save the drawing strokes to undo history
+  const canvasImage = canvas.toDataURL('image/png');
+  addCanvasElement({
+    id: generateId(),
+    type: 'drawing',
+    timestamp: Date.now(),
+    image: canvasImage,
     tool: currentTool,
-    color: currentColor,
-    timestamp: Date.now()
+    user: getCurrentUser().id
   });
+  
+  // ✅ Save state to undo stack
+  saveState();
+}
+function handleEraserClick(e) {
+  if (currentTool !== 'eraser') return;
+  
+  console.log('🧹 Eraser mode active');
+  
+  // Get canvas coordinates
+  const rect = canvas.getBoundingClientRect();
+  const eraserX = e.clientX - rect.left;
+  const eraserY = e.clientY - rect.top;
+  const eraserRadius = 20; // Eraser brush size
+  
+  // Clear circular area on canvas
+  ctx.clearRect(
+    eraserX - eraserRadius,
+    eraserY - eraserRadius,
+    eraserRadius * 2,
+    eraserRadius * 2
+  );
+  
+  console.log('✅ Erased at:', eraserX, eraserY);
+  
+  // Save state
+  saveState();
 }
 
-/**
- * Handle canvas click for tools like sticky notes and text
- */
 function handleCanvasClick(e) {
   const rect = mainCanvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
   
+  // ✅ Handle eraser tool
+  if (currentTool === 'eraser') {
+      handleEraserClick(e);
+      return;
+  }
+  
   switch(currentTool) {
-    case 'sticky':
-      createStickyNote(x, y);
-      break;
-    case 'text':
-      createTextElement(x, y);
-      break;
+      case 'sticky':
+          createStickyNote(x, y);
+          break;
+      case 'text':
+          createTextElement(x, y);
+          break;
   }
 }
+
 
 /**
  * Create a new sticky note
@@ -1080,7 +1253,6 @@ function sendToBack() {
   });
   saveState();
 }
-
 /**
  * Handle keyboard shortcuts
  */
@@ -1090,7 +1262,7 @@ function handleKeyboard(e) {
   
   // Ctrl/Cmd shortcuts
   if (e.ctrlKey || e.metaKey) {
-    switch(e.key) {
+    switch(e.key.toLowerCase()) {
       case 'z':
         e.preventDefault();
         undo();
@@ -1115,7 +1287,7 @@ function handleKeyboard(e) {
     return;
   }
   
-  // Tool selection shortcuts
+  // Tool selection shortcuts (no Ctrl required)
   switch(e.key.toLowerCase()) {
     case 'v':
       selectTool('select');
@@ -1144,18 +1316,21 @@ function handleKeyboard(e) {
     case 'a':
       selectTool('arrow');
       break;
+    case 'e':  // ✅ ERASER TOOL - E key
+      selectTool('eraser');
+      break;
     case ' ':
       e.preventDefault();
       selectTool('hand');
       break;
-    case 'Delete':
+    case 'delete':
       deleteSelected();
       break;
-    case 'Escape':
+    case 'escape':
       selectedElements.forEach(el => el.classList.remove('selected'));
       selectedElements = [];
       break;
-    case 'F1':
+    case 'f1':
       e.preventDefault();
       showHelp();
       break;
@@ -1196,71 +1371,298 @@ function updateZoom() {
   mainCanvas.style.transform = `scale(${zoomLevel}) translate(${panX}px, ${panY}px)`;
   document.getElementById('zoomLevel').textContent = Math.round(zoomLevel * 100) + '%';
 }
+/**
+ * Enhanced Undo/Redo/Save functionality with state management
+ */
+
+// State management
+let lastSaveState = null;
+let isSaving = false;
 
 /**
- * Undo/Redo functionality
+ * Create a snapshot of the current state
+ */
+function createStateSnapshot() {
+    const container = document.getElementById('canvasElements');
+    if (!container) {
+        console.warn('⚠️ Canvas container not found');
+        return null;
+    }
+    
+    return {
+        html: container.innerHTML,
+        boardName: boardData.name,
+        timestamp: Date.now(),
+        elementCount: container.querySelectorAll('.canvas-element').length,
+        // Add checksum for validation
+        checksum: generateChecksum(container.innerHTML)
+    };
+}
+
+/**
+ * Generate a simple checksum for state validation
+ */
+function generateChecksum(html) {
+    let hash = 0;
+    for (let i = 0; i < html.length; i++) {
+        const char = html.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash).toString(16);
+}
+
+/**
+ * Save current state to undo stack
  */
 function saveState() {
-  const container = document.getElementById('canvasElements');
-  const state = {
-    html: container.innerHTML,
-    boardName: boardData.name,
-    timestamp: Date.now()
+  // ✅ Save current canvas state to undo stack
+  const canvasData = {
+    imageData: ctx.getImageData(0, 0, canvas.width, canvas.height),
+    timestamp: Date.now(),
+    tool: currentTool
   };
   
-  undoStack.push(state);
+  undoStack.push(canvasData);
+  
+  // ✅ Limit undo history size
   if (undoStack.length > CONFIG.MAX_UNDO_HISTORY) {
     undoStack.shift();
   }
   
-  redoStack = []; // Clear redo stack
+  // ✅ Clear redo stack when new action performed
+  redoStack = [];
+  
+  console.log(`💾 State saved (${undoStack.length} states)`);
 }
 
 function undo() {
   if (undoStack.length === 0) {
-    showNotification('Nothing to undo');
+    console.warn('⏳ Nothing to undo');
     return;
   }
   
-  const container = document.getElementById('canvasElements');
+  // Save current state to redo
   const currentState = {
-    html: container.innerHTML,
-    boardName: boardData.name,
-    timestamp: Date.now()
+    imageData: ctx.getImageData(0, 0, canvas.width, canvas.height),
+    timestamp: Date.now(),
+    tool: currentTool
   };
   redoStack.push(currentState);
   
+  // Restore previous state
   const previousState = undoStack.pop();
-  container.innerHTML = previousState.html;
+  ctx.putImageData(previousState.imageData, 0, 0);
   
-  // Re-setup interactions for restored elements
-  container.querySelectorAll('.canvas-element').forEach(setupElementInteraction);
-  
-  showNotification('Undone');
+  console.log(`↶ Undo performed (${undoStack.length} states left)`);
 }
 
 function redo() {
   if (redoStack.length === 0) {
-    showNotification('Nothing to redo');
+    console.warn('⏳ Nothing to redo');
     return;
   }
   
-  const container = document.getElementById('canvasElements');
+  // Save current state to undo
   const currentState = {
-    html: container.innerHTML,
-    boardName: boardData.name,
-    timestamp: Date.now()
+    imageData: ctx.getImageData(0, 0, canvas.width, canvas.height),
+    timestamp: Date.now(),
+    tool: currentTool
   };
   undoStack.push(currentState);
   
+  // Restore next state
   const nextState = redoStack.pop();
-  container.innerHTML = nextState.html;
+  ctx.putImageData(nextState.imageData, 0, 0);
   
-  // Re-setup interactions for restored elements
-  container.querySelectorAll('.canvas-element').forEach(setupElementInteraction);
-  
-  showNotification('Redone');
+  console.log(`↷ Redo performed (${redoStack.length} states left)`);
 }
+
+/**
+ * Restore element interactions after undo/redo
+ */
+function restoreElementInteractions() {
+    const container = document.getElementById('canvasElements');
+    if (!container) return;
+    
+    // Re-setup all element interactions
+    container.querySelectorAll('.canvas-element').forEach((element) => {
+        setupElementInteraction(element);
+    });
+    
+    // Restore any other event listeners or state
+    console.log('🔗 Element interactions restored');
+}
+
+/**
+ * Update undo/redo button states
+ */
+function updateUndoRedoButtons() {
+    const undoBtn = document.getElementById('btnUndo');
+    const redoBtn = document.getElementById('btnRedo');
+    
+    if (undoBtn) {
+        undoBtn.disabled = undoStack.length === 0;
+        undoBtn.classList.toggle('disabled', undoStack.length === 0);
+    }
+    
+    if (redoBtn) {
+        redoBtn.disabled = redoStack.length === 0;
+        redoBtn.classList.toggle('disabled', redoStack.length === 0);
+    }
+}
+
+/**
+ * Clear all undo/redo history
+ */
+function clearHistory() {
+    undoStack = [];
+    redoStack = [];
+    lastSaveState = null;
+    updateUndoRedoButtons();
+    console.log('🗑️ Undo/Redo history cleared');
+}
+
+/**
+ * Manual save to server (persists to database)
+ */
+function manualSave() {
+    if (isSaving) {
+        console.log('⏳ Save in progress...');
+        return;
+    }
+    
+    isSaving = true;
+    const boardId = getBoardIdFromURL();
+    const container = document.getElementById('canvasElements');
+    
+    if (!container) {
+        console.error('❌ Canvas container not found');
+        isSaving = false;
+        return;
+    }
+    
+    const saveData = {
+        boardId: boardId,
+        content: container.innerHTML,
+        boardName: boardData.name,
+        timestamp: new Date().toISOString()
+    };
+    
+    // Send to server
+    fetch(`/api/boards/${boardId}/save`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(saveData)
+    })
+    .then(response => {
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return response.json();
+    })
+    .then(data => {
+        console.log('✅ Board saved successfully:', data);
+        showNotification('💾 Saved successfully');
+        isSaving = false;
+    })
+    .catch(error => {
+        console.error('❌ Error saving board:', error);
+        showNotification('❌ Error saving board');
+        isSaving = false;
+    });
+}
+
+/**
+ * Auto-save functionality (runs periodically)
+ */
+function setupAutoSave() {
+    setInterval(() => {
+        const boardId = getBoardIdFromURL();
+        const container = document.getElementById('canvasElements');
+        
+        if (!container || !boardId) return;
+        
+        const currentState = createStateSnapshot();
+        
+        // Only auto-save if state has changed since last save
+        if (!lastSaveState || lastSaveState.checksum !== currentState.checksum) {
+            console.log('🔄 Auto-saving...');
+            manualSave();
+        }
+    }, CONFIG.AUTO_SAVE_INTERVAL);
+}
+
+/**
+ * Setup keyboard shortcuts for undo/redo/save
+ */
+function setupUndoRedoShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        // Undo: Ctrl+Z (or Cmd+Z on Mac)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+            e.preventDefault();
+            undo();
+        }
+        
+        // Redo: Ctrl+Y or Ctrl+Shift+Z (or Cmd+Shift+Z on Mac)
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) {
+            e.preventDefault();
+            redo();
+        }
+        
+        // Save: Ctrl+S (or Cmd+S on Mac)
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            manualSave();
+        }
+        
+        // Eraser: E key
+        if (e.key === 'e' || e.key === 'E') {
+            selectTool('eraser');
+        }
+    });
+}
+
+/**
+ * Initialize undo/redo system
+ */
+function initializeUndoRedo() {
+    // Create initial state snapshot
+    const initialState = createStateSnapshot();
+    if (initialState) {
+        lastSaveState = initialState;
+    }
+    
+    // Setup keyboard shortcuts
+    setupUndoRedoShortcuts();
+    
+    // Setup auto-save
+    setupAutoSave();
+    
+    // Setup button listeners
+    const undoBtn = document.getElementById('btnUndo');
+    const redoBtn = document.getElementById('btnRedo');
+    const saveBtn = document.getElementById('btnSave');
+    
+    if (undoBtn) {
+        undoBtn.addEventListener('click', undo);
+    }
+    
+    if (redoBtn) {
+        redoBtn.addEventListener('click', redo);
+    }
+    
+    if (saveBtn) {
+        saveBtn.addEventListener('click', manualSave);
+    }
+    
+    // Update button states
+    updateUndoRedoButtons();
+    
+    console.log('✅ Undo/Redo system initialized');
+}
+
+// Call this in your initializeApp() function
 
 /**
  * Timer functionality

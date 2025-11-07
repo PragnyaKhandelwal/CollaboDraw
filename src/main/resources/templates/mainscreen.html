@@ -426,6 +426,23 @@
         opacity: 0;
         pointer-events: none;
       }
+      /* Eraser tool styling */
+.eraser-mode {
+    cursor: cell !important;
+}
+
+.eraser-mode .canvas-element:hover {
+    opacity: 0.7;
+    transform: scale(0.98);
+    box-shadow: 0 0 10px rgba(255, 69, 69, 0.5);
+    transition: all 0.15s ease;
+}
+
+[data-tool="eraser"].active {
+    background: #ff4545 !important;
+    color: white !important;
+}
+
 
       .main-canvas {
     margin-top: 60px;
@@ -1033,6 +1050,13 @@
       >
         <img th:src="@{/images/pen-nib.png}" />
       </button>
+      <button
+    class="tool-btn"
+    data-tool="eraser"
+    data-tooltip="Erase elements<span class='tooltip-shortcut'>E</span>"
+  >
+  <img th:src="@{/images/eraser.png}"/>
+  </button>
       <div class="tool-divider"></div>
       <button
         class="tool-btn"
