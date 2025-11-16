@@ -1,28 +1,10 @@
-# render.yaml — Render Blueprint for CollaboDraw (Java, no Docker)
+# render.yaml — Render Blueprint for CollaboDraw (Docker)
 services:
   - type: web
     name: collabodraw
     repo: https://github.com/PragnyaKhandelwal/CollaboDraw
     branch: main
-    env: native
+    env: docker
     plan: free
-    buildCommand: "./mvnw -DskipTests package"
-    startCommand: "java -Dserver.port=$PORT -jar target/*.jar"
     healthCheckPath: "/actuator/health"
-    envVars:
-      - key: SPRING_APPLICATION_NAME
-        value: "collabodraw"
-      - key: JDBC_DATABASE_URL
-        value: "jdbc:mysql://collabodraw-pratishtha-400c.f.aivencloud.com:17118/collaborative_workspace_db?sslMode=REQUIRED&serverTimezone=Asia/Kolkata&connectTimeout=5000&socketTimeout=10000&tcpKeepAlive=true"
-      - key: JDBC_DATABASE_USERNAME
-        value: "avnadmin"
-      - key: JDBC_DATABASE_PASSWORD
-        value: ""   # <<-- LEAVE BLANK, set this in Render Dashboard as a secret
-      - key: GOOGLE_OAUTH_CLIENT_ID
-        value: ""   # set in Render Dashboard
-      - key: GOOGLE_OAUTH_CLIENT_SECRET
-        value: ""   # <<-- LEAVE BLANK, set in Render Dashboard as a secret
-      - key: HIKARI_MAX
-        value: "10"
-      - key: HIKARI_MIN
-        value: "2"
+    # Do NOT include secrets here. Set them in Render Dashboard.
