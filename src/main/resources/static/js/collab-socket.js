@@ -9,7 +9,10 @@
     // Optional: disable debug logs
     stompClient.debug = null;
     stompClient.connect({}, function(){
+      try { console.log('[RT] STOMP connected'); } catch {}
       if (callback) callback();
+    }, function(error){
+      try { console.warn('[RT] STOMP connection error:', error); } catch {}
     });
   }
 
@@ -62,9 +65,26 @@
     });
   }
 
+  function subscribeVersions(boardId, handler){
+    if (!stompClient) return { unsubscribe: ()=>{} };
+    return stompClient.subscribe(`/topic/board.${boardId}.versions`, (message)=>{
+      try {
+        const payload = JSON.parse(message.body);
+        if (payload && payload.type === 'version') {
+          handler(payload);
+        }
+      } catch {}
+    });
+  }
+
+  function publishVersion(boardId, version){
+    if (!stompClient) return;
+    stompClient.send(`/app/board/${boardId}/version`, {}, JSON.stringify(version || {}));
+  }
+
   window.CollaboSocket = {
     connect, disconnect, joinBoard, leaveBoard, heartbeat, updateCursor,
-    subscribeParticipants, subscribeCursors,
+    subscribeParticipants, subscribeCursors, subscribeVersions, publishVersion,
     startHeartbeat(boardId, intervalMs=15000){
       if (heartbeatTimer) clearInterval(heartbeatTimer);
       heartbeatTimer = setInterval(()=> heartbeat(boardId), intervalMs);

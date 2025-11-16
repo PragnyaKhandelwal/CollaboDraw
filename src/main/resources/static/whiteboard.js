@@ -19,6 +19,10 @@ let timerSeconds = 0;
 let timerInterval;
 let traybarVisible = true;
 let users = [];
+// Realtime state
+let remoteCursors = {}; // { [userId]: { x, y, name, color } }
+let wsBoardId = null;
+let wsSubscriptions = { participants: null, cursors: null };
 let boardData = {
   name: 'Untitled Board',
   elements: [],
@@ -77,8 +81,14 @@ function initializeApp() {
   // Setup auto-save
   setInterval(autoSave, CONFIG.AUTO_SAVE_INTERVAL);
   
-  // Start real-time features
-  startRealTimeSync();
+  // Ensure a valid server board exists (handles ?session= as well)
+  ensureStartupBoard().then(() => {
+    // Start real-time features after we have a valid board id
+    startRealTimeSync();
+  }).catch(() => {
+    // Still try to start realtime (will no-op if board id unresolved)
+    startRealTimeSync();
+  });
   
   // Hide loading screen
   setTimeout(() => {
@@ -126,6 +136,51 @@ function initializeApp() {
     console.log('✅ App initialization complete');
   } catch(e) {
     console.error('⚠️ Import handling error:', e);
+  }
+}
+
+// Ensure there is a valid board on the server before collaborating/saving
+async function ensureStartupBoard() {
+  try {
+    const qp = new URLSearchParams(window.location.search || '');
+    const sessionCode = qp.get('session');
+    let boardId = window.CD && window.CD.boardId ? Number(window.CD.boardId) : null;
+
+    // If we already have a numeric board id, verify it exists
+    if (Number.isFinite(boardId) && boardId > 0) {
+      const resp = await fetch(`/api/boards/${boardId}`);
+      if (resp.ok) {
+        return; // board exists
+      }
+      // If not found, fall through to create
+    }
+
+    // If no board id or invalid, but we have a session code, create a new board and use its real id
+    if (sessionCode) {
+      const res = await fetch('/api/boards/new', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: `Session ${sessionCode}` })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (!window.CD) window.CD = {};
+        window.CD.boardId = data.id;
+        // Replace URL to stable ?board=ID and drop ?session=
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('session');
+          url.searchParams.set('board', String(data.id));
+          window.history.replaceState({}, '', url);
+        } catch {}
+        // Reflect name field
+        const bn = document.getElementById('boardName');
+        if (bn) { bn.value = data.name || bn.value || `Session ${sessionCode}`; bn.disabled = true; }
+        return;
+      }
+    }
+  } catch (e) {
+    console.warn('ensureStartupBoard failed:', e);
   }
 }
 
@@ -199,7 +254,12 @@ function updateUserAvatars() {
   
   // Get current user from session/localStorage or create default
   const currentUser = getCurrentUser();
-  users = [currentUser]; // Start with current user
+  // If realtime participants already loaded, keep them and ensure current user is present
+  if (!Array.isArray(users) || users.length === 0) {
+    users = [currentUser];
+  } else if (!users.some(u => (u.id || u.userId) === (currentUser.id || currentUser.userId) || u.name === currentUser.name)) {
+    users = [currentUser, ...users];
+  }
   
   users.forEach((user, index) => {
     const avatar = document.createElement('div');
@@ -297,7 +357,8 @@ function saveDrawingToDatabase() {
   
   if (!boardId) {
     console.error('❌ Board ID not available');
-    return;
+    // Attempt to create a board automatically, then retry once
+    return ensureServerBoardAndSave(document.getElementById('boardName')?.value || 'Untitled Board');
   }
   
   // Remove "board-" prefix if it exists
@@ -1872,6 +1933,17 @@ function addToVersionHistory() {
   
   localStorage.setItem('collabodraw-versions', JSON.stringify(versions));
   updateVersionHistory();
+
+  // Broadcast version event to collaborators
+  try {
+    if (wsBoardId && window.CollaboSocket) {
+      CollaboSocket.publishVersion(wsBoardId, {
+        id: newVersion.id,
+        description: newVersion.description,
+        timestamp: newVersion.timestamp
+      });
+    }
+  } catch(_){}
 }
 
 function restoreVersion(versionId) {
@@ -1964,34 +2036,114 @@ function goHome() {
  * Real-time collaboration simulation
  */
 function startRealTimeSync() {
-  // Simulate real-time cursor movement for demo purposes
-  setInterval(() => {
-    updateUserCursors();
-  }, 2000);
+  try {
+    // Normalize board id
+    let bid = window.CD && window.CD.boardId;
+    if (!bid) return;
+    if (typeof bid === 'string') bid = parseInt(bid.replace(/^board-/, ''), 10);
+    if (typeof bid === 'number') bid = parseInt(bid, 10);
+    if (!bid || isNaN(bid)) return;
+    wsBoardId = bid;
+
+    if (!window.CollaboSocket) {
+      console.warn('Realtime client (CollaboSocket) not loaded');
+      return;
+    }
+
+    CollaboSocket.connect(() => {
+      // Join board and start heartbeat
+      CollaboSocket.joinBoard(wsBoardId);
+      CollaboSocket.startHeartbeat(wsBoardId, 15000);
+
+      // Subscribe participants and map to UI users
+      if (wsSubscriptions.participants) { try { wsSubscriptions.participants.unsubscribe(); } catch(_){} }
+      wsSubscriptions.participants = CollaboSocket.subscribeParticipants(wsBoardId, (items) => {
+        try {
+          const mapped = (items || []).map(p => ({
+            id: p.userId,
+            userId: p.userId,
+            name: p.username,
+            initials: (p.username || 'U').substring(0,2).toUpperCase(),
+            color: colorFromString(p.username || String(p.userId))
+          }));
+          users = mapped;
+          // Refresh UI panels
+          updateActiveUsers();
+          // Render avatars without clobbering users
+          const avatars = document.getElementById('userAvatars');
+          if (avatars) {
+            avatars.innerHTML = '';
+            users.forEach((u, index) => {
+              const avatar = document.createElement('div');
+              avatar.className = 'avatar';
+              avatar.style.background = u.color;
+              avatar.title = u.name + (index === 0 ? ' (You)' : '');
+              avatar.textContent = (u.initials || 'U');
+              avatars.appendChild(avatar);
+            });
+          }
+        } catch (e) { console.warn('participants mapping failed', e); }
+      });
+
+      // Subscribe cursor events
+      if (wsSubscriptions.cursors) { try { wsSubscriptions.cursors.unsubscribe(); } catch(_){} }
+      wsSubscriptions.cursors = CollaboSocket.subscribeCursors(wsBoardId, (evt) => {
+        if (!evt || evt.type !== 'cursor') return;
+        // Try to avoid rendering own cursor if identifiable
+        const myName = (window.CD && window.CD.currentUserName) || (getCurrentUser().name);
+        if (evt.username && myName && evt.username === myName) return;
+        const key = evt.userId || evt.username || 'unknown';
+        remoteCursors[key] = {
+          x: evt.x || 0,
+          y: evt.y || 0,
+          name: evt.username || String(evt.userId || ''),
+          color: colorFromString((evt.username || String(evt.userId || '')))
+        };
+        renderRemoteCursors();
+      });
+
+      // Subscribe version events to sync sidebar
+      if (wsSubscriptions.versions) { try { wsSubscriptions.versions.unsubscribe(); } catch(_){} }
+      wsSubscriptions.versions = CollaboSocket.subscribeVersions(wsBoardId, (evt) => {
+        try {
+          if (!evt || evt.type !== 'version') return;
+          const list = getVersionHistory();
+          if (!list.find(v => v.id === evt.id)) {
+            const merged = [{ id: evt.id || generateId(), timestamp: evt.timestamp || new Date().toLocaleTimeString(), description: evt.description || 'Update', data: null }, ...list].slice(0,10);
+            localStorage.setItem('collabodraw-versions', JSON.stringify(merged));
+            updateVersionHistory();
+          }
+        } catch(e){ console.warn('version event handling failed', e); }
+      });
+    });
+
+    // Clean up on unload
+    window.addEventListener('beforeunload', () => {
+      try { if (wsBoardId) CollaboSocket.leaveBoard(wsBoardId); } catch(_){}
+      try { CollaboSocket.disconnect(); } catch(_){}
+    });
+  } catch (e) {
+    console.warn('Failed to start realtime sync:', e);
+  }
 }
 
-function updateUserCursors() {
-  const cursorsContainer = document.getElementById('userCursors');
-  
-  // Remove existing cursors
-  cursorsContainer.innerHTML = '';
-  
-  // Add cursors for other users (simulated)
-  const otherUsers = users.slice(1); // Exclude current user
-  
-  otherUsers.forEach(user => {
-    const cursor = document.createElement('div');
-    cursor.className = 'user-cursor';
-    cursor.innerHTML = `
-      <div class="cursor-pointer" style="background: ${user.color};"></div>
-      <div class="cursor-label">${user.name}</div>
+function renderRemoteCursors() {
+  const container = document.getElementById('userCursors');
+  if (!container) return;
+  container.innerHTML = '';
+  Object.keys(remoteCursors).forEach(key => {
+    const c = remoteCursors[key];
+    const el = document.createElement('div');
+    el.className = 'user-cursor';
+    el.style.position = 'absolute';
+    el.style.left = `${Math.max(0, Math.floor(c.x))}px`;
+    el.style.top = `${Math.max(0, Math.floor(c.y))}px`;
+    el.style.pointerEvents = 'none';
+    el.innerHTML = `
+      <div class="cursor-pointer" style="width:8px;height:8px;border-radius:50%;background:${c.color};box-shadow:0 0 0 2px rgba(255,255,255,0.8)"></div>
+      <div class="cursor-label" style="position:relative;left:10px;top:-6px;background:rgba(0,0,0,0.7);color:#fff;padding:2px 6px;border-radius:6px;font-size:11px;">${c.name}</div>
     `;
-    
-    // Random position for demo
-    cursor.style.left = Math.random() * 300 + 100 + 'px';
-    cursor.style.top = Math.random() * 300 + 100 + 'px';
-    
-    cursorsContainer.appendChild(cursor);
+    container.appendChild(el);
   });
 }
 
@@ -2020,11 +2172,14 @@ function handleCanvasMouseDown(e) {
 
 function handleCanvasMouseMove(e) {
   // Update cursor position for collaboration
-  broadcastChange('cursor', {
-    x: e.clientX,
-    y: e.clientY,
-    user: getCurrentUser().id
-  });
+  try {
+    const rect = mainCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    if (wsBoardId && window.CollaboSocket) {
+      CollaboSocket.updateCursor(wsBoardId, Math.round(x), Math.round(y));
+    }
+  } catch(_){}
 }
 
 function handleCanvasMouseUp(e) {
@@ -2150,4 +2305,16 @@ class TooltipManager {
     element.setAttribute('data-tooltip', tooltip);
     if (content) element.innerHTML = content;
     return element;
+  }
+
+  // Simple deterministic color from string
+  function colorFromString(str) {
+    try {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const hue = Math.abs(hash) % 360;
+      return `hsl(${hue}, 70%, 55%)`;
+    } catch { return '#3b82f6'; }
   }

@@ -98,6 +98,24 @@ public class CollaborationWsController {
         messagingTemplate.convertAndSend("/topic/board." + boardId + ".cursors", event);
     }
 
+    public static class VersionMessage {
+        public String id;
+        public String description;
+        public String timestamp;
+    }
+
+    @MessageMapping("/board/{boardId}/version")
+    public void version(@DestinationVariable Long boardId, @Payload VersionMessage msg, Principal principal) {
+        // Broadcast minimal version event; persistence is handled via REST already
+        Map<String, Object> event = new HashMap<>();
+        event.put("type", "version");
+        event.put("id", msg != null ? msg.id : null);
+        event.put("description", msg != null ? msg.description : "");
+        event.put("timestamp", msg != null ? msg.timestamp : "");
+        event.put("by", principal != null ? principal.getName() : "");
+        messagingTemplate.convertAndSend("/topic/board." + boardId + ".versions", event);
+    }
+
     private void broadcastParticipants(Long boardId) {
         List<Participant> participants = sessionRepository.activeParticipants(boardId);
         Map<String, Object> payload = new HashMap<>();

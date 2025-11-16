@@ -1,5 +1,6 @@
 package com.example.collabodraw.security;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -9,6 +10,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -44,7 +46,11 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http,
+                                           ObjectProvider<ClientRegistrationRepository> clientRegistrations) throws Exception {
+        // We now ALWAYS enable oauth2Login; if client registrations are absent Spring will fail fast,
+        // making misconfiguration visible instead of silently bypassing Google OAuth.
+        boolean oauthAvailable = clientRegistrations.getIfAvailable() != null;
         http
             // Disable CSRF for REST API
             .csrf(csrf -> csrf.disable())
@@ -65,7 +71,7 @@ public class SecurityConfig {
                 // ✅ PUBLIC ENDPOINTS
                 .requestMatchers("/auth", "/login", "/register").permitAll()
                 .requestMatchers("/ws/**").permitAll()
-                .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll() // ✅ OAuth2
+                .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll() // OAuth2 endpoints (safe even if disabled)
                 
                 // ✅ API ENDPOINTS
                 .requestMatchers("/api/drawings/**").permitAll()
@@ -77,14 +83,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().authenticated()
             )
-            
-            // ✅ OAUTH2 LOGIN CONFIGURATION
-            .oauth2Login(oauth2 -> oauth2
-                .loginPage("/auth")
-                .defaultSuccessUrl("/home", true)
-                .failureUrl("/auth?error=OAuth2%20login%20failed")
-            )
-            
+
             // ✅ FORM LOGIN
             .formLogin(form -> form
                 .loginPage("/auth")
@@ -95,7 +94,7 @@ public class SecurityConfig {
                 .passwordParameter("password")
                 .permitAll()
             )
-            
+
             // ✅ LOGOUT
             .logout(logout -> logout
                 .logoutUrl("/logout")
@@ -116,6 +115,13 @@ public class SecurityConfig {
             
             // ✅ CORS
             .cors(cors -> cors.configurationSource(corsConfigurationSource()));
+
+        // Always configure OAuth2 login. If registrations are missing, startup will surface an error instead of silently bypassing.
+        http.oauth2Login(oauth -> oauth
+            .loginPage("/auth")
+            .defaultSuccessUrl("/home", true)
+            .failureUrl("/auth?error=OAuth2%20login%20failed")
+        );
             
         return http.build();
     }
