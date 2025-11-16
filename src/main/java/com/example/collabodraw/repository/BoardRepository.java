@@ -69,6 +69,20 @@ public class BoardRepository {
         return jdbcTemplate.query(sql, boardRowMapper);
     }
 
+    /**
+     * Find the first board with an exact name match.
+     * Note: board_name is not unique by schema, we intentionally take the oldest match (lowest id)
+     * to provide stable mapping for a given logical name such as "Session <code>".
+     */
+    public Board findFirstByName(String name) {
+        String sql = "SELECT * FROM boards WHERE board_name = ? ORDER BY board_id ASC LIMIT 1";
+        try {
+            return jdbcTemplate.queryForObject(sql, boardRowMapper, name);
+        } catch (EmptyResultDataAccessException ex) {
+            return null;
+        }
+    }
+
     public int countByOwnerInDays(Long ownerId, int days) {
         String sql = "SELECT COUNT(*) FROM boards WHERE owner_id = ? AND created_at >= NOW() - INTERVAL ? DAY";
         Integer c = jdbcTemplate.queryForObject(sql, Integer.class, ownerId, days);

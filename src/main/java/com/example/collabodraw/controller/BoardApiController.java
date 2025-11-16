@@ -33,6 +33,89 @@ public class BoardApiController {
         this.whiteboardService = whiteboardService;
     }
 
+    /**
+     * Minimal board info endpoint used by the frontend to validate existence and fetch name.
+     */
+    @GetMapping("/{boardId}")
+    public ResponseEntity<Map<String, Object>> getBoardInfo(@PathVariable String boardId,
+                                                            Authentication authentication) {
+        try {
+            User currentUser = requireCurrentUser(authentication);
+            Long numericBoardId = resolveBoardId(boardId);
+
+            Board board = whiteboardService.getWhiteboardById(numericBoardId);
+            if (board == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("success", false, "message", "Board not found"));
+            }
+            boolean isOwner = board.getOwnerId() != null && board.getOwnerId().equals(currentUser.getUserId());
+            String role = whiteboardService.getUserRoleInWhiteboard(currentUser.getUserId(), board.getBoardId());
+            boolean hasAccess = isOwner || (role != null);
+            if (!hasAccess) {
+                throw new AccessDeniedException("You do not have access to this board");
+            }
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "id", formatBoardId(board.getBoardId()),
+                    "name", board.getBoardName()
+            ));
+        } catch (AccessDeniedException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", ex.getMessage()));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "Failed to load board: " + ex.getMessage()));
+        }
+    }
+
+    /**
+     * Find-or-create a board by a user-entered session code so that the same code
+     * always resolves to the same board across users and devices.
+     * Body: { "code": "<sessionCode>" }
+     */
+    @PostMapping("/session")
+    public ResponseEntity<Map<String, Object>> resolveSessionBoard(@RequestBody Map<String, Object> body,
+                                                                   Authentication authentication) {
+        try {
+            User currentUser = requireCurrentUser(authentication);
+            if (body == null || !body.containsKey("code")) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("success", false, "message", "Missing 'code'"));
+            }
+            Object cobj = body.get("code");
+            String code = (cobj instanceof String s) ? s.trim() : null;
+            if (code == null || code.isBlank()) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("success", false, "message", "Invalid session code"));
+            }
+            // Basic validation: allow letters, digits, dashes, underscores; length 2..40
+            if (!code.matches("[A-Za-z0-9_-]{2,40}")) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("success", false, "message", "Session code must be 2-40 characters [A-Za-z0-9_-]"));
+            }
+            // Normalize to lowercase for stable mapping
+            code = code.toLowerCase();
+
+            Board board = whiteboardService.findOrCreateBoardBySessionCode(code, currentUser.getUserId());
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "id", formatBoardId(board.getBoardId()),
+                    "name", board.getBoardName()
+            ));
+        } catch (AccessDeniedException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "Failed to resolve session: " + ex.getMessage()));
+        }
+    }
+
     @PostMapping("/new")
     public ResponseEntity<Map<String, Object>> createNewBoard(@RequestBody(required = false) Map<String, Object> body,
                                                               Authentication authentication) {
