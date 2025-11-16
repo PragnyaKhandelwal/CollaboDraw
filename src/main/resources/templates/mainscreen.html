@@ -1452,8 +1452,13 @@
       // All other JavaScript functions remain the same...
     </script>
 
-    <!-- External JavaScript -->
-    <script th:src="@{/whiteboard.js}"></script>
+  <!-- Realtime dependencies and client -->
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+  <script th:src="@{/js/collab-socket.js}"></script>
+
+  <!-- External JavaScript -->
+  <script th:src="@{/whiteboard.js}"></script>
 
     <script th:src="@{/board-operations.js}"></script>
 
@@ -1461,8 +1466,8 @@
     <!-- Handle URL Parameters -->
     <script th:inline="javascript">
       document.addEventListener("DOMContentLoaded", function () {
-        // Get parameters from Thymeleaf model and expose a small global context
-        const boardId = /*[[${boardId}]]*/ null;
+        // Get parameters from Thymeleaf model and/or URL
+        const modelBoardId = /*[[${boardId}]]*/ null;
         const sharedBoardId = /*[[${sharedBoardId}]]*/ null;
         const templateId = /*[[${templateId}]]*/ null;
         const previewId = /*[[${previewId}]]*/ null;
@@ -1471,9 +1476,22 @@
         const currentUserInitials =
           /*[[${currentUser != null ? #strings.toUpperCase(currentUser.username.substring(0,2)) : null}]]*/ null;
 
-        // ✅ FIX: Set global window.CD with boardId
+        // Resolve board id from model or URL (?board= / ?shared=)
+        function resolveBoardId() {
+          let id = modelBoardId;
+          try {
+            const qp = new URLSearchParams(window.location.search);
+            if (!id && qp.has('board')) id = parseInt(qp.get('board'), 10);
+            if (!id && qp.has('shared')) id = parseInt(qp.get('shared'), 10);
+            // Do NOT treat 'session' as a numeric board id; it is a human code and
+            // must be resolved by the client via /api/boards/session before setting board.
+          } catch(_) {}
+          return (Number.isFinite(id) && id > 0) ? id : null;
+        }
+
+        // ✅ Set global window.CD without hardcoded default
         window.CD = {
-          boardId: boardId || 6, // Default to 6 if not found
+          boardId: resolveBoardId(),
           sharedBoardId,
           templateId,
           previewId,

@@ -19,6 +19,11 @@ let timerSeconds = 0;
 let timerInterval;
 let traybarVisible = true;
 let users = [];
+// Realtime state
+let remoteCursors = {}; // { [userId]: { x, y, name, color } }
+let wsBoardId = null;
+let _lastParticipants = new Set();
+let wsSubscriptions = { participants: null, cursors: null };
 let boardData = {
   name: 'Untitled Board',
   elements: [],
@@ -63,7 +68,7 @@ function initializeApp() {
   setupEventListeners();
   
   // ✅ Set initial tool AFTER setup complete
-  selectTool('select');
+  selectTool('pen');
   
   // Load saved state or create default
   loadBoardState();
@@ -77,8 +82,14 @@ function initializeApp() {
   // Setup auto-save
   setInterval(autoSave, CONFIG.AUTO_SAVE_INTERVAL);
   
-  // Start real-time features
-  startRealTimeSync();
+  // Ensure a valid server board exists (handles ?session= as well)
+  ensureStartupBoard().then(() => {
+    // Start real-time features after we have a valid board id
+    startRealTimeSync();
+  }).catch(() => {
+    // Still try to start realtime (will no-op if board id unresolved)
+    startRealTimeSync();
+  });
   
   // Hide loading screen
   setTimeout(() => {
@@ -126,6 +137,56 @@ function initializeApp() {
     console.log('✅ App initialization complete');
   } catch(e) {
     console.error('⚠️ Import handling error:', e);
+  }
+}
+
+// Ensure there is a valid board on the server before collaborating/saving
+async function ensureStartupBoard() {
+  try {
+    const qp = new URLSearchParams(window.location.search || '');
+    const sessionCode = qp.get('session');
+    let boardId = window.CD && window.CD.boardId ? Number(window.CD.boardId) : null;
+
+    // If we already have a numeric board id, verify it exists
+    if (Number.isFinite(boardId) && boardId > 0) {
+      const resp = await fetch(`/api/boards/${boardId}`);
+      if (resp.ok) {
+        return; // board exists
+      }
+      // If not found, fall through to create
+    }
+
+    // If no board id or invalid, but we have a session code, resolve to a shared board id (find-or-create)
+    if (sessionCode) {
+      const res = await fetch('/api/boards/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: sessionCode })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (!window.CD) window.CD = {};
+        window.CD.boardId = data.id;
+        // Replace URL to stable ?board=ID and drop ?session=
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('session');
+          url.searchParams.set('board', String(data.id));
+          window.history.replaceState({}, '', url);
+        } catch {}
+        // Reflect name field
+        const bn = document.getElementById('boardName');
+        if (bn) { bn.value = data.name || bn.value || `Session ${sessionCode}`; bn.disabled = true; }
+        return;
+      } else {
+        let errText = 'Failed to resolve session';
+        try { const j = await res.json(); if (j && j.message) errText = j.message; } catch{}
+        notify(errText + ` (code: ${sessionCode})`);
+        console.warn('Failed to resolve session code:', sessionCode);
+      }
+    }
+  } catch (e) {
+    console.warn('ensureStartupBoard failed:', e);
   }
 }
 
@@ -199,7 +260,12 @@ function updateUserAvatars() {
   
   // Get current user from session/localStorage or create default
   const currentUser = getCurrentUser();
-  users = [currentUser]; // Start with current user
+  // If realtime participants already loaded, keep them and ensure current user is present
+  if (!Array.isArray(users) || users.length === 0) {
+    users = [currentUser];
+  } else if (!users.some(u => (u.id || u.userId) === (currentUser.id || currentUser.userId) || u.name === currentUser.name)) {
+    users = [currentUser, ...users];
+  }
   
   users.forEach((user, index) => {
     const avatar = document.createElement('div');
@@ -272,6 +338,11 @@ function getVersionHistory() {
  */
 function updateActiveUsers() {
   const activeUsers = document.getElementById('activeUsers');
+  // Ensure at least current user present locally
+  if (!Array.isArray(users) || users.length === 0) {
+    const cu = getCurrentUser();
+    users = [cu];
+  }
   const userCount = users.length;
   
   activeUsers.innerHTML = `
@@ -297,7 +368,8 @@ function saveDrawingToDatabase() {
   
   if (!boardId) {
     console.error('❌ Board ID not available');
-    return;
+    // Attempt to create a board automatically, then retry once
+    return ensureServerBoardAndSave(document.getElementById('boardName')?.value || 'Untitled Board');
   }
   
   // Remove "board-" prefix if it exists
@@ -497,6 +569,19 @@ function selectTool(tool) {
     toolBtn.classList.add('active');
   }
   
+  // Enable pointer events on drawing canvas only for drawing tools
+  try {
+    const drawCanvasEl = document.getElementById('drawingCanvas');
+    if (drawCanvasEl) {
+      const drawTools = new Set(['pen','highlighter','line','rectangle','circle','eraser']);
+      if (drawTools.has(tool)) {
+        drawCanvasEl.classList.add('active');
+      } else {
+        drawCanvasEl.classList.remove('active');
+      }
+    }
+  } catch(_){ }
+
   // Update cursor style
   updateCanvasCursor();
   
@@ -558,29 +643,69 @@ async function ensureServerBoardAndSave(name) {
   try {
     if (!window.CD) window.CD = {};
     if (!window.CD.boardId) {
-      const res = await fetch('/api/boards/new', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name || document.getElementById('boardName').value || 'Untitled Board' })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.id) {
-          window.CD.boardId = data.id;
-          // Reflect final name and lock editing
-          try {
-            const bn = document.getElementById('boardName');
-            if (bn) {
-              bn.value = (name || data.name || bn.value || 'Untitled Board');
-              bn.disabled = true;
+      // Prefer resolving a human session code to a shared board before creating a new board
+      let sessionCode = null;
+      try {
+        const qp = new URLSearchParams(window.location.search || '');
+        if (qp.has('session')) sessionCode = qp.get('session');
+      } catch {}
+
+      if (sessionCode && sessionCode.trim()) {
+        try {
+          const r = await fetch('/api/boards/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: sessionCode.trim() })
+          });
+          if (r.ok) {
+            const data = await r.json();
+            if (data && data.id) {
+              window.CD.boardId = data.id;
+              // Reflect UI and URL
+              try {
+                const bn = document.getElementById('boardName');
+                if (bn) {
+                  bn.value = (data.name || bn.value || `Session ${sessionCode}`);
+                  bn.disabled = true;
+                }
+              } catch {}
+              try {
+                const url = new URL(window.location.href);
+                url.searchParams.delete('session');
+                url.searchParams.set('board', String(data.id));
+                window.history.replaceState({}, '', url);
+              } catch {}
             }
-          } catch(_) {}
-          // update URL to include board for refresh continuity
-          try {
-            const url = new URL(window.location.href);
-            url.searchParams.set('board', data.id);
-            window.history.replaceState({}, '', url);
-          } catch {}
+          }
+        } catch {}
+      }
+
+      // If still no board id (no session or resolver failed), create a fresh board
+      if (!window.CD.boardId) {
+        const res = await fetch('/api/boards/new', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: name || document.getElementById('boardName').value || 'Untitled Board' })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.id) {
+            window.CD.boardId = data.id;
+            // Reflect final name and lock editing
+            try {
+              const bn = document.getElementById('boardName');
+              if (bn) {
+                bn.value = (name || data.name || bn.value || 'Untitled Board');
+                bn.disabled = true;
+              }
+            } catch(_) {}
+            // update URL to include board for refresh continuity
+            try {
+              const url = new URL(window.location.href);
+              url.searchParams.set('board', data.id);
+              window.history.replaceState({}, '', url);
+            } catch {}
+          }
         }
       }
     }
@@ -758,10 +883,14 @@ function handleToolbarAction(action) {
 
 function setupEventListeners() {
   // Canvas drawing events
-  canvas.addEventListener('mousedown', startDrawing);
-  canvas.addEventListener('mousemove', draw);
-  canvas.addEventListener('mouseup', stopDrawing);
-  canvas.addEventListener('mouseout', stopDrawing);
+  if (canvas) {
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+  } else {
+    console.warn('⚠️ Drawing canvas not found, strokes will not broadcast');
+  }
 
   // ✅ FIXED: Canvas interaction events - Now with eraser support
   mainCanvas.addEventListener('click', (e) => {
@@ -857,9 +986,18 @@ function startDrawing(e) {
   if (!['pen', 'highlighter', 'line', 'rectangle', 'circle'].includes(currentTool)) return;
   
   isDrawing = true;
+  // Initialize stroke capture for realtime broadcast
+  window._currentStroke = {
+    points: [],
+    color: currentColor,
+    tool: currentTool,
+    width: (currentTool === 'highlighter' ? 8 : 2),
+    alpha: (currentTool === 'highlighter' ? 0.5 : 1)
+  };
   const rect = canvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
+  if (window._currentStroke) window._currentStroke.points.push([x, y]);
   
   ctx.beginPath();
   ctx.moveTo(x, y);
@@ -880,6 +1018,27 @@ function draw(e) {
   const rect = canvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
+  if (window._currentStroke) window._currentStroke.points.push([x, y]);
+  // Progressive broadcast every 10 points for near real-time remote rendering
+  if (window._currentStroke && window._currentStroke.points.length % 10 === 0) {
+    try {
+      if (window.CD && window.CD.boardId && typeof CollaboSocket !== 'undefined') {
+        const boardNumeric = String(window.CD.boardId).replace(/^board-/, '');
+        CollaboSocket.publishElement(boardNumeric, {
+          kind: 'stroke',
+          payload: {
+            points: window._currentStroke.points.slice(-10), // send recent segment
+            color: window._currentStroke.color,
+            width: window._currentStroke.width,
+            alpha: window._currentStroke.alpha,
+            tool: window._currentStroke.tool,
+            partial: true,
+            strokeId: window._currentStroke.id || (window._currentStroke.id = generateId())
+          }
+        });
+      }
+    } catch(err){ /* silent */ }
+  }
   
   if (currentTool === 'pen' || currentTool === 'highlighter') {
     ctx.lineTo(x, y);
@@ -903,6 +1062,24 @@ function stopDrawing() {
     tool: currentTool,
     user: getCurrentUser().id
   });
+  // Broadcast stroke vector data instead of full image for efficiency
+  try {
+    if (window.CD && window.CD.boardId && window._currentStroke && typeof CollaboSocket !== 'undefined') {
+      const boardNumeric = String(window.CD.boardId).replace(/^board-/, '');
+      CollaboSocket.publishElement(boardNumeric, {
+        kind: 'stroke',
+        payload: {
+          points: window._currentStroke.points,
+          color: window._currentStroke.color,
+          width: window._currentStroke.width,
+          alpha: window._currentStroke.alpha,
+          tool: window._currentStroke.tool,
+          strokeId: window._currentStroke.id || (window._currentStroke.id = generateId())
+        }
+      });
+    }
+  } catch(e){ console.warn('Stroke broadcast failed', e); }
+  window._currentStroke = null;
   
   // ✅ Save state to undo stack
   saveState();
@@ -930,6 +1107,16 @@ function handleEraserClick(e) {
   
   // Save state
   saveState();
+  // Broadcast erase action
+  try {
+    if (window.CD && window.CD.boardId && typeof CollaboSocket !== 'undefined') {
+      const boardNumeric = String(window.CD.boardId).replace(/^board-/, '');
+      CollaboSocket.publishElement(boardNumeric, {
+        kind: 'erase',
+        payload: { x: eraserX, y: eraserY, radius: eraserRadius }
+      });
+    }
+  } catch(e){}
 }
 
 function handleCanvasClick(e) {
@@ -981,7 +1168,38 @@ function createStickyNote(x, y) {
   setupElementInteraction(sticky);
   selectElement(sticky);
   saveState();
+  // Realtime broadcast of new sticky note
+  try {
+    if (window.CD && window.CD.boardId && typeof CollaboSocket !== 'undefined') {
+      const boardNumeric = String(window.CD.boardId).replace(/^board-/, '');
+      CollaboSocket.publishElement(boardNumeric, {
+        kind: 'sticky',
+        payload: { id: stickyId, x, y, title: 'New Note', content: '' }
+      });
+    }
+  } catch(e){}
   
+  // Broadcast updates (debounced)
+  const titleInput = sticky.querySelector('.sticky-title');
+  const contentArea = sticky.querySelector('.sticky-content');
+  let _stickyTimer;
+  function queueStickyUpdate(){
+    clearTimeout(_stickyTimer);
+    _stickyTimer = setTimeout(()=>{
+      try {
+        if (window.CD && window.CD.boardId && typeof CollaboSocket !== 'undefined') {
+          const boardNumeric = String(window.CD.boardId).replace(/^board-/, '');
+          CollaboSocket.publishElement(boardNumeric, {
+            kind: 'sticky-update',
+            payload: { id: stickyId, title: titleInput.value, content: contentArea.value }
+          });
+        }
+      } catch(e){}
+    }, 300);
+  }
+  if (titleInput) titleInput.addEventListener('input', queueStickyUpdate);
+  if (contentArea) contentArea.addEventListener('input', queueStickyUpdate);
+
   return sticky;
 }
 
@@ -1013,6 +1231,35 @@ function createTextElement(x, y) {
   
   setupElementInteraction(textEl);
   saveState();
+  // Realtime broadcast of new text element
+  try {
+    if (window.CD && window.CD.boardId && typeof CollaboSocket !== 'undefined') {
+      const boardNumeric = String(window.CD.boardId).replace(/^board-/, '');
+      CollaboSocket.publishElement(boardNumeric, {
+        kind: 'text',
+        payload: { id: textId, x, y, value: 'Text' }
+      });
+    // Broadcast text updates
+    const inputEl = textEl.querySelector('input');
+    let _textTimer;
+    if (inputEl) {
+      inputEl.addEventListener('input', () => {
+        clearTimeout(_textTimer);
+        _textTimer = setTimeout(()=>{
+          try {
+            if (window.CD && window.CD.boardId && typeof CollaboSocket !== 'undefined') {
+              const boardNumeric = String(window.CD.boardId).replace(/^board-/, '');
+              CollaboSocket.publishElement(boardNumeric, {
+                kind: 'text-update',
+                payload: { id: textId, value: inputEl.value }
+              });
+            }
+          } catch(e){}
+        }, 250);
+      });
+    }
+    }
+  } catch(e){}
 }
 
 /**
@@ -1056,11 +1303,20 @@ function setupElementInteraction(element) {
     element.classList.remove('dragging');
     
     saveState();
-    broadcastChange('move', {
-      id: element.dataset.id,
-      x: element.style.left,
-      y: element.style.top
-    });
+    // Realtime broadcast element move
+    try {
+      if (window.CD && window.CD.boardId && typeof CollaboSocket !== 'undefined') {
+        const boardNumeric = String(window.CD.boardId).replace(/^board-/, '');
+        CollaboSocket.publishElement(boardNumeric, {
+          kind: 'move',
+          payload: {
+            id: element.dataset.id,
+            x: parseInt(element.style.left, 10) || 0,
+            y: parseInt(element.style.top, 10) || 0
+          }
+        });
+      }
+    } catch(_){ }
   });
   
   // Double-click to edit
@@ -1872,6 +2128,17 @@ function addToVersionHistory() {
   
   localStorage.setItem('collabodraw-versions', JSON.stringify(versions));
   updateVersionHistory();
+
+  // Broadcast version event to collaborators
+  try {
+    if (wsBoardId && window.CollaboSocket) {
+      CollaboSocket.publishVersion(wsBoardId, {
+        id: newVersion.id,
+        description: newVersion.description,
+        timestamp: newVersion.timestamp
+      });
+    }
+  } catch(_){}
 }
 
 function restoreVersion(versionId) {
@@ -1964,35 +2231,313 @@ function goHome() {
  * Real-time collaboration simulation
  */
 function startRealTimeSync() {
-  // Simulate real-time cursor movement for demo purposes
-  setInterval(() => {
-    updateUserCursors();
-  }, 2000);
+  try {
+    // Normalize board id
+    let bid = window.CD && window.CD.boardId;
+    if (!bid) return;
+    if (typeof bid === 'string') bid = parseInt(bid.replace(/^board-/, ''), 10);
+    if (typeof bid === 'number') bid = parseInt(bid, 10);
+    if (!bid || isNaN(bid)) return;
+    wsBoardId = bid;
+
+    if (!window.CollaboSocket) {
+      console.warn('Realtime client (CollaboSocket) not loaded');
+      return;
+    }
+
+    CollaboSocket.connect(() => {
+      // Join board and start heartbeat
+      CollaboSocket.joinBoard(wsBoardId);
+      CollaboSocket.startHeartbeat(wsBoardId, 15000);
+
+      // Fetch and replay historical events before subscribing to live ones
+      fetchAndReplayEvents(wsBoardId).catch(e => console.warn('Replay failed', e));
+
+      // Subscribe participants and map to UI users
+      if (wsSubscriptions.participants) { try { wsSubscriptions.participants.unsubscribe(); } catch(_){} }
+      wsSubscriptions.participants = CollaboSocket.subscribeParticipants(wsBoardId, (items) => {
+        try {
+          const mapped = (items || []).map(p => ({
+            id: p.userId,
+            userId: p.userId,
+            name: p.username,
+            initials: (p.username || 'U').substring(0,2).toUpperCase(),
+            color: colorFromString(p.username || String(p.userId))
+          }));
+          // Merge strategy: if server returned empty list, keep existing users (heartbeat edge case)
+          const effective = mapped.length === 0 && users.length > 0 ? users : mapped;
+          // Delta-detect join/leave
+          const current = new Set(effective.map(m => m.name || String(m.userId)));
+          const joined = [];
+          const left = [];
+          current.forEach(n => { if (!_lastParticipants.has(n)) joined.push(n); });
+          _lastParticipants.forEach(n => { if (!current.has(n)) left.push(n); });
+          if (joined.length) notify(`${joined.join(', ')} joined`);
+          if (left.length) notify(`${left.join(', ')} left`);
+          _lastParticipants = current;
+          users = effective;
+          // Refresh UI panels
+          updateActiveUsers();
+          // Render avatars without clobbering users
+          const avatars = document.getElementById('userAvatars');
+          if (avatars) {
+            avatars.innerHTML = '';
+            users.forEach((u, index) => {
+              const avatar = document.createElement('div');
+              avatar.className = 'avatar';
+              avatar.style.background = u.color;
+              avatar.title = u.name + (index === 0 ? ' (You)' : '');
+              avatar.textContent = (u.initials || 'U');
+              avatars.appendChild(avatar);
+            });
+          }
+        } catch (e) { console.warn('participants mapping failed', e); }
+      });
+
+      // Subscribe cursor events
+      if (wsSubscriptions.cursors) { try { wsSubscriptions.cursors.unsubscribe(); } catch(_){} }
+      wsSubscriptions.cursors = CollaboSocket.subscribeCursors(wsBoardId, (evt) => {
+        if (!evt || evt.type !== 'cursor') return;
+        // Try to avoid rendering own cursor if identifiable
+        const myName = (window.CD && window.CD.currentUserName) || (getCurrentUser().name);
+        if (evt.username && myName && evt.username === myName) return;
+        const key = evt.userId || evt.username || 'unknown';
+        remoteCursors[key] = {
+          x: evt.x || 0,
+          y: evt.y || 0,
+          name: evt.username || String(evt.userId || ''),
+          color: colorFromString((evt.username || String(evt.userId || '')))
+        };
+        // Fallback participant tracking if participants topic not emitting
+        const cursorName = remoteCursors[key].name;
+        if (cursorName && !users.some(u => u.name === cursorName)) {
+          users.push({
+            id: key,
+            userId: key,
+            name: cursorName,
+            initials: (cursorName.substring(0,2) || 'U').toUpperCase(),
+            color: remoteCursors[key].color
+          });
+          updateActiveUsers();
+          notify(cursorName + ' joined');
+        }
+        renderRemoteCursors();
+      });
+
+      // Subscribe version events to sync sidebar
+      if (wsSubscriptions.versions) { try { wsSubscriptions.versions.unsubscribe(); } catch(_){} }
+      wsSubscriptions.versions = CollaboSocket.subscribeVersions(wsBoardId, (evt) => {
+        try {
+          if (!evt || evt.type !== 'version') return;
+          const list = getVersionHistory();
+          if (!list.find(v => v.id === evt.id)) {
+            const merged = [{ id: evt.id || generateId(), timestamp: evt.timestamp || new Date().toLocaleTimeString(), description: evt.description || 'Update', data: null }, ...list].slice(0,10);
+            localStorage.setItem('collabodraw-versions', JSON.stringify(merged));
+            updateVersionHistory();
+          }
+        } catch(e){ console.warn('version event handling failed', e); }
+      });
+      // Subscribe element updates (strokes, notes, text)
+      if (wsSubscriptions.elements) { try { wsSubscriptions.elements.unsubscribe(); } catch(_){} }
+      wsSubscriptions.elements = CollaboSocket.subscribeElements(wsBoardId, (payload, meta) => {
+        try {
+          if (!meta || !meta.kind) return;
+          const kind = meta.kind;
+          if (kind === 'stroke' && payload && Array.isArray(payload.points)) {
+            // Maintain ongoing path per strokeId for smoother remote rendering
+            const sid = payload.strokeId || 'unknown';
+            window._remoteStrokePaths = window._remoteStrokePaths || {};
+            const existing = window._remoteStrokePaths[sid];
+            const pts = payload.points;
+            ctx.save();
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = payload.color || '#000';
+            ctx.globalAlpha = payload.alpha != null ? payload.alpha : 1;
+            ctx.lineWidth = payload.width || 2;
+            ctx.beginPath();
+            if (existing && existing.lastPoint) {
+              ctx.moveTo(existing.lastPoint[0], existing.lastPoint[1]);
+            } else if (pts.length) {
+              ctx.moveTo(pts[0][0], pts[0][1]);
+            }
+            for (let i=0;i<pts.length;i++) {
+              const [px, py] = pts[i];
+              ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+            ctx.closePath();
+            ctx.restore();
+            if (pts.length) {
+              window._remoteStrokePaths[sid] = { lastPoint: pts[pts.length-1] };
+            }
+          } else if (kind === 'sticky' && payload) {
+            if (!document.querySelector(`[data-id="${payload.id}"]`)) {
+              const el = createStickyNote(payload.x, payload.y);
+              if (el) el.dataset.id = payload.id;
+            }
+          } else if (kind === 'sticky-update' && payload) {
+            const el = document.querySelector(`[data-id="${payload.id}"]`);
+            if (el) {
+              const ti = el.querySelector('.sticky-title');
+              const ta = el.querySelector('.sticky-content');
+              if (ti && typeof payload.title === 'string') ti.value = payload.title;
+              if (ta && typeof payload.content === 'string') ta.value = payload.content;
+            }
+          } else if (kind === 'text' && payload) {
+            if (!document.querySelector(`[data-id="${payload.id}"]`)) {
+              const el = createTextElement(payload.x, payload.y);
+              if (el) el.dataset.id = payload.id;
+            }
+          } else if (kind === 'text-update' && payload) {
+            const el = document.querySelector(`[data-id="${payload.id}"]`);
+            if (el) {
+              const input = el.querySelector('input');
+              if (input && typeof payload.value === 'string') input.value = payload.value;
+            }
+          } else if (kind === 'move' && payload) {
+            const el = document.querySelector(`[data-id="${payload.id}"]`);
+            if (el) {
+              el.style.left = (parseInt(payload.x, 10) || 0) + 'px';
+              el.style.top = (parseInt(payload.y, 10) || 0) + 'px';
+            }
+          } else if (kind === 'erase' && payload) {
+            // Apply erase to local canvas for remote user
+            const r = payload.radius || 20;
+            ctx.clearRect((payload.x||0) - r, (payload.y||0) - r, r*2, r*2);
+          }
+        } catch(err){ console.warn('element event handling failed', err); }
+      });
+    });
+
+    // Clean up on unload
+    window.addEventListener('beforeunload', () => {
+      try { if (wsBoardId) CollaboSocket.leaveBoard(wsBoardId); } catch(_){}
+      try { CollaboSocket.disconnect(); } catch(_){}
+    });
+  } catch (e) {
+    console.warn('Failed to start realtime sync:', e);
+  }
 }
 
-function updateUserCursors() {
-  const cursorsContainer = document.getElementById('userCursors');
-  
-  // Remove existing cursors
-  cursorsContainer.innerHTML = '';
-  
-  // Add cursors for other users (simulated)
-  const otherUsers = users.slice(1); // Exclude current user
-  
-  otherUsers.forEach(user => {
-    const cursor = document.createElement('div');
-    cursor.className = 'user-cursor';
-    cursor.innerHTML = `
-      <div class="cursor-pointer" style="background: ${user.color};"></div>
-      <div class="cursor-label">${user.name}</div>
+// Fetch prior events from REST replay endpoint and render them
+async function fetchAndReplayEvents(bid) {
+  if (!bid) return;
+  try {
+    const resp = await fetch(`/api/live/${bid}`);
+    if (!resp.ok) return;
+    const body = await resp.json();
+    const events = Array.isArray(body) ? body : (Array.isArray(body?.events) ? body.events : []);
+    if (!Array.isArray(events)) return;
+    console.log(`🕘 Replaying ${events.length} prior events for board ${bid}`);
+    events.forEach(ev => {
+      try {
+        const kind = ev.kind || ev.type || ev.eventType;
+        const payload = ev.payload || ev.data || ev.body;
+        if (!kind) return;
+        // Reuse existing rendering logic
+        if (kind === 'stroke' && payload && Array.isArray(payload.points)) {
+          const pts = payload.points;
+          ctx.save();
+          ctx.beginPath();
+          ctx.lineCap = 'round';
+          ctx.strokeStyle = payload.color || '#000';
+          ctx.globalAlpha = payload.alpha != null ? payload.alpha : 1;
+          ctx.lineWidth = payload.width || 2;
+          for (let i=0;i<pts.length;i++) {
+            const [px, py] = pts[i];
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+          ctx.closePath();
+          ctx.restore();
+        } else if (kind === 'sticky' && payload) {
+          if (!document.querySelector(`[data-id="${payload.id}"]`)) {
+            const el = createStickyNote(payload.x, payload.y);
+            if (el) el.dataset.id = payload.id;
+          }
+        } else if (kind === 'sticky-update' && payload) {
+          const el = document.querySelector(`[data-id="${payload.id}"]`);
+          if (el) {
+            const ti = el.querySelector('.sticky-title');
+            const ta = el.querySelector('.sticky-content');
+            if (ti && typeof payload.title === 'string') ti.value = payload.title;
+            if (ta && typeof payload.content === 'string') ta.value = payload.content;
+          }
+        } else if (kind === 'text' && payload) {
+          if (!document.querySelector(`[data-id="${payload.id}"]`)) {
+            const el = createTextElement(payload.x, payload.y);
+            if (el) el.dataset.id = payload.id;
+          }
+        } else if (kind === 'text-update' && payload) {
+          const el = document.querySelector(`[data-id="${payload.id}"]`);
+          if (el) {
+            const input = el.querySelector('input');
+            if (input && typeof payload.value === 'string') input.value = payload.value;
+          }
+        } else if (kind === 'erase' && payload) {
+          const r = payload.radius || 20;
+          ctx.clearRect((payload.x||0) - r, (payload.y||0) - r, r*2, r*2);
+        }
+      } catch(re){ console.warn('Replay event failed', re); }
+    });
+  } catch (e) {
+    console.warn('Failed to fetch replay events', e);
+  }
+}
+
+function renderRemoteCursors() {
+  const container = document.getElementById('userCursors');
+  if (!container) return;
+  container.innerHTML = '';
+  Object.keys(remoteCursors).forEach(key => {
+    const c = remoteCursors[key];
+    const el = document.createElement('div');
+    el.className = 'user-cursor';
+    el.style.position = 'absolute';
+    el.style.left = `${Math.max(0, Math.floor(c.x))}px`;
+    el.style.top = `${Math.max(0, Math.floor(c.y))}px`;
+    el.style.pointerEvents = 'none';
+    el.innerHTML = `
+      <div class="cursor-pointer" style="width:8px;height:8px;border-radius:50%;background:${c.color};box-shadow:0 0 0 2px rgba(255,255,255,0.8)"></div>
+      <div class="cursor-label" style="position:relative;left:10px;top:-6px;background:rgba(0,0,0,0.7);color:#fff;padding:2px 6px;border-radius:6px;font-size:11px;">${c.name}</div>
     `;
-    
-    // Random position for demo
-    cursor.style.left = Math.random() * 300 + 100 + 'px';
-    cursor.style.top = Math.random() * 300 + 100 + 'px';
-    
-    cursorsContainer.appendChild(cursor);
+    container.appendChild(el);
   });
+}
+
+// Simple on-page toast/notification helper
+function notify(message, timeoutMs = 2500) {
+  try {
+    let host = document.getElementById('toastHost');
+    if (!host) {
+      host = document.createElement('div');
+      host.id = 'toastHost';
+      host.style.position = 'fixed';
+      host.style.right = '16px';
+      host.style.bottom = '16px';
+      host.style.zIndex = '9999';
+      host.style.display = 'flex';
+      host.style.flexDirection = 'column';
+      host.style.gap = '8px';
+      document.body.appendChild(host);
+    }
+    const toast = document.createElement('div');
+    toast.textContent = String(message || '');
+    toast.style.background = 'rgba(0,0,0,0.8)';
+    toast.style.color = '#fff';
+    toast.style.padding = '8px 12px';
+    toast.style.borderRadius = '8px';
+    toast.style.fontSize = '13px';
+    toast.style.boxShadow = '0 4px 16px rgba(0,0,0,0.25)';
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 150ms ease';
+    host.appendChild(toast);
+    requestAnimationFrame(() => toast.style.opacity = '1');
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => host.removeChild(toast), 200);
+    }, timeoutMs);
+  } catch {}
 }
 
 function broadcastChange(type, data) {
@@ -2020,11 +2565,14 @@ function handleCanvasMouseDown(e) {
 
 function handleCanvasMouseMove(e) {
   // Update cursor position for collaboration
-  broadcastChange('cursor', {
-    x: e.clientX,
-    y: e.clientY,
-    user: getCurrentUser().id
-  });
+  try {
+    const rect = mainCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    if (wsBoardId && window.CollaboSocket) {
+      CollaboSocket.updateCursor(wsBoardId, Math.round(x), Math.round(y));
+    }
+  } catch(_){}
 }
 
 function handleCanvasMouseUp(e) {
@@ -2150,4 +2698,16 @@ class TooltipManager {
     element.setAttribute('data-tooltip', tooltip);
     if (content) element.innerHTML = content;
     return element;
+  }
+
+  // Simple deterministic color from string
+  function colorFromString(str) {
+    try {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const hue = Math.abs(hash) % 360;
+      return `hsl(${hue}, 70%, 55%)`;
+    } catch { return '#3b82f6'; }
   }

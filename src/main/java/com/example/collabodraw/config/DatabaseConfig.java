@@ -14,7 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Database configuration class for Cloud SQL
+ * Database configuration (generic MySQL / Aiven)
  */
 @Configuration
 @EnableTransactionManagement

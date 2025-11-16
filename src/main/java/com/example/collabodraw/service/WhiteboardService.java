@@ -5,6 +5,7 @@ import com.example.collabodraw.model.entity.Board;
 import com.example.collabodraw.model.entity.BoardMembership;
 import com.example.collabodraw.model.entity.Element;
 import com.example.collabodraw.repository.BoardRepository;
+import com.example.collabodraw.repository.SessionRoomRepository;
 import com.example.collabodraw.repository.BoardMembershipRepository;
 import com.example.collabodraw.repository.ElementRepository;
 import org.springframework.stereotype.Service;
@@ -22,13 +23,16 @@ public class WhiteboardService {
     private final BoardRepository boardRepository;
     private final BoardMembershipRepository boardMembershipRepository;
     private final ElementRepository elementRepository;
+    private final SessionRoomRepository sessionRoomRepository;
 
     public WhiteboardService(BoardRepository boardRepository, 
                            BoardMembershipRepository boardMembershipRepository,
-                           ElementRepository elementRepository) {
+                           ElementRepository elementRepository,
+                           SessionRoomRepository sessionRoomRepository) {
         this.boardRepository = boardRepository;
         this.boardMembershipRepository = boardMembershipRepository;
         this.elementRepository = elementRepository;
+        this.sessionRoomRepository = sessionRoomRepository;
     }
 
     public Board createWhiteboard(WhiteboardDto whiteboardDto) {
@@ -99,6 +103,53 @@ public class WhiteboardService {
     public void saveBoardSnapshot(Long boardId, Long userId, String dataJson) {
         elementRepository.replaceSnapshot(boardId, userId, dataJson);
         boardRepository.updateLastModified(boardId);
+    }
+
+    /**
+     * Resolve a collaborative session code to a concrete board.
+     * Strategy: use a canonical name "Session <code>" and find the first board with that name.
+     * If none exists, create it owned by the current user and ensure membership.
+     */
+    public Board findOrCreateBoardBySessionCode(String code, Long currentUserId) {
+        if (code == null || code.isBlank()) {
+            throw new IllegalArgumentException("Session code is required");
+        }
+        String normalized = code.trim().toLowerCase();
+
+        // 1) Fast path: mapping table
+        Long mappedId = sessionRoomRepository.findBoardIdByCode(normalized);
+        if (mappedId != null) {
+            Board board = boardRepository.findById(mappedId);
+            if (board != null) {
+                addUserToWhiteboard(board.getBoardId(), currentUserId, "viewer");
+                return board;
+            }
+            // mapping exists but board missing => fall through to recreate
+        }
+
+        // 2) Create a new board with canonical name and try to claim the mapping atomically
+        String canonicalName = "Session " + normalized;
+        WhiteboardDto dto = new WhiteboardDto(canonicalName, currentUserId, false);
+        Board created = createWhiteboard(dto);
+        addUserToWhiteboard(created.getBoardId(), currentUserId, "owner");
+
+        boolean createdMapping = sessionRoomRepository.createMapping(normalized, created.getBoardId());
+        if (createdMapping) {
+            return created;
+        }
+
+        // 3) Another concurrent request won the race; read back the mapping and return that board
+        Long winnerId = sessionRoomRepository.findBoardIdByCode(normalized);
+        if (winnerId != null) {
+            Board winner = boardRepository.findById(winnerId);
+            if (winner != null) {
+                addUserToWhiteboard(winner.getBoardId(), currentUserId, "viewer");
+                return winner;
+            }
+        }
+
+        // Fallback: return the one we created
+        return created;
     }
 
     @Transactional
