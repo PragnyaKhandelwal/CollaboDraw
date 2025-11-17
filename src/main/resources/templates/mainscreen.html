@@ -1483,8 +1483,8 @@
             const qp = new URLSearchParams(window.location.search);
             if (!id && qp.has('board')) id = parseInt(qp.get('board'), 10);
             if (!id && qp.has('shared')) id = parseInt(qp.get('shared'), 10);
-            // Do NOT treat 'session' as a numeric board id; it is a human code and
-            // must be resolved by the client via /api/boards/session before setting board.
+            // Accept "session" as an alias to reduce confusion
+            if (!id && qp.has('session')) id = parseInt(qp.get('session'), 10);
           } catch(_) {}
           return (Number.isFinite(id) && id > 0) ? id : null;
         }
