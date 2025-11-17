@@ -1083,6 +1083,8 @@ function stopDrawing() {
   
   // ✅ Save state to undo stack
   saveState();
+  // ✅ Also persist a canvas snapshot so refresh restores drawing
+  try { saveBoardState(); } catch(_){ }
 }
 function handleEraserClick(e) {
   if (currentTool !== 'eraser') return;
@@ -1117,6 +1119,8 @@ function handleEraserClick(e) {
       });
     }
   } catch(e){}
+  // Also persist a canvas snapshot after erase so refresh shows latest bitmap
+  try { saveBoardState(); } catch(_){ }
 }
 
 function handleCanvasClick(e) {
@@ -2040,6 +2044,22 @@ function autoSave() {
 
 function saveBoardState() {
   const container = document.getElementById('canvasElements');
+  // Ensure we embed a hidden snapshot of the drawing canvas so it's persisted to server
+  try {
+    const drawingCanvas = document.getElementById('drawingCanvas');
+    if (drawingCanvas && container) {
+      let snap = container.querySelector('#wb-snapshot');
+      if (!snap) {
+        snap = document.createElement('img');
+        snap.id = 'wb-snapshot';
+        snap.alt = 'canvas-snapshot';
+        snap.style.display = 'none';
+        container.appendChild(snap);
+      }
+      // Update snapshot data URL (PNG)
+      snap.src = drawingCanvas.toDataURL('image/png');
+    }
+  } catch(_){ }
   boardData.elements = container.innerHTML;
   boardData.name = document.getElementById('boardName').value;
   boardData.settings = {
@@ -2083,6 +2103,17 @@ function loadBoardState() {
       document.getElementById('canvasElements').innerHTML = boardData.elements;
       // Re-setup interactions for loaded elements
       document.querySelectorAll('.canvas-element').forEach(setupElementInteraction);
+      // If a snapshot of the drawing exists, render it back onto the canvas
+      try {
+        const snap = document.getElementById('wb-snapshot');
+        if (snap && snap.src && ctx) {
+          const img = new Image();
+          img.onload = () => {
+            try { ctx.drawImage(img, 0, 0); } catch(_){ }
+          };
+          img.src = snap.src;
+        }
+      } catch(_){ }
     }
     
     if (boardData.name) {
