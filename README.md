@@ -1,5 +1,8 @@
 # CollaboDraw
-![alt text](image.png)
+<img width="200" height="200" alt="image" src="https://github.com/user-attachments/assets/a2a7099a-569e-46b5-a146-10d973197b79" />
+
+
+
 CollaboDraw is a real-time collaborative whiteboard built with Spring Boot, STOMP over WebSockets, Thymeleaf, and MySQL.
 Multiple users can draw on the same board, see presence and cursor updates, and collaborate live.
 
@@ -16,12 +19,16 @@ Multiple users can draw on the same board, see presence and cursor updates, and 
 - Access boards
 - Navigate to shared content
 - Manage personal workspace
+<img width="1918" height="1021" alt="image" src="https://github.com/user-attachments/assets/af50c2d2-849e-4e22-b7a6-8bb15ffb1684" />
+
 
 ### Whiteboard
 
 - Draw shapes, lines, freehand sketches
 - See other users’ cursors in real time
 - Sync updates instantly across clients
+<img width="1918" height="1026" alt="image" src="https://github.com/user-attachments/assets/f04cae0b-a34f-40dd-a98b-ad0def7c6843" />
+
 
  ### Live Collaboration 
 - Track active users on board
@@ -31,6 +38,13 @@ Multiple users can draw on the same board, see presence and cursor updates, and 
 ### Authentication (Login / OAuth)
 - Secure login with Spring Security
 - Google OAuth2 integration
+
+<img width="1918" height="1008" alt="image" src="https://github.com/user-attachments/assets/f1314575-bb6b-4bda-98b0-17bfc4d17ac1" />
+
+<img width="1918" height="1017" alt="image" src="https://github.com/user-attachments/assets/9f31c4ef-d82b-40dd-89f5-18050a8f8614" />
+
+<img width="1754" height="717" alt="image" src="https://github.com/user-attachments/assets/a88447b9-a9a0-487b-9e1b-8f387dfcd905" />
+
 
 ## Tech Stack
 
@@ -91,7 +105,7 @@ $env:SPRING_PROFILES_ACTIVE = "dev"
 & .\mvnw.cmd spring-boot:run
 ```
 
-App URL: http://localhost:8080
+App URL: https://collabodraw-bdd2.onrender.com
 
 ## Build and Test
 

@@ -509,10 +509,17 @@
     }
 
     .btn-group {
-      display: flex;
-      gap: 12px;
-    }
+  display: flex;
+  align-items: center;
+}
 
+.btn-group .btn-primary {
+  margin-right: 6px;
+}
+
+.logout-btn {
+  margin-left: auto;
+}
     /* Security Settings */
     .security-item {
       display: flex;
@@ -682,7 +689,24 @@
         border-bottom-color: var(--main-green);
       }
     }
+    .logout-btn {
+  background: #16a34a;          /* same green as your theme */
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
 
+.logout-btn:hover {
+  background: #15803d;          /* darker green on hover */
+}
+
+.logout-btn:active {
+  transform: scale(0.97);
+}
     @media (max-width: 700px) {
       .main-content {
         margin-left: var(--sidebar-collapsed-width);
@@ -824,14 +848,21 @@
                 <label class="form-label">Bio</label>
                 <textarea class="form-textarea" th:field="*{bio}" th:placeholder="${currentUser?.username ?: 'Tell us about yourself...'}"></textarea>
               </div>
-              
+            </form>
+
               <div class="btn-group">
                 <button type="submit" class="btn btn-primary">Save Changes</button>
                 <button type="reset" class="btn btn-secondary">Cancel</button>
+                <button type="button" class="logout-btn" onclick="logout()">Sign Out</button>
               </div>
-            </form>
-          </section>
+              <form id="logoutForm" th:action="@{/logout}" method="post" style="display:none;"></form>
 
+          </section>
+          <script>
+            function logout() {
+              document.getElementById('logoutForm').submit();
+            }
+            </script>
           <!-- Account Security Section -->
           <section class="settings-section" id="account" style="display: none;">
             <h2 class="section-title">Advanced Settings</h2>
