@@ -81,6 +81,7 @@ public class CollaborationWsController {
     public void cursor(@DestinationVariable Long boardId, @Payload CursorMessage msg, Principal principal,
                        @Header("simpSessionId") String sessionId) {
         Long userId = resolveUserId(principal);
+        String displayName = resolveDisplayName(principal, sessionId);
         // Update persistent cursor position only for authenticated users
         if (userId != null) {
             Long cursorId = cursorRepository.findCursorId(boardId, userId);
@@ -94,11 +95,8 @@ public class CollaborationWsController {
         Map<String, Object> event = new HashMap<>();
         event.put("type", "cursor");
         event.put("userId", userId);
-        // Provide a stable guest name when unauthenticated so clients can show active users
-        String uname = (principal != null && principal.getName() != null && !principal.getName().isBlank())
-                ? principal.getName()
-                : (sessionId != null ? ("Guest-" + sessionId.substring(0, Math.min(6, sessionId.length()))) : "Guest");
-        event.put("username", uname);
+        event.put("username", displayName);
+        event.put("displayName", displayName);
         event.put("x", msg.x);
         event.put("y", msg.y);
         event.put("timestamp", LocalDateTime.now().toString());
@@ -163,5 +161,21 @@ public class CollaborationWsController {
         if (principal == null) return null;
         User user = userService.findByUsername(principal.getName());
         return user != null ? user.getUserId() : null;
+    }
+
+    private String resolveDisplayName(Principal principal, String sessionId) {
+        if (principal != null) {
+            User user = userService.findByUsername(principal.getName());
+            if (user != null && user.getUsername() != null && !user.getUsername().isBlank()) {
+                return user.getUsername();
+            }
+            if (principal.getName() != null && !principal.getName().isBlank()) {
+                return principal.getName();
+            }
+        }
+
+        return sessionId != null
+                ? "Guest-" + sessionId.substring(0, Math.min(6, sessionId.length()))
+                : "Guest";
     }
 }

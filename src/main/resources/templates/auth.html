@@ -451,6 +451,16 @@
       e.preventDefault();
       showTab('login');
     });
+
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const activeTab = params.get('tab');
+      if (activeTab === 'signup') {
+        showTab('signup');
+      } else {
+        showTab('login');
+      }
+    } catch (_) {}
   </script>
   <script th:src="@{/auth.js}"></script></body>
 </html>

@@ -5,11 +5,13 @@ import com.example.collabodraw.model.dto.UserRegistrationDto;
 import com.example.collabodraw.service.DatabaseHealthService;
 import com.example.collabodraw.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.validation.BindingResult;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * Controller for authentication-related endpoints
@@ -26,14 +28,23 @@ public class AuthController {
     }
 
     @GetMapping("/auth")
-    public String loginPage(@RequestParam(value = "error", required = false) String error, Model model) {
+    public String loginPage(
+            @RequestParam(value = "error", required = false) String error,
+            @RequestParam(value = "message", required = false) String message,
+            @RequestParam(value = "tab", required = false) String tab,
+            Model model) {
         boolean databaseAvailable = databaseHealthService.refresh();
         model.addAttribute("databaseAvailable", databaseAvailable);
         model.addAttribute("databaseMessage", databaseHealthService.getLastStatusMessage());
         model.addAttribute("databaseReason", databaseHealthService.getLastFailureReason());
+        model.addAttribute("activeTab", (tab == null || tab.isBlank()) ? "login" : tab);
 
         if (!databaseAvailable && error == null) {
             model.addAttribute("error", "Aiven/MySQL is currently unavailable. " + databaseHealthService.getLastFailureReason());
+        }
+
+        if (message != null && !message.isBlank()) {
+            model.addAttribute("message", message);
         }
 
         if (error != null) {
@@ -47,15 +58,26 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String register(@Valid UserRegistrationDto user, Model model) {
+    public String register(@Valid UserRegistrationDto user, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addAttribute("error", "Please check the registration form and try again.");
+            redirectAttributes.addAttribute("tab", "signup");
+            return "redirect:/auth";
+        }
+
         try {
             userService.registerUser(user);
-            model.addAttribute("message", "Registration successful! Please log in.");
+            redirectAttributes.addAttribute("message", "Registration successful! Please log in.");
+            redirectAttributes.addAttribute("tab", "login");
+            return "redirect:/auth";
         } catch (UserAlreadyExistsException e) {
-            model.addAttribute("error", e.getMessage());
+            redirectAttributes.addAttribute("error", e.getMessage());
+            redirectAttributes.addAttribute("tab", "signup");
+            return "redirect:/auth";
         } catch (Exception e) {
-            model.addAttribute("error", "Registration failed: " + e.getMessage());
+            redirectAttributes.addAttribute("error", "Registration failed: " + e.getMessage());
+            redirectAttributes.addAttribute("tab", "signup");
+            return "redirect:/auth";
         }
-        return "auth";
     }
 }

@@ -109,15 +109,16 @@ const RealTime = {
   handleCursorEvent(evt) {
     if (!evt || evt.type !== 'cursor') return;
     
-    const myName = (window.CD && window.CD.currentUserName) || (AppState.getCurrentUser().name);
-    if (evt.username && myName && evt.username === myName) return;
+    const myName = (window.CD && window.CD.currentUserName) || AppState.getCurrentUser().name;
+    const remoteName = evt.displayName || evt.username || String(evt.userId || '');
+    if (remoteName && myName && remoteName === myName) return;
     
-    const key = evt.userId || evt.username || 'unknown';
+    const key = evt.userId || remoteName || 'unknown';
     AppState.remoteCursors[key] = {
       x: evt.x || 0,
       y: evt.y || 0,
-      name: evt.username || String(evt.userId || ''),
-      color: this.colorFromString((evt.username || String(evt.userId || '')))
+      name: remoteName,
+      color: this.colorFromString(remoteName || String(evt.userId || ''))
     };
     
     const cursorName = AppState.remoteCursors[key].name;
