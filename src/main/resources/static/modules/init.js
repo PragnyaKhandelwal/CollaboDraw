@@ -3,6 +3,10 @@
  * Coordinates module initialization and event setup
  */
 
+let isPanningCanvas = false;
+let lastPanClientX = 0;
+let lastPanClientY = 0;
+
 /**
  * Initialize the entire application
  */
@@ -43,6 +47,10 @@ async function initializeApp() {
     UIControls.initializeTools();
     setupEventListeners();
     UIControls.selectTool('pen');
+
+    // Resolve the active board before loading any cached state.
+    // This keeps session boards isolated from stale data from other boards.
+    await ensureStartupBoard();
     
     // Load state
     Storage.loadBoardState();
@@ -108,9 +116,9 @@ function setupEventListeners() {
       
       try {
         const boardNumeric = String(window.CD.boardId).replace(/^board-/, '');
-        CollaboSocket.updateCursor(boardNumeric, x, y);
+        const currentName = (window.CD && window.CD.currentUserName) || AppState.getCurrentUser().name;
+        CollaboSocket.updateCursor(boardNumeric, x, y, AppState.getClientId(), currentName);
         lastCursorSend = now;
-        console.log(`Cursor sent: (${Math.round(x)}, ${Math.round(y)})`);
       } catch (err) {
         // ignore
       }
@@ -157,22 +165,45 @@ function handleCanvasClick(e) {
  * Handle canvas mouse down (drag start)
  */
 function handleCanvasMouseDown(e) {
-  // Placeholder for generic canvas mouse down
-  // Element-specific handlers are in ElementManager
+  if (AppState.currentTool !== 'hand') return;
+  if (e.button !== 0) return;
+
+  isPanningCanvas = true;
+  lastPanClientX = e.clientX;
+  lastPanClientY = e.clientY;
+  AppState.mainCanvas.style.cursor = 'grabbing';
+  e.preventDefault();
 }
 
 /**
  * Handle canvas mouse move
  */
 function handleCanvasMouseMove(e) {
-  // Could be extended for drawing shapes, etc.
+  if (!isPanningCanvas || AppState.currentTool !== 'hand') return;
+
+  const dx = e.clientX - lastPanClientX;
+  const dy = e.clientY - lastPanClientY;
+  lastPanClientX = e.clientX;
+  lastPanClientY = e.clientY;
+
+  AppState.panX += dx / AppState.zoomLevel;
+  AppState.panY += dy / AppState.zoomLevel;
+  Canvas.updateZoom();
+  e.preventDefault();
 }
 
 /**
  * Handle canvas mouse up (drag end)
  */
 function handleCanvasMouseUp(e) {
-  // Handled in ElementManager and DrawingTools
+  if (!isPanningCanvas) return;
+  isPanningCanvas = false;
+
+  if (AppState.currentTool === 'hand') {
+    AppState.mainCanvas.style.cursor = 'grab';
+  }
+
+  e.preventDefault();
 }
 
 /**
@@ -582,11 +613,7 @@ async function ensureStartupBoard() {
     const requestedName = (qp.get('name') || (window.CD && window.CD.boardName) || '').trim();
     let boardId = window.CD && window.CD.boardId ? Number(window.CD.boardId) : null;
 
-    if (Number.isFinite(boardId) && boardId > 0) {
-      const resp = await fetch(`/api/boards/${boardId}`, { credentials: 'include' });
-      if (resp.ok) return;
-    }
-
+    // Session code explicitly overrides stale board query state so users can switch rooms reliably.
     if (sessionCode) {
       const res = await fetch('/api/boards/session', {
         method: 'POST',
@@ -608,6 +635,11 @@ async function ensureStartupBoard() {
         if (bn) { bn.value = data.name || bn.value || `Session ${sessionCode}`; bn.disabled = true; }
         return;
       }
+    }
+
+    if (Number.isFinite(boardId) && boardId > 0) {
+      const resp = await fetch(`/api/boards/${boardId}`, { credentials: 'include' });
+      if (resp.ok) return;
     }
 
     if (!boardId && !previewId && wantsNewBoard) {
@@ -895,6 +927,37 @@ function initializeTooltips() {
       globalTooltip.className = 'tooltip';
       document.body.appendChild(globalTooltip);
     }
+
+    const placeTooltipBelow = (el) => {
+      if (!el) return;
+
+      const rect = el.getBoundingClientRect();
+      const docX = window.scrollX || window.pageXOffset || 0;
+      const docY = window.scrollY || window.pageYOffset || 0;
+      const gap = 10;
+
+      // Ensure dimensions are measurable before positioning.
+      globalTooltip.style.visibility = 'hidden';
+      globalTooltip.style.position = 'absolute';
+      globalTooltip.classList.add('show');
+      
+      // Get tooltip dimensions after showing
+      const tipWidth = globalTooltip.offsetWidth || 150;
+      const tipHeight = globalTooltip.offsetHeight || 30;
+
+      // Center tooltip horizontally under the element
+      let left = rect.left + (rect.width / 2) - (tipWidth / 2) + docX;
+      const minLeft = docX + 8;
+      const maxLeft = docX + window.innerWidth - tipWidth - 8;
+      left = Math.max(minLeft, Math.min(left, maxLeft));
+
+      // Position tooltip below the element with gap
+      const top = rect.bottom + gap + docY;
+      
+      globalTooltip.style.left = `${left}px`;
+      globalTooltip.style.top = `${top}px`;
+      globalTooltip.style.visibility = '';
+    };
     
     document.addEventListener('mouseover', (e) => {
       const el = e.target.closest('[data-tooltip]');
@@ -902,9 +965,7 @@ function initializeTooltips() {
       const text = el.getAttribute('data-tooltip');
       if (text) {
         globalTooltip.innerHTML = text;
-        const rect = el.getBoundingClientRect();
-        globalTooltip.style.left = (rect.left + rect.width / 2) + 'px';
-        globalTooltip.style.top = (rect.top - 10) + 'px';
+        placeTooltipBelow(el);
         globalTooltip.classList.add('show');
       }
     });
@@ -913,9 +974,7 @@ function initializeTooltips() {
       if (globalTooltip.classList.contains('show')) {
         const el = e.target.closest('[data-tooltip]');
         if (el) {
-          const rect = el.getBoundingClientRect();
-          globalTooltip.style.left = (rect.left + rect.width / 2) + 'px';
-          globalTooltip.style.top = (rect.top - 10) + 'px';
+          placeTooltipBelow(el);
         }
       }
     });

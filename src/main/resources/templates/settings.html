@@ -517,9 +517,6 @@
   margin-right: 6px;
 }
 
-.logout-btn {
-  margin-left: auto;
-}
     /* Security Settings */
     .security-item {
       display: flex;
@@ -689,24 +686,20 @@
         border-bottom-color: var(--main-green);
       }
     }
-    .logout-btn {
-  background: #16a34a;          /* same green as your theme */
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+      border: 1px solid #fca5a5;
+    }
 
-.logout-btn:hover {
-  background: #15803d;          /* darker green on hover */
-}
+    .btn-danger:hover {
+      background: #dc2626;
+      transform: translateY(-1px);
+    }
 
-.logout-btn:active {
-  transform: scale(0.97);
-}
+    .btn-danger:active {
+      transform: scale(0.97);
+    }
     @media (max-width: 700px) {
       .main-content {
         margin-left: var(--sidebar-collapsed-width);
@@ -853,7 +846,7 @@
               <div class="btn-group">
                 <button type="submit" class="btn btn-primary">Save Changes</button>
                 <button type="reset" class="btn btn-secondary">Cancel</button>
-                <button type="button" class="logout-btn" onclick="logout()">Sign Out</button>
+                <button type="button" class="btn btn-danger" onclick="logout()">Sign Out</button>
               </div>
               <form id="logoutForm" th:action="@{/logout}" method="post" style="display:none;"></form>
 

@@ -47,9 +47,14 @@
     stompClient.send(`/app/board/${boardId}/heartbeat`, { 'content-type': 'application/json' }, JSON.stringify({}));
   }
 
-  function updateCursor(boardId, x, y){
+  function updateCursor(boardId, x, y, clientId, displayName){
     if (!stompClient) return;
-    stompClient.send(`/app/board/${boardId}/cursor`, { 'content-type': 'application/json' }, JSON.stringify({ x: Number(x)||0, y: Number(y)||0 }));
+    stompClient.send(`/app/board/${boardId}/cursor`, { 'content-type': 'application/json' }, JSON.stringify({
+      x: Number(x)||0,
+      y: Number(y)||0,
+      clientId: clientId || null,
+      displayName: displayName || null
+    }));
   }
 
   function subscribeParticipants(boardId, handler){

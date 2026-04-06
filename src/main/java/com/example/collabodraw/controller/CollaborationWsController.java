@@ -75,13 +75,15 @@ public class CollaborationWsController {
     public static class CursorMessage {
         public int x;
         public int y;
+        public String clientId;
+        public String displayName;
     }
 
     @MessageMapping("/board/{boardId}/cursor")
     public void cursor(@DestinationVariable Long boardId, @Payload CursorMessage msg, Principal principal,
                        @Header("simpSessionId") String sessionId) {
         Long userId = resolveUserId(principal);
-        String displayName = resolveDisplayName(principal, sessionId);
+        String displayName = resolveDisplayName(principal, sessionId, msg != null ? msg.displayName : null);
         // Update persistent cursor position only for authenticated users
         if (userId != null) {
             Long cursorId = cursorRepository.findCursorId(boardId, userId);
@@ -97,6 +99,7 @@ public class CollaborationWsController {
         event.put("userId", userId);
         event.put("username", displayName);
         event.put("displayName", displayName);
+        event.put("clientId", msg.clientId);
         event.put("x", msg.x);
         event.put("y", msg.y);
         event.put("timestamp", LocalDateTime.now().toString());
@@ -163,7 +166,7 @@ public class CollaborationWsController {
         return user != null ? user.getUserId() : null;
     }
 
-    private String resolveDisplayName(Principal principal, String sessionId) {
+    private String resolveDisplayName(Principal principal, String sessionId, String requestedDisplayName) {
         if (principal != null) {
             User user = userService.findByUsername(principal.getName());
             if (user != null && user.getUsername() != null && !user.getUsername().isBlank()) {
@@ -172,6 +175,10 @@ public class CollaborationWsController {
             if (principal.getName() != null && !principal.getName().isBlank()) {
                 return principal.getName();
             }
+        }
+
+        if (requestedDisplayName != null && !requestedDisplayName.isBlank()) {
+            return requestedDisplayName;
         }
 
         return sessionId != null

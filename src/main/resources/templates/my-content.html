@@ -280,6 +280,52 @@
       cursor: pointer;
     }
 
+    /* Standard Button Styles */
+    .btn {
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: none;
+      font-size: 14px;
+    }
+
+    .btn-primary {
+      background: var(--main-green);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #1a9966;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--light-gray);
+      color: var(--text-dark);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border);
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+      border: 1px solid #fca5a5;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+      transform: translateY(-1px);
+    }
+
+    .btn-danger:active {
+      transform: scale(0.97);
+    }
+
     /* Content */
     .content {
       flex: 1;

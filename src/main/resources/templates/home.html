@@ -278,6 +278,52 @@
             cursor: pointer;
         }
 
+        /* Standard Button Styles */
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: var(--main-green);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1a9966;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--light-gray);
+            color: var(--text-dark);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+            border: 1px solid #fca5a5;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger:active {
+            transform: scale(0.97);
+        }
+
         /* Dashboard Content */
         .dashboard-content {
             flex: 1;
@@ -536,24 +582,6 @@
             color: var(--gray);
             font-size: 14px;
         }
-        .logout-btn {
-  background: #16a34a;          /* same green as your theme */
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.logout-btn:hover {
-  background: #15803d;          /* darker green on hover */
-}
-
-.logout-btn:active {
-  transform: scale(0.97);
-}
         /* Responsive */
         @media (max-width: 700px) {
             .main-content {
@@ -634,7 +662,7 @@
         <input type="text" class="search-input" placeholder="Search boards, templates, or teammates...">
       </div>
       <div class="header-right">
-        <button class="notification-btn" id="homeNotifBtn"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg></button>
+        <button class="notification-btn" id="homeNotifBtn">🔔</button>
         <div id="homeNotifDropdown" style="display:none; position:absolute; top:70px; right:32px; background:#ffffff; color:#111827; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); width:280px; z-index:50;">
           <div style="padding:12px 16px; font-weight:600; border-bottom:1px solid #f3f4f6;">Notifications</div>
           <div style="padding:12px 16px; font-size:14px;">
@@ -643,11 +671,6 @@
           </div>
         </div>
         <div class="avatar" onclick="window.location.href='/settings'" th:text="${currentUser?.username?.substring(0,2)?.toUpperCase() ?: 'JD'}">JD</div>
-        <form th:action="@{/logout}" method="post" style="display:inline;">
-          <button type="submit" class="logout-btn">
-            Sign Out
-          </button>
-        </form>
       </div>
     </header>
 

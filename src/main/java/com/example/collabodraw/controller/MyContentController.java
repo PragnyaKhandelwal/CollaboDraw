@@ -44,9 +44,9 @@ public class MyContentController {
 
         if (currentUser != null) {
             model.addAttribute("currentUser", currentUser);
-            List<Board> myBoards = whiteboardService.getWhiteboardsByOwner(currentUser.getUserId());
-            model.addAttribute("boards", myBoards);
-            model.addAttribute("totalBoards", myBoards != null ? myBoards.size() : 0);
+            List<Board> accessibleBoards = whiteboardService.getAccessibleWhiteboards(currentUser.getUserId());
+            model.addAttribute("boards", accessibleBoards);
+            model.addAttribute("totalBoards", accessibleBoards != null ? accessibleBoards.size() : 0);
 
             var shared = membershipRepository.findByUserId(currentUser.getUserId());
             long sharedWithOthers = shared.stream().filter(m -> !"owner".equalsIgnoreCase(m.getRole())).count();

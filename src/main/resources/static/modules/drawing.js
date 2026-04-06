@@ -104,6 +104,7 @@ const DrawingTools = {
           CollaboSocket.publishElement(boardNumeric, {
             kind: 'stroke',
             payload: {
+              originClientId: AppState.getClientId(),
               points: partialPoints,
               color: window._currentStroke.color,
               width: window._currentStroke.width,
@@ -152,6 +153,7 @@ const DrawingTools = {
         CollaboSocket.publishElement(boardNumeric, {
           kind: 'stroke',
           payload: {
+            originClientId: AppState.getClientId(),
             points: window._currentStroke.points,
             color: window._currentStroke.color,
             width: window._currentStroke.width,

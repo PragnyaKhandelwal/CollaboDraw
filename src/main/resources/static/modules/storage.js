@@ -4,6 +4,36 @@
  */
 
 const Storage = {
+  getBoardStorageKey() {
+    const boardId = AppState.getBoardId();
+    return boardId ? `collabodraw-board-${boardId}` : 'collabodraw-board';
+  },
+
+  getVersionHistoryKey() {
+    const boardId = AppState.getBoardId();
+    return boardId ? `collabodraw-versions-${boardId}` : 'collabodraw-versions';
+  },
+
+  resetBoardState() {
+    const container = document.getElementById('canvasElements');
+    if (container) {
+      container.innerHTML = '';
+    }
+
+    if (AppState.ctx && AppState.canvas) {
+      AppState.ctx.clearRect(0, 0, AppState.canvas.width, AppState.canvas.height);
+    }
+
+    AppState.boardData = {
+      name: AppState.boardData?.name || 'Untitled Board',
+      elements: '',
+      settings: {}
+    };
+
+    AppState.selectedElements = [];
+    AppState.clipboard = [];
+  },
+
   /**
    * Save board state to localStorage and server
    */
@@ -37,7 +67,7 @@ const Storage = {
       color: AppState.currentColor
     };
     
-    localStorage.setItem('collabodraw-board', JSON.stringify(AppState.boardData));
+    localStorage.setItem(this.getBoardStorageKey(), JSON.stringify(AppState.boardData));
     
     // Persist to server
     try {
@@ -63,8 +93,11 @@ const Storage = {
    * Load board state from localStorage
    */
   loadBoardState() {
-    const saved = localStorage.getItem('collabodraw-board');
-    if (!saved) return;
+    const saved = localStorage.getItem(this.getBoardStorageKey());
+    if (!saved) {
+      this.resetBoardState();
+      return;
+    }
     
     try {
       AppState.boardData = JSON.parse(saved);
@@ -116,7 +149,7 @@ const Storage = {
    * Get version history from localStorage
    */
   getVersionHistory() {
-    const history = JSON.parse(localStorage.getItem('collabodraw-versions') || '[]');
+    const history = JSON.parse(localStorage.getItem(this.getVersionHistoryKey()) || '[]');
     return history.slice(0, 10);
   },
 
@@ -138,7 +171,7 @@ const Storage = {
     versions.unshift(newVersion);
     versions.splice(10);
     
-    localStorage.setItem('collabodraw-versions', JSON.stringify(versions));
+    localStorage.setItem(this.getVersionHistoryKey(), JSON.stringify(versions));
     this.updateVersionHistory();
 
     // Broadcast version event
@@ -244,14 +277,20 @@ const Storage = {
     }
     
     const saveData = {
-      boardId: boardId,
-      content: container.innerHTML,
-      boardName: AppState.boardData.name,
-      timestamp: new Date().toISOString()
+      elements: container.innerHTML,
+      settings: {
+        zoom: AppState.zoomLevel,
+        pan: { x: AppState.panX, y: AppState.panY },
+        timer: AppState.timerSeconds,
+        tool: AppState.currentTool,
+        color: AppState.currentColor
+      },
+      name: document.getElementById('boardName')?.value || AppState.boardData.name || 'Untitled Board'
     };
-    
-    fetch(`/api/boards/${boardId}/save`, {
+
+    fetch(`/api/boards/${boardId}/content`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(saveData)
     })

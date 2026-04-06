@@ -4,11 +4,72 @@
  */
 
 const RealTime = {
+  _serverParticipants: [],
+
+  resetPresenceState() {
+    this._serverParticipants = [];
+    AppState.remoteCursors = {};
+    AppState.users = [];
+    AppState._lastParticipants = new Set();
+  },
+
+  getPresenceIdentity(userId, username, clientId) {
+    if (userId !== null && userId !== undefined && userId !== '') {
+      return `user:${userId}`;
+    }
+    if (clientId) {
+      return `client:${clientId}`;
+    }
+    if (username) {
+      return `name:${String(username).toLowerCase()}`;
+    }
+    return null;
+  },
+
+  rebuildPresenceUsers() {
+    const usersById = new Map();
+
+    const upsert = (identity, userId, name, color) => {
+      if (!identity) return;
+      usersById.set(String(identity), {
+        id: String(identity),
+        userId: userId ?? identity,
+        userId: id,
+        name: name || 'User',
+        initials: ((name || 'U').substring(0, 2) || 'U').toUpperCase(),
+        color: color || this.colorFromString(String(name || id))
+      });
+    };
+
+    const me = AppState.getCurrentUser();
+    const meIdentity = this.getPresenceIdentity(window.CD && window.CD.currentUserId, me && me.name, me && me.id);
+    if (meIdentity) {
+      upsert(meIdentity, window.CD && window.CD.currentUserId ? window.CD.currentUserId : me.id, me.name, me.color);
+    }
+
+    (this._serverParticipants || []).forEach((p) => {
+      const identity = this.getPresenceIdentity(p.userId, p.name, null);
+      upsert(identity, p.userId, p.name, p.color);
+    });
+
+    Object.keys(AppState.remoteCursors || {}).forEach((key) => {
+      const c = AppState.remoteCursors[key];
+      const identity = this.getPresenceIdentity(c.userId, c.name, c.clientId || key);
+      upsert(identity, c.userId, c.name, c.color);
+    });
+
+    AppState.users = Array.from(usersById.values());
+    UIControls.updateActiveUsers();
+    this.updateAvatarDisplay();
+  },
+
   /**
    * Start real-time synchronization
    */
   startSync() {
     try {
+      this.resetPresenceState();
+
       let bid = window.CD && window.CD.boardId;
       if (!bid) return;
       if (typeof bid === 'string') bid = parseInt(bid.replace(/^board-/, ''), 10);
@@ -83,23 +144,20 @@ const RealTime = {
         initials: (p.username || 'U').substring(0,2).toUpperCase(),
         color: this.colorFromString(p.username || String(p.userId))
       }));
-      
-      const effective = mapped.length === 0 && AppState.users.length > 0 ? AppState.users : mapped;
-      const current = new Set(effective.map(m => m.name || String(m.userId)));
+
+      const current = new Set(mapped.map(m => `user:${m.userId}`));
       const joined = [];
       const left = [];
       
       current.forEach(n => { if (!AppState._lastParticipants.has(n)) joined.push(n); });
       AppState._lastParticipants.forEach(n => { if (!current.has(n)) left.push(n); });
       
-      if (joined.length) this.notify(`${joined.join(', ')} joined`);
-      if (left.length) this.notify(`${left.join(', ')} left`);
+      if (joined.length) this.notify('A collaborator joined');
+      if (left.length) this.notify('A collaborator left');
       
       AppState._lastParticipants = current;
-      AppState.users = effective;
-      
-      UIControls.updateActiveUsers();
-      this.updateAvatarDisplay();
+      this._serverParticipants = mapped;
+      this.rebuildPresenceUsers();
     } catch (e) { console.warn('participants mapping failed', e); }
   },
 
@@ -109,31 +167,21 @@ const RealTime = {
   handleCursorEvent(evt) {
     if (!evt || evt.type !== 'cursor') return;
     
-    const myName = (window.CD && window.CD.currentUserName) || AppState.getCurrentUser().name;
+    const myClientId = AppState.getClientId();
     const remoteName = evt.displayName || evt.username || String(evt.userId || '');
-    if (remoteName && myName && remoteName === myName) return;
+    if (evt.clientId && myClientId && evt.clientId === myClientId) return;
     
-    const key = evt.userId || remoteName || 'unknown';
+    const key = evt.userId || evt.clientId || remoteName || 'unknown';
     AppState.remoteCursors[key] = {
       x: evt.x || 0,
       y: evt.y || 0,
       name: remoteName,
+      userId: evt.userId || null,
+      clientId: evt.clientId || null,
       color: this.colorFromString(remoteName || String(evt.userId || ''))
     };
-    
-    const cursorName = AppState.remoteCursors[key].name;
-    if (cursorName && !AppState.users.some(u => u.name === cursorName)) {
-      AppState.users.push({
-        id: key,
-        userId: key,
-        name: cursorName,
-        initials: (cursorName.substring(0,2) || 'U').toUpperCase(),
-        color: AppState.remoteCursors[key].color
-      });
-      UIControls.updateActiveUsers();
-      this.notify(cursorName + ' joined');
-    }
-    
+
+    this.rebuildPresenceUsers();
     Canvas.renderRemoteCursors();
   },
 
@@ -144,10 +192,10 @@ const RealTime = {
     try {
       if (!meta || !meta.kind) return;
       const kind = meta.kind;
-      const currentUserName = (window.CD && window.CD.currentUserName) || AppState.getCurrentUser().name;
+      const myClientId = AppState.getClientId();
 
-      // Ignore live echoes of our own stroke broadcasts; replay keeps them visible.
-      if (!meta.replay && meta.by && currentUserName && meta.by === currentUserName && kind === 'stroke') {
+      // Ignore only this tab's own live stroke echoes; do not suppress same-user other tabs.
+      if (!meta.replay && kind === 'stroke' && payload && payload.originClientId && myClientId && payload.originClientId === myClientId) {
         return;
       }
       

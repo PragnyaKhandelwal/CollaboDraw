@@ -50,6 +50,11 @@ public class WhiteboardService {
         return boardRepository.findByOwnerId(ownerId);
     }
 
+    public List<Board> getAccessibleWhiteboards(Long userId) {
+        if (userId == null) return List.of();
+        return boardRepository.findAccessibleByUserId(userId);
+    }
+
     public Board getWhiteboardById(Long id) {
         return boardRepository.findById(id);
     }
@@ -68,13 +73,29 @@ public class WhiteboardService {
         if (board == null) {
             throw new RuntimeException("Board not found with ID: " + boardId);
         }
-        
+
+        String targetRole = (role == null || role.isBlank()) ? "viewer" : role.toLowerCase();
+
         // Check if user is already a member
         BoardMembership existingMembership = boardMembershipRepository.findByBoardIdAndUserId(boardId, userId);
         if (existingMembership == null) {
-            BoardMembership membership = new BoardMembership(boardId, userId, role);
+            BoardMembership membership = new BoardMembership(boardId, userId, targetRole);
             boardMembershipRepository.save(membership);
+            return;
         }
+
+        // Upgrade role when needed (viewer -> editor -> owner).
+        String currentRole = existingMembership.getRole() == null ? "viewer" : existingMembership.getRole().toLowerCase();
+        if (roleRank(targetRole) > roleRank(currentRole)) {
+            existingMembership.setRole(targetRole);
+            boardMembershipRepository.save(existingMembership);
+        }
+    }
+
+    private int roleRank(String role) {
+        if ("owner".equalsIgnoreCase(role)) return 3;
+        if ("editor".equalsIgnoreCase(role)) return 2;
+        return 1;
     }
 
     public String getUserRoleInWhiteboard(Long userId, Long boardId) {
@@ -117,20 +138,29 @@ public class WhiteboardService {
             throw new IllegalArgumentException("Session code is required");
         }
         String normalized = code.trim().toLowerCase();
+        String canonicalName = "Session " + normalized;
 
         // 1) Fast path: mapping table
         Long mappedId = sessionRoomRepository.findBoardIdByCode(normalized);
         if (mappedId != null) {
             Board board = boardRepository.findById(mappedId);
             if (board != null) {
-                addUserToWhiteboard(board.getBoardId(), currentUserId, "viewer");
+                addUserToWhiteboard(board.getBoardId(), currentUserId, "editor");
                 return board;
             }
             // mapping exists but board missing => fall through to recreate
         }
 
+        // 1.5) Recovery path: if mapping table is empty/missing for an existing session board,
+        // recover by canonical name and re-create mapping.
+        Board existingByCanonicalName = boardRepository.findFirstByName(canonicalName);
+        if (existingByCanonicalName != null) {
+            sessionRoomRepository.createMapping(normalized, existingByCanonicalName.getBoardId());
+            addUserToWhiteboard(existingByCanonicalName.getBoardId(), currentUserId, "editor");
+            return existingByCanonicalName;
+        }
+
         // 2) Create a new board with canonical name and try to claim the mapping atomically
-        String canonicalName = "Session " + normalized;
         WhiteboardDto dto = new WhiteboardDto(canonicalName, currentUserId, false);
         Board created = createWhiteboard(dto);
         addUserToWhiteboard(created.getBoardId(), currentUserId, "owner");
@@ -145,7 +175,7 @@ public class WhiteboardService {
         if (winnerId != null) {
             Board winner = boardRepository.findById(winnerId);
             if (winner != null) {
-                addUserToWhiteboard(winner.getBoardId(), currentUserId, "viewer");
+                addUserToWhiteboard(winner.getBoardId(), currentUserId, "editor");
                 return winner;
             }
         }

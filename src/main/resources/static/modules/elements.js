@@ -209,11 +209,20 @@ const ElementManager = {
       element.classList.add('selected');
       AppState.selectedElements.push(element);
     }
+
+    if (typeof UIControls !== 'undefined') {
+      const active = AppState.selectedElements[AppState.selectedElements.length - 1] || null;
+      UIControls.updatePropertiesPanel(active);
+    }
   },
 
   clearSelection() {
     AppState.selectedElements.forEach(el => el.classList.remove('selected'));
     AppState.selectedElements = [];
+
+    if (typeof UIControls !== 'undefined') {
+      UIControls.updatePropertiesPanel(null);
+    }
   },
 
   editElement(element) {

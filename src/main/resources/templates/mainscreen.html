@@ -97,6 +97,7 @@
         position: relative !important;
       }
 
+      /** Arrow pointing UP - for tooltip below element (default) **/
       .tooltip::after {
         content: "";
         position: absolute;
@@ -271,6 +272,52 @@
       .header-btn:hover {
         background: rgba(255, 255, 255, 0.1);
         transform: translateY(-1px);
+      }
+
+      /* Standard Button Styles (for consistency with other pages) */
+      .btn {
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        border: none;
+        font-size: 14px;
+      }
+
+      .btn-primary {
+        background: var(--main-green);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #1a9966;
+        transform: translateY(-1px);
+      }
+
+      .btn-secondary {
+        background: var(--light-gray);
+        color: var(--text-dark);
+        border: 1px solid var(--border);
+      }
+
+      .btn-secondary:hover {
+        background: var(--border);
+      }
+
+      .btn-danger {
+        background: #ef4444;
+        color: white;
+        border: 1px solid #fca5a5;
+      }
+
+      .btn-danger:hover {
+        background: #dc2626;
+        transform: translateY(-1px);
+      }
+
+      .btn-danger:active {
+        transform: scale(0.97);
       }
 
       .user-avatars {
@@ -547,7 +594,7 @@
       .canvas-toolbar {
         position: absolute;
         top: 20px;
-        left: 20px;
+        right: 20px;
         display: flex;
         gap: 8px;
         background: white;
@@ -556,11 +603,11 @@
         border: 1px solid var(--border);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         z-index: 850;
-        transition: left 0.3s ease;
+        transition: right 0.3s ease;
       }
 
       .traybar-visible .canvas-toolbar {
-        left: 85px;
+        right: 20px;
       }
 
       .toolbar-btn {
@@ -989,10 +1036,10 @@
           left: 10px;
         }
         .canvas-toolbar {
-          left: 10px;
+          right: 10px;
         }
         .traybar-visible .canvas-toolbar {
-          left: 65px;
+          right: 10px;
         }
         .header-center {
           display: none;
@@ -1593,6 +1640,8 @@
         const seedTemplate = /*[[${seedTemplate}]]*/ null;
         const currentUserName =
           /*[[${currentUser != null ? currentUser.username : null}]]*/ null;
+        const currentUserId =
+          /*[[${currentUser != null ? currentUser.userId : null}]]*/ null;
         const currentUserInitials =
           /*[[${currentUser != null ? #strings.toUpperCase(currentUser.username.substring(0,2)) : null}]]*/ null;
 
@@ -1629,6 +1678,7 @@
           boardName,
           seedTemplate,
           currentUserName,
+          currentUserId,
           currentUserInitials,
         };
 

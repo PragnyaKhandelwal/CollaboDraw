@@ -59,6 +59,14 @@ public class BoardRepository {
         return jdbcTemplate.query(sql, boardRowMapper, ownerId);
     }
 
+    public List<Board> findAccessibleByUserId(Long userId) {
+        String sql = "SELECT DISTINCT b.* FROM boards b " +
+                "LEFT JOIN board_membership bm ON b.board_id = bm.board_id " +
+                "WHERE b.owner_id = ? OR bm.user_id = ? " +
+                "ORDER BY b.last_modified DESC";
+        return jdbcTemplate.query(sql, boardRowMapper, userId, userId);
+    }
+
     public List<Board> findAll() {
         String sql = "SELECT * FROM boards ORDER BY last_modified DESC";
         return jdbcTemplate.query(sql, boardRowMapper);

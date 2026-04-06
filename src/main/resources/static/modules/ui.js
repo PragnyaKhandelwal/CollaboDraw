@@ -211,6 +211,31 @@ const UIControls = {
   },
 
   /**
+   * Enable/disable properties controls depending on selection state
+   */
+  setPropertiesEnabled(enabled) {
+    ['bgColor', 'borderColor', 'opacity'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = !enabled;
+    });
+  },
+
+  /**
+   * Reset properties panel UI when no element is selected
+   */
+  resetPropertiesPanel() {
+    const bgColor = document.getElementById('bgColor');
+    const borderColor = document.getElementById('borderColor');
+    const opacity = document.getElementById('opacity');
+
+    if (bgColor) bgColor.value = '#ffffff';
+    if (borderColor) borderColor.value = '#000000';
+    if (opacity) opacity.value = 100;
+
+    this.setPropertiesEnabled(false);
+  },
+
+  /**
    * Update properties panel for selected element
    */
   updatePropertiesPanel(element) {
@@ -219,25 +244,54 @@ const UIControls = {
     const opacity = document.getElementById('opacity');
     
     if (!bgColor || !borderColor || !opacity) return;
+    if (!element) {
+      this.resetPropertiesPanel();
+      return;
+    }
+
+    this.setPropertiesEnabled(true);
     
     const computedStyle = window.getComputedStyle(element);
-    bgColor.value = this.rgbToHex(computedStyle.backgroundColor);
-    borderColor.value = this.rgbToHex(computedStyle.borderColor);
-    opacity.value = Math.round(parseFloat(computedStyle.opacity) * 100);
+    const bgHex = this.rgbToHex(element.style.backgroundColor || computedStyle.backgroundColor || '#ffffff');
+    const borderHex = this.rgbToHex(element.style.borderColor || computedStyle.borderColor || '#000000');
+    const opacityValue = Math.round((parseFloat(computedStyle.opacity) || 1) * 100);
+
+    bgColor.value = bgHex || '#ffffff';
+    borderColor.value = borderHex || '#000000';
+    opacity.value = Number.isFinite(opacityValue) ? Math.max(0, Math.min(100, opacityValue)) : 100;
+
+    const applyToSelected = (fn) => {
+      const selected = Array.isArray(AppState.selectedElements) && AppState.selectedElements.length > 0
+        ? AppState.selectedElements
+        : [element];
+
+      selected.forEach((el) => {
+        if (!el) return;
+        fn(el);
+      });
+      History.saveState();
+    };
     
     bgColor.onchange = () => {
-      element.style.backgroundColor = bgColor.value;
-      History.saveState();
+      applyToSelected((el) => {
+        el.style.backgroundColor = bgColor.value;
+      });
     };
     
     borderColor.onchange = () => {
-      element.style.borderColor = borderColor.value;
-      History.saveState();
+      applyToSelected((el) => {
+        if (!el.style.borderWidth || el.style.borderWidth === '0px') {
+          el.style.borderWidth = '1px';
+          el.style.borderStyle = 'solid';
+        }
+        el.style.borderColor = borderColor.value;
+      });
     };
     
     opacity.oninput = () => {
-      element.style.opacity = opacity.value / 100;
-      History.saveState();
+      applyToSelected((el) => {
+        el.style.opacity = opacity.value / 100;
+      });
     };
   },
 
@@ -245,10 +299,15 @@ const UIControls = {
    * Convert RGB to Hex
    */
   rgbToHex(rgb) {
-    if (rgb.startsWith('#')) return rgb;
-    const result = rgb.match(/\d+/g);
-    if (!result) return '#000000';
-    return '#' + result.map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
+    if (!rgb || typeof rgb !== 'string') return '#000000';
+    if (rgb.startsWith('#')) return rgb.length === 9 ? rgb.slice(0, 7) : rgb;
+    if (rgb === 'transparent') return '#ffffff';
+
+    const result = rgb.match(/\d+(\.\d+)?/g);
+    if (!result || result.length < 3) return '#000000';
+
+    const [r, g, b] = result.slice(0, 3).map((x) => Math.max(0, Math.min(255, Math.round(parseFloat(x)))));
+    return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
   },
 
   /**
@@ -292,6 +351,7 @@ const UIControls = {
     this.updateUserAvatars();
     Storage.updateVersionHistory();
     this.updateActiveUsers();
+    this.resetPropertiesPanel();
     
     const boardNameInput = document.getElementById('boardName');
     if (boardNameInput && !boardNameInput.disabled) {

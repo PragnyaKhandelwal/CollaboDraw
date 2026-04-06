@@ -94,6 +94,23 @@ const AppState = {
   generateId() {
     return 'id-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
   },
+
+  // Stable per-tab id to distinguish collaborators across tabs on same machine/session.
+  getClientId() {
+    try {
+      if (!this._clientId) {
+        const existing = sessionStorage.getItem('collabodraw-client-id');
+        this._clientId = existing || this.generateId();
+        sessionStorage.setItem('collabodraw-client-id', this._clientId);
+      }
+      return this._clientId;
+    } catch (_) {
+      if (!this._clientId) {
+        this._clientId = this.generateId();
+      }
+      return this._clientId;
+    }
+  },
   
   // Get board ID from various sources
   getBoardId() {

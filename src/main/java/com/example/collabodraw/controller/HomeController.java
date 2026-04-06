@@ -53,7 +53,7 @@ public class HomeController {
                 User currentUser = userService.findByUsername(username);
                 if (currentUser != null) {
                     model.addAttribute("currentUser", currentUser);
-                    var whiteboards = whiteboardService.getWhiteboardsByOwner(currentUser.getUserId());
+                    var whiteboards = whiteboardService.getAccessibleWhiteboards(currentUser.getUserId());
                     model.addAttribute("whiteboards", whiteboards);
                     model.addAttribute("popularTemplates", templateService.getPopularTemplates(10));
                 } else {
@@ -100,7 +100,7 @@ public class HomeController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
 
-            var boards = whiteboardService.getWhiteboardsByOwner(user.getUserId());
+            var boards = whiteboardService.getAccessibleWhiteboards(user.getUserId());
             var templates = templateService.getPopularTemplates(10);
 
             response.put("success", true);
