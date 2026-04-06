@@ -33,9 +33,17 @@ public class SessionRepository {
         jdbc.update("UPDATE sessions SET disconnected_at = NOW() WHERE session_id=? AND user_id=? AND disconnected_at IS NULL", sessionId, userId);
     }
 
+    public void endBySessionId(Long sessionId) {
+        jdbc.update("UPDATE sessions SET disconnected_at = NOW() WHERE session_id=? AND disconnected_at IS NULL", sessionId);
+    }
+
     public void heartbeat(Long sessionId, Long userId) {
         // reuse connected_at as last-seen for simplicity
         jdbc.update("UPDATE sessions SET connected_at = NOW() WHERE session_id=? AND user_id=? AND disconnected_at IS NULL", sessionId, userId);
+    }
+
+    public void heartbeatBySessionId(Long sessionId) {
+        jdbc.update("UPDATE sessions SET connected_at = NOW() WHERE session_id=? AND disconnected_at IS NULL", sessionId);
     }
 
     public void heartbeatByBoard(Long boardId, Long userId) {

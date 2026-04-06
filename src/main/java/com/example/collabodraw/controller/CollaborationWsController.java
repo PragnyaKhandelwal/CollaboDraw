@@ -5,16 +5,19 @@ import com.example.collabodraw.model.entity.User;
 import com.example.collabodraw.repository.CursorRepository;
 import com.example.collabodraw.repository.SessionRepository;
 import com.example.collabodraw.service.UserService;
+import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.messaging.simp.annotation.SendToUser;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +29,17 @@ public class CollaborationWsController {
     private final CursorRepository cursorRepository;
     private final UserService userService;
     private final com.example.collabodraw.service.RealtimeEventStore eventStore;
+    private final Map<String, SessionBinding> wsSessionBindings = new ConcurrentHashMap<>();
+
+    private static final class SessionBinding {
+        private final Long boardId;
+        private final Long dbSessionId;
+
+        private SessionBinding(Long boardId, Long dbSessionId) {
+            this.boardId = boardId;
+            this.dbSessionId = dbSessionId;
+        }
+    }
 
     public CollaborationWsController(SimpMessagingTemplate messagingTemplate,
                                      SessionRepository sessionRepository,
@@ -40,12 +54,23 @@ public class CollaborationWsController {
     }
 
     @MessageMapping("/board/{boardId}/join")
-    public void join(@DestinationVariable Long boardId, Principal principal) {
+    public void join(@DestinationVariable Long boardId, Principal principal,
+                     @Header("simpSessionId") String wsSessionId) {
         Long userId = resolveUserId(principal);
         if (userId == null) return;
 
         // Create one session row per websocket join so multi-tab presence is visible.
-        sessionRepository.create(boardId, userId);
+        Long createdSessionId = sessionRepository.create(boardId, userId);
+        if (wsSessionId != null && createdSessionId != null) {
+            SessionBinding previous = wsSessionBindings.put(wsSessionId, new SessionBinding(boardId, createdSessionId));
+            if (previous != null && !previous.dbSessionId.equals(createdSessionId)) {
+                sessionRepository.endBySessionId(previous.dbSessionId);
+                if (!previous.boardId.equals(boardId)) {
+                    broadcastParticipants(previous.boardId);
+                }
+            }
+        }
+
         if (cursorRepository.findCursorId(boardId, userId) == null) {
             cursorRepository.insertCursor(boardId, userId, 0, 0);
         }
@@ -54,22 +79,54 @@ public class CollaborationWsController {
     }
 
     @MessageMapping("/board/{boardId}/leave")
-    public void leave(@DestinationVariable Long boardId, Principal principal) {
+    public void leave(@DestinationVariable Long boardId, Principal principal,
+                      @Header("simpSessionId") String wsSessionId) {
         Long userId = resolveUserId(principal);
         if (userId == null) return;
-        Long sid = sessionRepository.getActiveSessionId(boardId, userId);
-        if (sid != null) {
-            sessionRepository.end(sid, userId);
+
+        SessionBinding binding = wsSessionId != null ? wsSessionBindings.remove(wsSessionId) : null;
+        if (binding != null) {
+            sessionRepository.endBySessionId(binding.dbSessionId);
+            broadcastParticipants(binding.boardId);
+            return;
+        }
+
+        // Fallback for legacy clients without simpSessionId.
+        Long fallbackSessionId = sessionRepository.getActiveSessionId(boardId, userId);
+        if (fallbackSessionId != null) {
+            sessionRepository.end(fallbackSessionId, userId);
         }
         broadcastParticipants(boardId);
     }
 
     @MessageMapping("/board/{boardId}/heartbeat")
-    public void heartbeat(@DestinationVariable Long boardId, Principal principal) {
+    public void heartbeat(@DestinationVariable Long boardId, Principal principal,
+                          @Header("simpSessionId") String wsSessionId) {
         Long userId = resolveUserId(principal);
         if (userId == null) return;
-        sessionRepository.heartbeatByBoard(boardId, userId);
-        // Optionally broadcast presence; keep light and only broadcast on join/leave
+
+        SessionBinding binding = wsSessionId != null ? wsSessionBindings.get(wsSessionId) : null;
+        if (binding != null) {
+            sessionRepository.heartbeatBySessionId(binding.dbSessionId);
+        } else {
+            // Fallback for legacy clients without simpSessionId.
+            sessionRepository.heartbeatByBoard(boardId, userId);
+        }
+
+        // Self-heal occasional missed leave/disconnect events for all tabs.
+        broadcastParticipants(boardId);
+    }
+
+    @EventListener
+    public void onWebSocketDisconnect(SessionDisconnectEvent event) {
+        String wsSessionId = StompHeaderAccessor.wrap(event.getMessage()).getSessionId();
+        if (wsSessionId == null) return;
+
+        SessionBinding binding = wsSessionBindings.remove(wsSessionId);
+        if (binding == null) return;
+
+        sessionRepository.endBySessionId(binding.dbSessionId);
+        broadcastParticipants(binding.boardId);
     }
 
     public static class CursorMessage {
