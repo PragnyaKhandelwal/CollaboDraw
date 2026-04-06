@@ -34,10 +34,9 @@ const RealTime = {
       usersById.set(String(identity), {
         id: String(identity),
         userId: userId ?? identity,
-        userId: id,
         name: name || 'User',
         initials: ((name || 'U').substring(0, 2) || 'U').toUpperCase(),
-        color: color || this.colorFromString(String(name || id))
+        color: color || this.colorFromString(String(name || userId || identity))
       });
     };
 

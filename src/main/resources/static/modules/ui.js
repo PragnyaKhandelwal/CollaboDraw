@@ -4,6 +4,38 @@
  */
 
 const UIControls = {
+  canonicalizePresenceUsers(users) {
+    const deduped = new Map();
+
+    (Array.isArray(users) ? users : []).forEach((user) => {
+      if (!user) return;
+      const stableId = user.userId != null && user.userId !== ''
+        ? `user:${user.userId}`
+        : user.id != null && user.id !== ''
+          ? `id:${user.id}`
+          : user.name
+            ? `name:${String(user.name).toLowerCase()}`
+            : null;
+      if (!stableId) return;
+
+      const previous = deduped.get(stableId);
+      const next = {
+        ...previous,
+        ...user,
+        id: stableId,
+        userId: user.userId != null ? user.userId : (previous ? previous.userId : user.id)
+      };
+
+      if (previous && !previous.userId && user.userId != null) {
+        next.userId = user.userId;
+      }
+
+      deduped.set(stableId, next);
+    });
+
+    return Array.from(deduped.values());
+  },
+
   /**
    * Initialize tool button listeners
    */
@@ -372,11 +404,11 @@ const UIControls = {
     userAvatars.innerHTML = '';
     
     const currentUser = AppState.getCurrentUser();
-    if (!Array.isArray(AppState.users) || AppState.users.length === 0) {
-      AppState.users = [currentUser];
-    } else if (!AppState.users.some(u => (u.id || u.userId) === (currentUser.id || currentUser.userId) || u.name === currentUser.name)) {
-      AppState.users = [currentUser, ...AppState.users];
-    }
+    const mergedUsers = this.canonicalizePresenceUsers([
+      currentUser,
+      ...(Array.isArray(AppState.users) ? AppState.users : [])
+    ]);
+    AppState.users = mergedUsers;
     
     AppState.users.forEach((user, index) => {
       const avatar = document.createElement('div');
@@ -395,10 +427,7 @@ const UIControls = {
     const activeUsers = document.getElementById('activeUsers');
     if (!activeUsers) return;
     
-    if (!Array.isArray(AppState.users) || AppState.users.length === 0) {
-      const cu = AppState.getCurrentUser();
-      AppState.users = [cu];
-    }
+    AppState.users = this.canonicalizePresenceUsers(AppState.users.length ? AppState.users : [AppState.getCurrentUser()]);
     
     const userCount = AppState.users.length;
     

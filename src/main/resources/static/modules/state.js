@@ -66,8 +66,10 @@ const AppState = {
   
   // Utility to get current user
   getCurrentUser() {
+    const authenticatedUserId = window.CD && window.CD.currentUserId != null ? window.CD.currentUserId : null;
     const injected = (window.CD && (window.CD.currentUserName || window.CD.currentUserInitials))
       ? {
+          userId: authenticatedUserId,
           name: window.CD.currentUserName || 'User',
           initials: (window.CD.currentUserInitials || (window.CD.currentUserName ? window.CD.currentUserName.substring(0,2) : 'U')).toUpperCase(),
         }
@@ -76,15 +78,18 @@ const AppState = {
     const dataEl = document.getElementById('currentUserData');
     const ds = dataEl ? dataEl.dataset : null;
     const injected2 = (!injected && ds && (ds.name || ds.initials))
-      ? { name: ds.name || 'User', initials: (ds.initials || (ds.name ? ds.name.substring(0,2) : 'U')).toUpperCase() }
+      ? { userId: authenticatedUserId, name: ds.name || 'User', initials: (ds.initials || (ds.name ? ds.name.substring(0,2) : 'U')).toUpperCase() }
       : null;
 
     let user = JSON.parse(localStorage.getItem('collabodraw-user') || '{}');
     if (!user.id) {
-      user = { id: this.generateId(), name: 'User', initials: 'U', color: '#3b82f6' };
+      user = { id: this.generateId(), userId: authenticatedUserId, name: 'User', initials: 'U', color: '#3b82f6' };
     }
 
     const chosen = injected || injected2 || user;
+    if (authenticatedUserId != null && chosen.userId == null) {
+      chosen.userId = authenticatedUserId;
+    }
     chosen.initials = (chosen.initials || (chosen.name ? chosen.name.substring(0,2) : 'U')).toUpperCase();
     localStorage.setItem('collabodraw-user', JSON.stringify({ ...user, ...chosen }));
     return { ...user, ...chosen };
