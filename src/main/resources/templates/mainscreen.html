@@ -1087,7 +1087,6 @@
       <div class="header-left">
         <div
           class="logo"
-          th:if="${sharedBoardId == null}"
           onclick="homeButtonClick()"
           data-tooltip="Go to Dashboard"
         >
@@ -1098,8 +1097,7 @@
         </div>
         <div
           class="logo shared-session"
-          th:if="${sharedBoardId != null}"
-          data-tooltip="Shared session board"
+          style="display: none"
           aria-disabled="true"
         >
           <div class="logo-icon">
@@ -1126,6 +1124,15 @@
       </div>
       <div class="header-right">
         <button
+          id="leaveSessionBtn"
+          class="header-btn leave-session-btn"
+          onclick="leaveSharedSession()"
+          data-tooltip="Leave shared session"
+          style="display: none"
+        >
+          Leave
+        </button>
+        <button
           class="header-btn"
           onclick="undo()"
           data-tooltip="Undo last action<span class='tooltip-shortcut'>Ctrl+Z</span>"
@@ -1138,15 +1145,6 @@
           data-tooltip="Redo last undone action<span class='tooltip-shortcut'>Ctrl+Y</span>"
         >
           <img th:src="@{/images/redo-alt.png}" />
-        </button>
-        <button
-          id="leaveSessionBtn"
-          class="header-btn leave-session-btn"
-          onclick="leaveSharedSession()"
-          data-tooltip="Leave shared session"
-          style="display: none"
-        >
-          Leave
         </button>
         <button
           class="header-btn"
