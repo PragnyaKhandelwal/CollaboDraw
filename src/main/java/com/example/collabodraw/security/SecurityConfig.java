@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -24,9 +25,12 @@ import java.io.IOException;
 public class SecurityConfig {
 
     private final MyUserDetailsService myUserDetailsService;
+    private final PreventLoginSwitchFilter preventLoginSwitchFilter;
 
-    public SecurityConfig(MyUserDetailsService myUserDetailsService) {
+    public SecurityConfig(MyUserDetailsService myUserDetailsService,
+                          PreventLoginSwitchFilter preventLoginSwitchFilter) {
         this.myUserDetailsService = myUserDetailsService;
+        this.preventLoginSwitchFilter = preventLoginSwitchFilter;
     }
 
     @Bean
@@ -130,7 +134,8 @@ public class SecurityConfig {
             )
             
             // ✅ CORS
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()));
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .addFilterBefore(preventLoginSwitchFilter, UsernamePasswordAuthenticationFilter.class);
 
         // Always configure OAuth2 login. If registrations are missing, startup will surface an error instead of silently bypassing.
         http.oauth2Login(oauth -> oauth

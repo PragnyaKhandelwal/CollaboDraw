@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.security.core.Authentication;
 
 /**
  * Controller for authentication-related endpoints
@@ -31,7 +32,9 @@ public class AuthController {
     public String loginPage(
             @RequestParam(value = "error", required = false) String error,
             @RequestParam(value = "message", required = false) String message,
+            @RequestParam(value = "currentUser", required = false) String currentUser,
             @RequestParam(value = "tab", required = false) String tab,
+            Authentication authentication,
             Model model) {
         boolean databaseAvailable = databaseHealthService.refresh();
         model.addAttribute("databaseAvailable", databaseAvailable);
@@ -47,9 +50,16 @@ public class AuthController {
             model.addAttribute("message", message);
         }
 
+        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
+            model.addAttribute("message", "You are already logged in as " + authentication.getName() + ". Logout first to use another account in this browser.");
+        }
+
         if (error != null) {
             if ("dbUnavailable".equals(error)) {
                 model.addAttribute("error", "Aiven/MySQL is currently unavailable. " + databaseHealthService.getLastFailureReason());
+            } else if ("alreadyLoggedIn".equals(error)) {
+                String user = (currentUser != null && !currentUser.isBlank()) ? currentUser : "another account";
+                model.addAttribute("error", "Already logged in as " + user + " in this browser session. Please logout first to switch users.");
             } else {
                 model.addAttribute("error", "Invalid username or password. Please try again.");
             }
