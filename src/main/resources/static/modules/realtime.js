@@ -157,8 +157,7 @@ const RealTime = {
       current.forEach(n => { if (!AppState._lastParticipants.has(n)) joined.push(n); });
       AppState._lastParticipants.forEach(n => { if (!current.has(n)) left.push(n); });
       
-      if (joined.length) this.notify('A collaborator joined');
-      if (left.length) this.notify('A collaborator left');
+      // Specific join/leave messages are sent via presence events - skip generic messages here
       
       AppState._lastParticipants = current;
       this._serverParticipants = mapped;

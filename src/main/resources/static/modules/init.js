@@ -52,6 +52,11 @@ async function initializeApp() {
     // This keeps session boards isolated from stale data from other boards.
     await ensureStartupBoard();
     
+    // Update UI for shared/session vs private boards
+    if (typeof updateSessionUIMode === 'function') {
+      updateSessionUIMode();
+    }
+    
     // Load state
     await Storage.loadBoardState();
     UIControls.initialize();
@@ -625,6 +630,7 @@ async function ensureStartupBoard() {
         const data = await res.json();
         if (!window.CD) window.CD = {};
         window.CD.boardId = data.id;
+        window.CD.sharedBoardId = data.id;  // Mark as shared/session board
         try {
           const url = new URL(window.location.href);
           url.searchParams.delete('session');

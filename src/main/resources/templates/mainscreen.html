@@ -1137,10 +1137,11 @@
           <img th:src="@{/images/redo-alt.png}" />
         </button>
         <button
-          th:if="${sharedBoardId != null}"
+          id="leaveSessionBtn"
           class="header-btn leave-session-btn"
           onclick="leaveSharedSession()"
           data-tooltip="Leave shared session"
+          style="display: none"
         >
           Leave
         </button>
@@ -1644,6 +1645,35 @@
       function goHome() {
         window.location.href = "/home"; // Changed from 'home.html'
       }
+
+      function updateSessionUIMode() {
+        // Show leave button and disable logo for shared/session boards
+        const isShared = !!(window.CD && window.CD.sharedBoardId);
+        const leaveBtn = document.getElementById('leaveSessionBtn');
+        const logos = document.querySelectorAll('.logo');
+        
+        if (isShared) {
+          if (leaveBtn) leaveBtn.style.display = 'flex';
+          logos.forEach(logo => {
+            if (!logo.classList.contains('shared-session')) {
+              logo.style.display = 'none';
+            }
+          });
+        } else {
+          if (leaveBtn) leaveBtn.style.display = 'none';
+          logos.forEach(logo => {
+            if (logo.classList.contains('shared-session')) {
+              logo.style.display = 'none';
+            } else {
+              logo.style.display = 'flex';
+            }
+          });
+        }
+      }
+
+      // Call on window load and whenever CD is updated
+      window.addEventListener('load', updateSessionUIMode);
+      window.addEventListener('boardUpdated', updateSessionUIMode);
 
       function leaveSharedSession() {
         try {
