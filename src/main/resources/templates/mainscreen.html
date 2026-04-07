@@ -287,14 +287,17 @@
         min-width: 112px;
         padding: 0 14px;
         gap: 8px;
-        border-color: rgba(239, 68, 68, 0.45);
-        background: rgba(239, 68, 68, 0.14);
+        border: 2px solid #ef4444;
+        background: #ef4444;
+        color: white;
         font-weight: 600;
+        font-size: 14px;
       }
 
       .leave-session-btn:hover {
-        background: rgba(239, 68, 68, 0.24);
-        border-color: rgba(239, 68, 68, 0.7);
+        background: #dc2626;
+        border-color: #dc2626;
+        transform: translateY(-1px);
       }
 
       /* Standard Button Styles (for consistency with other pages) */
@@ -1085,7 +1088,7 @@
         <div
           class="logo"
           th:if="${sharedBoardId == null}"
-          onclick="goHome()"
+          onclick="homeButtonClick()"
           data-tooltip="Go to Dashboard"
         >
           <div class="logo-icon">
@@ -1646,28 +1649,37 @@
         window.location.href = "/home"; // Changed from 'home.html'
       }
 
+      function homeButtonClick() {
+        // Don't navigate if in a session board - logo should be disabled
+        if (window.CD && window.CD.sharedBoardId) {
+          return;
+        }
+        goHome();
+      }
+
       function updateSessionUIMode() {
         // Show leave button and disable logo for shared/session boards
         const isShared = !!(window.CD && window.CD.sharedBoardId);
         const leaveBtn = document.getElementById('leaveSessionBtn');
         const logos = document.querySelectorAll('.logo');
+        const personalLogo = document.querySelector('.logo:not(.shared-session)');
+        const sharedLogo = document.querySelector('.logo.shared-session');
         
         if (isShared) {
           if (leaveBtn) leaveBtn.style.display = 'flex';
-          logos.forEach(logo => {
-            if (!logo.classList.contains('shared-session')) {
-              logo.style.display = 'none';
-            }
-          });
+          if (personalLogo) personalLogo.style.display = 'none';
+          if (sharedLogo) {
+            sharedLogo.style.display = 'flex';
+            // Remove tooltip from logo in session
+            sharedLogo.removeAttribute('data-tooltip');
+          }
         } else {
           if (leaveBtn) leaveBtn.style.display = 'none';
-          logos.forEach(logo => {
-            if (logo.classList.contains('shared-session')) {
-              logo.style.display = 'none';
-            } else {
-              logo.style.display = 'flex';
-            }
-          });
+          if (personalLogo) {
+            personalLogo.style.display = 'flex';
+            personalLogo.setAttribute('data-tooltip', 'Go to Dashboard');
+          }
+          if (sharedLogo) sharedLogo.style.display = 'none';
         }
       }
 
