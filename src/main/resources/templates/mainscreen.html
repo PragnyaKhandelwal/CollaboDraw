@@ -1629,76 +1629,74 @@
     <!-- Handle URL Parameters -->
     <!-- Handle URL Parameters -->
     <script th:inline="javascript">
-      document.addEventListener("DOMContentLoaded", function () {
-        // Get parameters from Thymeleaf model and/or URL
-        const modelBoardId = /*[[${boardId}]]*/ null;
-        const sharedBoardId = /*[[${sharedBoardId}]]*/ null;
-        const templateId = /*[[${templateId}]]*/ null;
-        const previewId = /*[[${previewId}]]*/ null;
-        const newBoard = /*[[${newBoard}]]*/ null;
-        const boardName = /*[[${boardName}]]*/ null;
-        const seedTemplate = /*[[${seedTemplate}]]*/ null;
-        const currentUserName =
-          /*[[${currentUser != null ? currentUser.username : null}]]*/ null;
-        const currentUserId =
-          /*[[${currentUser != null ? currentUser.userId : null}]]*/ null;
-        const currentUserInitials =
-          /*[[${currentUser != null ? #strings.toUpperCase(currentUser.username.substring(0,2)) : null}]]*/ null;
+      // Get parameters from Thymeleaf model and/or URL
+      const modelBoardId = /*[[${boardId}]]*/ null;
+      const sharedBoardId = /*[[${sharedBoardId}]]*/ null;
+      const templateId = /*[[${templateId}]]*/ null;
+      const previewId = /*[[${previewId}]]*/ null;
+      const newBoard = /*[[${newBoard}]]*/ null;
+      const boardName = /*[[${boardName}]]*/ null;
+      const seedTemplate = /*[[${seedTemplate}]]*/ null;
+      const currentUserName =
+        /*[[${currentUser != null ? currentUser.username : null}]]*/ null;
+      const currentUserId =
+        /*[[${currentUser != null ? currentUser.userId : null}]]*/ null;
+      const currentUserInitials =
+        /*[[${currentUser != null ? #strings.toUpperCase(currentUser.username.substring(0,2)) : null}]]*/ null;
 
-        // Resolve board id from model or URL (?board= / ?shared=)
-        function resolveBoardId() {
-          let id = modelBoardId;
-          try {
-            const qp = new URLSearchParams(window.location.search);
-            const normalize = (v) => {
-              if (v == null) return null;
-              let text = String(v).trim();
-              if (!text) return null;
-              if (text.startsWith('board-')) text = text.substring('board-'.length);
-              const n = parseInt(text, 10);
-              return Number.isFinite(n) && n > 0 ? n : null;
-            };
-            if (!id && qp.has('board')) id = normalize(qp.get('board'));
-            if (!id && qp.has('shared')) id = normalize(qp.get('shared'));
-            // Do NOT treat 'session' as a numeric board id; it is a human code and
-            // must be resolved by the client via /api/boards/session before setting board.
-          } catch(_) {}
-          return (Number.isFinite(id) && id > 0) ? id : null;
-        }
+      // Resolve board id from model or URL (?board= / ?shared=)
+      function resolveBoardId() {
+        let id = modelBoardId;
+        try {
+          const qp = new URLSearchParams(window.location.search);
+          const normalize = (v) => {
+            if (v == null) return null;
+            let text = String(v).trim();
+            if (!text) return null;
+            if (text.startsWith('board-')) text = text.substring('board-'.length);
+            const n = parseInt(text, 10);
+            return Number.isFinite(n) && n > 0 ? n : null;
+          };
+          if (!id && qp.has('board')) id = normalize(qp.get('board'));
+          if (!id && qp.has('shared')) id = normalize(qp.get('shared'));
+          // Do NOT treat 'session' as a numeric board id; it is a human code and
+          // must be resolved by the client via /api/boards/session before setting board.
+        } catch(_) {}
+        return (Number.isFinite(id) && id > 0) ? id : null;
+      }
 
-        const resolvedBoardId = resolveBoardId();
+      const resolvedBoardId = resolveBoardId();
 
-        // ✅ Set global window.CD without hardcoded default
-        window.CD = {
-          boardId: resolvedBoardId,
-          sharedBoardId,
-          templateId,
-          previewId,
-          newBoard,
-          boardName,
-          seedTemplate,
-          currentUserName,
-          currentUserId,
-          currentUserInitials,
-        };
+      // ✅ Set global window.CD before app init starts.
+      window.CD = {
+        boardId: resolvedBoardId,
+        sharedBoardId,
+        templateId,
+        previewId,
+        newBoard,
+        boardName,
+        seedTemplate,
+        currentUserName,
+        currentUserId,
+        currentUserInitials,
+      };
 
-        console.log("🎯 Board Config:", window.CD);
+      console.log("🎯 Board Config:", window.CD);
 
-        // Handle different parameter scenarios
-        if (resolvedBoardId) {
-          console.log("📋 Loading board (API):", resolvedBoardId);
-          // loadBoardData(boardId);
-        } else if (sharedBoardId) {
-          console.log("🔗 Loading shared board (API):", sharedBoardId);
-          // loadSharedBoardData(sharedBoardId);
-        } else if (templateId) {
-          console.log("📝 Using template:", templateId);
-          // loadTemplateData(templateId);
-        } else if (previewId) {
-          console.log("👁️ Previewing template:", previewId);
-          // loadTemplatePreview(previewId);
-        }
-      });
+      // Handle different parameter scenarios
+      if (resolvedBoardId) {
+        console.log("📋 Loading board (API):", resolvedBoardId);
+        // loadBoardData(boardId);
+      } else if (sharedBoardId) {
+        console.log("🔗 Loading shared board (API):", sharedBoardId);
+        // loadSharedBoardData(sharedBoardId);
+      } else if (templateId) {
+        console.log("📝 Using template:", templateId);
+        // loadTemplateData(templateId);
+      } else if (previewId) {
+        console.log("👁️ Previewing template:", previewId);
+        // loadTemplatePreview(previewId);
+      }
     </script>
 
     <script>

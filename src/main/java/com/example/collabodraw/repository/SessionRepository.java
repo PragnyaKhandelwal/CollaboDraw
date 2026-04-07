@@ -14,6 +14,7 @@ import java.util.List;
 @Repository
 public class SessionRepository {
     private final JdbcTemplate jdbc;
+    private static final int PRESENCE_IDLE_TIMEOUT_SECONDS = 12;
 
     public SessionRepository(JdbcTemplate jdbc) { this.jdbc = jdbc; }
 
@@ -68,16 +69,25 @@ public class SessionRepository {
     }
 
     public List<Participant> activeParticipants(Long boardId) {
-        // show users seen in last 2 minutes, including number of active websocket sessions per user
+        // Show users seen recently, including number of active websocket sessions per user.
         String sql = "SELECT u.user_id, u.username, COUNT(*) AS conn_count FROM sessions s JOIN users u ON s.user_id=u.user_id " +
-                "WHERE s.board_id=? AND s.disconnected_at IS NULL AND TIMESTAMPDIFF(SECOND, s.connected_at, NOW()) <= 120 " +
+                "WHERE s.board_id=? AND s.disconnected_at IS NULL AND TIMESTAMPDIFF(SECOND, s.connected_at, NOW()) <= ? " +
                 "GROUP BY u.user_id, u.username ORDER BY u.username";
-        return jdbc.query(sql, (rs, i) -> new Participant(rs.getLong(1), rs.getString(2), rs.getInt(3)), boardId);
+        return jdbc.query(sql, (rs, i) -> new Participant(rs.getLong(1), rs.getString(2), rs.getInt(3)), boardId, PRESENCE_IDLE_TIMEOUT_SECONDS);
     }
 
     public int activeConnectionCount(Long boardId) {
-        String sql = "SELECT COUNT(*) FROM sessions WHERE board_id=? AND disconnected_at IS NULL AND TIMESTAMPDIFF(SECOND, connected_at, NOW()) <= 120";
-        Integer count = jdbc.queryForObject(sql, Integer.class, boardId);
+        String sql = "SELECT COUNT(*) FROM sessions WHERE board_id=? AND disconnected_at IS NULL AND TIMESTAMPDIFF(SECOND, connected_at, NOW()) <= ?";
+        Integer count = jdbc.queryForObject(sql, Integer.class, boardId, PRESENCE_IDLE_TIMEOUT_SECONDS);
         return count != null ? count : 0;
+    }
+
+    public void cleanupStaleSessions(Long boardId) {
+        jdbc.update(
+            "UPDATE sessions SET disconnected_at = NOW() " +
+            "WHERE board_id=? AND disconnected_at IS NULL AND TIMESTAMPDIFF(SECOND, connected_at, NOW()) > ?",
+            boardId,
+            PRESENCE_IDLE_TIMEOUT_SECONDS
+        );
     }
 }

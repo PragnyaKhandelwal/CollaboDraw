@@ -209,6 +209,7 @@ public class CollaborationWsController {
     }
 
     private void broadcastParticipants(Long boardId) {
+        sessionRepository.cleanupStaleSessions(boardId);
         List<Participant> participants = sessionRepository.activeParticipants(boardId);
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "participants");

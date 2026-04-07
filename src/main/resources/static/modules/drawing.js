@@ -88,11 +88,12 @@ const DrawingTools = {
         this.renderQueue.push([x, y]);
     }
     
-    // Progressive broadcast every 50ms (time-based throttling)
+    // Progressive broadcast at ~50 FPS or when enough new points accumulate.
     const now = Date.now();
     if (!this.lastBroadcast) this.lastBroadcast = parseInt(now);
-    
-    if (now - this.lastBroadcast > 50 && window._currentStroke) {
+
+    const pointDelta = window._currentStroke ? ((window._currentStroke.points || []).length - (this.lastBroadcastPointCount || 0)) : 0;
+    if (window._currentStroke && ((now - this.lastBroadcast > 20) || pointDelta >= 4)) {
       this.lastBroadcast = now;
       try {
         if (window.CD && window.CD.boardId && typeof CollaboSocket !== 'undefined') {
@@ -226,45 +227,53 @@ const DrawingTools = {
     const pts = payload.points;
     const isPartial = !!payload.partial;
 
-    const samePoint = (a, b) => Array.isArray(a) && Array.isArray(b) && a[0] === b[0] && a[1] === b[1];
-    
-    AppState.ctx.save();
-    AppState.ctx.lineCap = 'round';
-    AppState.ctx.strokeStyle = payload.color || '#000';
-    AppState.ctx.globalAlpha = payload.alpha != null ? payload.alpha : 1;
-    AppState.ctx.lineWidth = payload.width || 2;
-    AppState.ctx.beginPath();
-    
-    const existing = window._remoteStrokePaths[sid];
-    let startIndex = 0;
-    if (existing && existing.lastPoint) {
-      const matchedIndex = pts.findIndex(pt => samePoint(pt, existing.lastPoint));
-      if (matchedIndex >= 0) {
-        AppState.ctx.moveTo(existing.lastPoint[0], existing.lastPoint[1]);
-        startIndex = matchedIndex + 1;
-      } else if (isPartial) {
-        AppState.ctx.moveTo(existing.lastPoint[0], existing.lastPoint[1]);
-      } else if (pts.length) {
-        AppState.ctx.moveTo(pts[0][0], pts[0][1]);
-        startIndex = 1;
+    const drawPath = (pathPoints, fromIndex) => {
+      if (!Array.isArray(pathPoints) || pathPoints.length < 2 || fromIndex >= pathPoints.length) return;
+      AppState.ctx.save();
+      AppState.ctx.lineCap = 'round';
+      AppState.ctx.strokeStyle = payload.color || '#000';
+      AppState.ctx.globalAlpha = payload.alpha != null ? payload.alpha : 1;
+      AppState.ctx.lineWidth = payload.width || 2;
+      AppState.ctx.beginPath();
+      const start = Math.max(1, fromIndex);
+      AppState.ctx.moveTo(pathPoints[start - 1][0], pathPoints[start - 1][1]);
+      for (let i = start; i < pathPoints.length; i++) {
+        AppState.ctx.lineTo(pathPoints[i][0], pathPoints[i][1]);
       }
-    } else if (pts.length) {
-      AppState.ctx.moveTo(pts[0][0], pts[0][1]);
-      startIndex = 1;
+      AppState.ctx.stroke();
+      AppState.ctx.closePath();
+      AppState.ctx.restore();
+    };
+
+    const existing = window._remoteStrokePaths[sid] || { renderedCount: 0, finalized: false };
+    if (existing.finalized) return;
+
+    if (isPartial) {
+      // Partial packets can arrive out of order; only append truly new tail points.
+      const startIndex = Math.max(1, Math.min(existing.renderedCount, pts.length - 1));
+      drawPath(pts, startIndex);
+      existing.renderedCount = Math.max(existing.renderedCount, pts.length);
+      existing.lastPoint = pts[pts.length - 1] || existing.lastPoint;
+      existing.partial = true;
+      window._remoteStrokePaths[sid] = existing;
+      return;
     }
-    
-    for (let i = startIndex; i < pts.length; i++) {
-      const [px, py] = pts[i];
-      AppState.ctx.lineTo(px, py);
+
+    // Final packet must guarantee completeness even if some partial packets were dropped.
+    if (pts.length >= 2) {
+      if (existing.renderedCount < pts.length) {
+        const startIndex = Math.max(1, existing.renderedCount);
+        drawPath(pts, startIndex);
+      } else if (existing.renderedCount <= 1) {
+        drawPath(pts, 1);
+      }
     }
-    
-    AppState.ctx.stroke();
-    AppState.ctx.closePath();
-    AppState.ctx.restore();
-    
-    if (pts.length) {
-      window._remoteStrokePaths[sid] = { lastPoint: pts[pts.length - 1], partial: isPartial };
-    }
+
+    existing.renderedCount = Math.max(existing.renderedCount, pts.length);
+    existing.lastPoint = pts[pts.length - 1] || existing.lastPoint;
+    existing.partial = false;
+    existing.finalized = true;
+    window._remoteStrokePaths[sid] = existing;
   }
 };
 
