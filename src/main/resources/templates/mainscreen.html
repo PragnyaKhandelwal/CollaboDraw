@@ -187,8 +187,16 @@
         transition: transform 0.2s;
       }
 
+      .logo.shared-session {
+        cursor: default;
+      }
+
       .logo:hover {
         transform: translateY(-1px);
+      }
+
+      .logo.shared-session:hover {
+        transform: none;
       }
 
       .logo-icon img {
@@ -272,6 +280,21 @@
       .header-btn:hover {
         background: rgba(255, 255, 255, 0.1);
         transform: translateY(-1px);
+      }
+
+      .leave-session-btn {
+        width: auto;
+        min-width: 112px;
+        padding: 0 14px;
+        gap: 8px;
+        border-color: rgba(239, 68, 68, 0.45);
+        background: rgba(239, 68, 68, 0.14);
+        font-weight: 600;
+      }
+
+      .leave-session-btn:hover {
+        background: rgba(239, 68, 68, 0.24);
+        border-color: rgba(239, 68, 68, 0.7);
       }
 
       /* Standard Button Styles (for consistency with other pages) */
@@ -1059,7 +1082,23 @@
     <!-- Top Header -->
     <div class="top-header">
       <div class="header-left">
-        <div class="logo" onclick="goHome()" data-tooltip="Go to Dashboard">
+        <div
+          class="logo"
+          th:if="${sharedBoardId == null}"
+          onclick="goHome()"
+          data-tooltip="Go to Dashboard"
+        >
+          <div class="logo-icon">
+            <img th:src="@{/images/Preview.png}" alt="CollaboDraw" />
+          </div>
+          CollaboDraw
+        </div>
+        <div
+          class="logo shared-session"
+          th:if="${sharedBoardId != null}"
+          data-tooltip="Shared session board"
+          aria-disabled="true"
+        >
           <div class="logo-icon">
             <img th:src="@{/images/Preview.png}" alt="CollaboDraw" />
           </div>
@@ -1096,6 +1135,14 @@
           data-tooltip="Redo last undone action<span class='tooltip-shortcut'>Ctrl+Y</span>"
         >
           <img th:src="@{/images/redo-alt.png}" />
+        </button>
+        <button
+          th:if="${sharedBoardId != null}"
+          class="header-btn leave-session-btn"
+          onclick="leaveSharedSession()"
+          data-tooltip="Leave shared session"
+        >
+          Leave
         </button>
         <button
           class="header-btn"
@@ -1596,6 +1643,24 @@
       // Modified goHome function to use Spring controller route
       function goHome() {
         window.location.href = "/home"; // Changed from 'home.html'
+      }
+
+      function leaveSharedSession() {
+        try {
+          const boardId = window.CD && (window.CD.boardId || window.CD.sharedBoardId);
+          const boardNumeric = String(boardId || "").replace(/^board-/, "");
+          if (window.CollaboSocket && boardNumeric) {
+            window.CollaboSocket.leaveBoard(boardNumeric);
+            setTimeout(() => {
+              try {
+                window.CollaboSocket.disconnect();
+              } catch (_) {}
+              goHome();
+            }, 120);
+            return;
+          }
+        } catch (_) {}
+        goHome();
       }
 
       // All other JavaScript functions remain the same...

@@ -93,6 +93,12 @@ const RealTime = {
           this.handleParticipants(items);
         });
 
+        // Presence events (immediate join/leave notifications)
+        if (AppState.wsSubscriptions.presence) { try { AppState.wsSubscriptions.presence.unsubscribe(); } catch(_){} }
+        AppState.wsSubscriptions.presence = CollaboSocket.subscribePresence(AppState.wsBoardId, (evt) => {
+          this.handlePresenceEvent(evt);
+        });
+
         // Cursors
         if (AppState.wsSubscriptions.cursors) { try { AppState.wsSubscriptions.cursors.unsubscribe(); } catch(_){} }
         AppState.wsSubscriptions.cursors = CollaboSocket.subscribeCursors(AppState.wsBoardId, (evt) => {
@@ -158,6 +164,21 @@ const RealTime = {
       this._serverParticipants = mapped;
       this.rebuildPresenceUsers();
     } catch (e) { console.warn('participants mapping failed', e); }
+  },
+
+  /**
+   * Handle immediate join/leave presence events
+   */
+  handlePresenceEvent(evt) {
+    try {
+      if (!evt || evt.type !== 'presence') return;
+      const username = evt.username || 'User';
+      if (evt.action === 'join') {
+        this.notify(`${username} joined the session`);
+      } else if (evt.action === 'leave') {
+        this.notify(`${username} left the session`);
+      }
+    } catch (e) { console.warn('presence event handling failed', e); }
   },
 
   /**

@@ -296,9 +296,19 @@ public class BoardApiController {
             payload.put("success", true);
             payload.put("id", formatBoardId(board.getBoardId()));
             payload.put("name", board.getBoardName());
-            // Elements/content persistence is not wired yet; return empty to let UI initialize
-            payload.put("elements", "");
-            payload.put("settings", new HashMap<>());
+
+            String snapshotJson = whiteboardService.getBoardSnapshot(numericBoardId);
+            if (snapshotJson != null && !snapshotJson.isBlank()) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> data = objectMapper.readValue(snapshotJson, Map.class);
+                Object elements = data.get("elements");
+                Object settings = data.get("settings");
+                payload.put("elements", (elements instanceof String) ? elements : "");
+                payload.put("settings", (settings instanceof Map) ? settings : new LinkedHashMap<>());
+            } else {
+                payload.put("elements", "");
+                payload.put("settings", new LinkedHashMap<>());
+            }
             return ResponseEntity.ok(payload);
         } catch (AccessDeniedException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -336,8 +346,18 @@ public class BoardApiController {
             payload.put("success", true);
             payload.put("id", formatBoardId(board.getBoardId()));
             payload.put("name", board.getBoardName());
-            payload.put("elements", "");
-            payload.put("settings", new HashMap<>());
+            String snapshotJson = whiteboardService.getBoardSnapshot(numericBoardId);
+            if (snapshotJson != null && !snapshotJson.isBlank()) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> data = objectMapper.readValue(snapshotJson, Map.class);
+                Object elements = data.get("elements");
+                Object settings = data.get("settings");
+                payload.put("elements", (elements instanceof String) ? elements : "");
+                payload.put("settings", (settings instanceof Map) ? settings : new LinkedHashMap<>());
+            } else {
+                payload.put("elements", "");
+                payload.put("settings", new LinkedHashMap<>());
+            }
             payload.put("readOnly", true);
             return ResponseEntity.ok(payload);
         } catch (AccessDeniedException ex) {

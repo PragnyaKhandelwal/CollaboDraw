@@ -34,10 +34,12 @@ public class CollaborationWsController {
     private static final class SessionBinding {
         private final Long boardId;
         private final Long dbSessionId;
+        private final String username;
 
-        private SessionBinding(Long boardId, Long dbSessionId) {
+        private SessionBinding(Long boardId, Long dbSessionId, String username) {
             this.boardId = boardId;
             this.dbSessionId = dbSessionId;
+            this.username = username;
         }
     }
 
@@ -58,11 +60,12 @@ public class CollaborationWsController {
                      @Header("simpSessionId") String wsSessionId) {
         Long userId = resolveUserId(principal);
         if (userId == null) return;
+        String username = resolveDisplayName(principal, wsSessionId, null);
 
         // Create one session row per websocket join so multi-tab presence is visible.
         Long createdSessionId = sessionRepository.create(boardId, userId);
         if (wsSessionId != null && createdSessionId != null) {
-            SessionBinding previous = wsSessionBindings.put(wsSessionId, new SessionBinding(boardId, createdSessionId));
+            SessionBinding previous = wsSessionBindings.put(wsSessionId, new SessionBinding(boardId, createdSessionId, username));
             if (previous != null && !previous.dbSessionId.equals(createdSessionId)) {
                 sessionRepository.endBySessionId(previous.dbSessionId);
                 if (!previous.boardId.equals(boardId)) {
@@ -75,6 +78,7 @@ public class CollaborationWsController {
             cursorRepository.insertCursor(boardId, userId, 0, 0);
         }
 
+        broadcastPresence(boardId, "join", userId, username);
         broadcastParticipants(boardId);
     }
 
@@ -83,10 +87,12 @@ public class CollaborationWsController {
                       @Header("simpSessionId") String wsSessionId) {
         Long userId = resolveUserId(principal);
         if (userId == null) return;
+        String username = resolveDisplayName(principal, wsSessionId, null);
 
         SessionBinding binding = wsSessionId != null ? wsSessionBindings.remove(wsSessionId) : null;
         if (binding != null) {
             sessionRepository.endBySessionId(binding.dbSessionId);
+            broadcastPresence(binding.boardId, "leave", userId, binding.username != null ? binding.username : username);
             broadcastParticipants(binding.boardId);
             return;
         }
@@ -96,6 +102,7 @@ public class CollaborationWsController {
         if (fallbackSessionId != null) {
             sessionRepository.end(fallbackSessionId, userId);
         }
+        broadcastPresence(boardId, "leave", userId, username);
         broadcastParticipants(boardId);
     }
 
@@ -126,6 +133,7 @@ public class CollaborationWsController {
         if (binding == null) return;
 
         sessionRepository.endBySessionId(binding.dbSessionId);
+        broadcastPresence(binding.boardId, "leave", null, binding.username);
         broadcastParticipants(binding.boardId);
     }
 
@@ -216,6 +224,16 @@ public class CollaborationWsController {
         payload.put("items", participants);
         payload.put("connections", sessionRepository.activeConnectionCount(boardId));
         messagingTemplate.convertAndSend("/topic/board." + boardId + ".participants", payload);
+    }
+
+    private void broadcastPresence(Long boardId, String action, Long userId, String username) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("type", "presence");
+        payload.put("action", action);
+        payload.put("userId", userId);
+        payload.put("username", username);
+        payload.put("timestamp", LocalDateTime.now().toString());
+        messagingTemplate.convertAndSend("/topic/board." + boardId + ".presence", payload);
     }
 
     private Long resolveUserId(Principal principal) {

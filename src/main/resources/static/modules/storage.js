@@ -34,6 +34,61 @@ const Storage = {
     AppState.clipboard = [];
   },
 
+  applyBoardState(state) {
+    if (!state || typeof state !== 'object') return false;
+
+    const container = document.getElementById('canvasElements');
+    const elements = typeof state.elements === 'string' ? state.elements : '';
+    const settings = state.settings && typeof state.settings === 'object' ? state.settings : {};
+
+    AppState.boardData = {
+      name: typeof state.name === 'string' && state.name.trim() ? state.name : (AppState.boardData?.name || 'Untitled Board'),
+      elements,
+      settings
+    };
+
+    if (container) {
+      container.innerHTML = elements;
+      document.querySelectorAll('.canvas-element').forEach(el => ElementManager.setupElementInteraction(el));
+    }
+
+    const nameInput = document.getElementById('boardName');
+    if (nameInput && AppState.boardData.name) {
+      nameInput.value = AppState.boardData.name;
+    }
+
+    if (settings.zoom) {
+      AppState.zoomLevel = Number(settings.zoom) || AppState.zoomLevel;
+      Canvas.updateZoom();
+    }
+    if (settings.timer != null) {
+      AppState.timerSeconds = Number(settings.timer) || 0;
+      UIControls.updateTimerDisplay();
+    }
+    if (settings.tool) {
+      UIControls.selectTool(settings.tool);
+    }
+    if (settings.color) {
+      UIControls.selectColor(settings.color);
+    }
+
+    try {
+      const snap = document.getElementById('wb-snapshot');
+      if (snap && snap.src && AppState.ctx) {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            AppState.ctx.clearRect(0, 0, AppState.canvas.width, AppState.canvas.height);
+            AppState.ctx.drawImage(img, 0, 0);
+          } catch (_) {}
+        };
+        img.src = snap.src;
+      }
+    } catch (_) {}
+
+    return true;
+  },
+
   /**
    * Save board state to localStorage and server
    */
@@ -92,54 +147,39 @@ const Storage = {
   /**
    * Load board state from localStorage
    */
-  loadBoardState() {
+  async loadBoardState() {
+    const boardId = AppState.getBoardId();
+    if (boardId) {
+      try {
+        const response = await fetch(`/api/boards/${boardId}/content`, { credentials: 'include' });
+        if (response.ok) {
+          const data = await response.json();
+          if (data && (typeof data.elements === 'string' || data.settings || data.name)) {
+            const applied = this.applyBoardState({
+              name: data.name || AppState.boardData?.name || 'Untitled Board',
+              elements: data.elements || '',
+              settings: data.settings || {}
+            });
+            if (applied) {
+              localStorage.setItem(this.getBoardStorageKey(), JSON.stringify(AppState.boardData));
+              return;
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to load board from server, falling back to local cache:', error);
+      }
+    }
+
     const saved = localStorage.getItem(this.getBoardStorageKey());
     if (!saved) {
       this.resetBoardState();
       return;
     }
-    
+
     try {
-      AppState.boardData = JSON.parse(saved);
-      
-      if (AppState.boardData.elements) {
-        document.getElementById('canvasElements').innerHTML = AppState.boardData.elements;
-        document.querySelectorAll('.canvas-element').forEach(el => ElementManager.setupElementInteraction(el));
-        
-        try {
-          const snap = document.getElementById('wb-snapshot');
-          if (snap && snap.src && AppState.ctx) {
-            const img = new Image();
-            img.onload = () => {
-              try { AppState.ctx.drawImage(img, 0, 0); } catch(_){ }
-            };
-            img.src = snap.src;
-          }
-        } catch(_){ }
-      }
-      
-      if (AppState.boardData.name) {
-        const nameInput = document.getElementById('boardName');
-        if (nameInput) nameInput.value = AppState.boardData.name;
-      }
-      
-      if (AppState.boardData.settings) {
-        const settings = AppState.boardData.settings;
-        if (settings.zoom) {
-          AppState.zoomLevel = settings.zoom;
-          Canvas.updateZoom();
-        }
-        if (settings.timer) {
-          AppState.timerSeconds = settings.timer;
-          UIControls.updateTimerDisplay();
-        }
-        if (settings.tool) {
-          UIControls.selectTool(settings.tool);
-        }
-        if (settings.color) {
-          UIControls.selectColor(settings.color);
-        }
-      }
+      const parsed = JSON.parse(saved);
+      this.applyBoardState(parsed);
     } catch (e) {
       console.error('Failed to load board state:', e);
     }

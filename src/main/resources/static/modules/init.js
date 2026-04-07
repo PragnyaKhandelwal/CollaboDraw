@@ -53,7 +53,7 @@ async function initializeApp() {
     await ensureStartupBoard();
     
     // Load state
-    Storage.loadBoardState();
+    await Storage.loadBoardState();
     UIControls.initialize();
     History.initialize();
     
