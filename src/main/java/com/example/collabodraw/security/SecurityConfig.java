@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -24,12 +23,9 @@ import java.io.IOException;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final MyUserDetailsService myUserDetailsService;
     private final PreventLoginSwitchFilter preventLoginSwitchFilter;
 
-    public SecurityConfig(MyUserDetailsService myUserDetailsService,
-                          PreventLoginSwitchFilter preventLoginSwitchFilter) {
-        this.myUserDetailsService = myUserDetailsService;
+    public SecurityConfig(PreventLoginSwitchFilter preventLoginSwitchFilter) {
         this.preventLoginSwitchFilter = preventLoginSwitchFilter;
     }
 
@@ -41,14 +37,6 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
-    }
-
-    @Bean
-    public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(myUserDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
     }
 
     @Bean
