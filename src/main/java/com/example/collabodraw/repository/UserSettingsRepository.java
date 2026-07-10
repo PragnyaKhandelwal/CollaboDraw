@@ -30,6 +30,7 @@ public class UserSettingsRepository {
             s.setMentions(rs.getBoolean("mentions"));
             s.setMarketingEmails(rs.getBoolean("marketing_emails"));
             s.setTwoFactorEnabled(rs.getBoolean("two_factor_enabled"));
+            s.setAvatarData(rs.getString("avatar_data"));
             return s;
         }
     };
@@ -60,5 +61,9 @@ public class UserSettingsRepository {
             s.isEmailNotifications(), s.isPushNotifications(), s.isBoardUpdates(), s.isMentions(), s.isMarketingEmails(), s.isTwoFactorEnabled(),
             s.getUserId()
         );
+    }
+
+    public void updateAvatar(Long userId, String avatarDataUrl) {
+        jdbcTemplate.update("UPDATE user_settings SET avatar_data=? WHERE user_id=?", avatarDataUrl, userId);
     }
 }

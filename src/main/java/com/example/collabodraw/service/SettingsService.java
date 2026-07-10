@@ -24,4 +24,8 @@ public class SettingsService {
     public void update(UserSettings settings) {
         userSettingsRepository.update(settings);
     }
+
+    public void updateAvatar(Long userId, String avatarDataUrl) {
+        userSettingsRepository.updateAvatar(userId, avatarDataUrl);
+    }
 }

@@ -14,6 +14,7 @@ public class UserSettings {
     private boolean mentions;
     private boolean marketingEmails;
     private boolean twoFactorEnabled;
+    private String avatarData; // data: URL (base64), or null if no custom avatar has been set
 
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
@@ -41,4 +42,6 @@ public class UserSettings {
     public void setMarketingEmails(boolean marketingEmails) { this.marketingEmails = marketingEmails; }
     public boolean isTwoFactorEnabled() { return twoFactorEnabled; }
     public void setTwoFactorEnabled(boolean twoFactorEnabled) { this.twoFactorEnabled = twoFactorEnabled; }
+    public String getAvatarData() { return avatarData; }
+    public void setAvatarData(String avatarData) { this.avatarData = avatarData; }
 }
