@@ -1,7 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:attr="data-theme=${pageTheme != null and pageTheme != 'system' ? pageTheme : null}">
 <head>
+  <meta name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
   <script th:src="@{/js/csrf-fetch.js}"></script>
+  <link rel="stylesheet" th:href="@{/css/theme-dark.css}" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="icon"  th:href="@{/images/Preview.png}" type="image/png" sizes="32x32"/>
@@ -525,6 +528,12 @@
       color: white;
     }
 
+    .action-btn.favorite-btn.active {
+      border-color: #f59e0b;
+      color: #f59e0b;
+      background: #fffbeb;
+    }
+
     /* Empty State */
     .empty-state {
       text-align: center;
@@ -716,7 +725,12 @@
 
       <!-- Content Grid -->
       <div class="content-grid" th:if="${boards != null and not #lists.isEmpty(boards)}">
-        <div class="board-card" th:each="board : ${boards}" th:attr="onclick='openBoard(' + ${board.boardId} + ')'">
+        <div class="board-card" th:each="board : ${boards}"
+             th:attr="onclick='openBoard(' + ${board.boardId} + ')',
+                      data-board-id=${board.boardId},
+                      data-modified=${board.lastModified ?: board.createdAt},
+                      data-favorite=${favoriteBoardIds.contains(board.boardId)},
+                      data-archived=${archivedBoardIds.contains(board.boardId)}">
           <div class="board-preview">🎯</div>
           <div class="board-info">
             <div class="board-title" th:text="${board.boardName}">Board</div>
@@ -726,6 +740,11 @@
             </div>
             <div class="board-actions">
               <button class="action-btn primary" th:attr="onclick='event.stopPropagation(); openBoard(' + ${board.boardId} + ')'">Open</button>
+              <button class="action-btn favorite-btn" th:classappend="${favoriteBoardIds.contains(board.boardId)} ? ' active' : ''"
+                      th:attr="onclick='event.stopPropagation(); toggleFavorite(' + ${board.boardId} + ', this)'"
+                      th:text="${favoriteBoardIds.contains(board.boardId)} ? '★ Favorited' : '☆ Favorite'">☆ Favorite</button>
+              <button class="action-btn archive-btn" th:attr="onclick='event.stopPropagation(); toggleArchive(' + ${board.boardId} + ', this)'"
+                      th:text="${archivedBoardIds.contains(board.boardId)} ? 'Unarchive' : 'Archive'">Archive</button>
               <button class="action-btn" th:attr="onclick='event.stopPropagation(); shareBoard(' + ${board.boardId} + ')'">Share</button>
               <button class="action-btn" th:attr="onclick='event.stopPropagation(); duplicateBoard(' + ${board.boardId} + ')'">Duplicate</button>
               <button class="action-btn danger" th:attr="onclick='event.stopPropagation(); deleteBoard(' + ${board.boardId} + ')'">Delete</button>
@@ -863,10 +882,74 @@
 
     function filterBoards(filter) {
       const boards = document.querySelectorAll('.board-card');
+      const RECENT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000; // "recent" = touched in the last 7 days
       boards.forEach(board => {
-        // Add filtering logic based on board attributes
-        board.style.display = 'block';
+        const isRealBoard = board.hasAttribute('data-board-id');
+        const isArchived = board.getAttribute('data-archived') === 'true';
+        const isFavorite = board.getAttribute('data-favorite') === 'true';
+        const modifiedRaw = board.getAttribute('data-modified');
+        const modifiedTs = modifiedRaw ? Date.parse(modifiedRaw) : NaN;
+        const isRecent = !Number.isNaN(modifiedTs) && (Date.now() - modifiedTs) <= RECENT_WINDOW_MS;
+
+        let visible;
+        if (!isRealBoard) {
+          // The dashed "Create New Board" placeholder card - only makes sense in the
+          // unfiltered view, since it isn't recent/favorited/archived.
+          visible = filter === 'all';
+        } else if (filter === 'archived') {
+          visible = isArchived;
+        } else if (isArchived) {
+          // Archived boards are hidden from All/Recent/Favorites, same as most apps' "archive"
+          // behavior - they only reappear under the Archived filter.
+          visible = false;
+        } else if (filter === 'recent') {
+          visible = isRecent;
+        } else if (filter === 'favorites') {
+          visible = isFavorite;
+        } else {
+          visible = true; // 'all'
+        }
+        board.style.display = visible ? 'block' : 'none';
       });
+    }
+
+    async function toggleFavorite(boardId, btnEl) {
+      try {
+        const res = await fetch(`/api/boards/${boardId}/favorite`, { method: 'POST', credentials: 'include' });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          alert(data.message || 'Failed to update favorite');
+          return;
+        }
+        const card = btnEl.closest('.board-card');
+        card.setAttribute('data-favorite', data.favorite ? 'true' : 'false');
+        btnEl.textContent = data.favorite ? '★ Favorited' : '☆ Favorite';
+        btnEl.classList.toggle('active', !!data.favorite);
+        const activeFilter = document.querySelector('.filter-btn.active');
+        if (activeFilter) filterBoards(activeFilter.getAttribute('data-filter'));
+      } catch (e) {
+        console.error('Failed to toggle favorite:', e);
+        alert('Failed to update favorite. Please try again.');
+      }
+    }
+
+    async function toggleArchive(boardId, btnEl) {
+      try {
+        const res = await fetch(`/api/boards/${boardId}/archive`, { method: 'POST', credentials: 'include' });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          alert(data.message || 'Failed to update archive state');
+          return;
+        }
+        const card = btnEl.closest('.board-card');
+        card.setAttribute('data-archived', data.archived ? 'true' : 'false');
+        btnEl.textContent = data.archived ? 'Unarchive' : 'Archive';
+        const activeFilter = document.querySelector('.filter-btn.active');
+        if (activeFilter) filterBoards(activeFilter.getAttribute('data-filter'));
+      } catch (e) {
+        console.error('Failed to toggle archive:', e);
+        alert('Failed to update archive state. Please try again.');
+      }
     }
 
     function toggleView(view) {
