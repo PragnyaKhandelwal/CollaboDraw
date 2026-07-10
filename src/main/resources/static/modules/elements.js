@@ -173,10 +173,6 @@ const ElementManager = {
     } catch(e){}
   },
 
-  createLinks(x, y) {
-     // implementation for links if needed
-  },
-
   createTextElement(x, y) {
     const textId = AppState.generateId();
     const textEl = document.createElement('div');

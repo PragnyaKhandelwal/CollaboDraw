@@ -279,13 +279,6 @@ function showImportDialog() {
 }
 
 /**
- * Show join dialog
- */
-function showJoinDialog() {
-    alert('Join board functionality coming soon!');
-}
-
-/**
  * Navigate to home page from whiteboard
  */
 function goHome() {
