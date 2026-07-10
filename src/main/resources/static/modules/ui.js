@@ -225,7 +225,8 @@ const UIControls = {
   },
 
   /**
-   * Toggle timer start/stop
+   * Toggle timer start/stop. Broadcasts the change so collaborators' timers stay in sync -
+   * previously this only ever updated the local display, so each viewer saw a different timer.
    */
   toggleTimer() {
     if (AppState.timerRunning) {
@@ -238,6 +239,37 @@ const UIControls = {
       }, 1000);
       AppState.timerRunning = true;
     }
+    this.broadcastTimerState();
+  },
+
+  broadcastTimerState() {
+    try {
+      if (window.CD && window.CD.boardId && typeof CollaboSocket !== 'undefined') {
+        const boardNumeric = String(window.CD.boardId).replace(/^board-/, '');
+        CollaboSocket.publishElement(boardNumeric, {
+          kind: 'timer',
+          payload: { running: AppState.timerRunning, seconds: AppState.timerSeconds }
+        });
+      }
+    } catch (_) { }
+  },
+
+  /**
+   * Apply a timer state received from another collaborator (does not re-broadcast).
+   */
+  syncTimerState(running, seconds) {
+    if (typeof seconds === 'number' && seconds >= 0) AppState.timerSeconds = seconds;
+    if (running && !AppState.timerRunning) {
+      AppState.timerInterval = setInterval(() => {
+        AppState.timerSeconds++;
+        this.updateTimerDisplay();
+      }, 1000);
+      AppState.timerRunning = true;
+    } else if (!running && AppState.timerRunning) {
+      clearInterval(AppState.timerInterval);
+      AppState.timerRunning = false;
+    }
+    this.updateTimerDisplay();
   },
 
   /**
