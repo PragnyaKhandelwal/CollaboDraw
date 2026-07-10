@@ -3,14 +3,76 @@
  * Handles pen, highlighter, eraser, and stroke rendering
  */
 
+const SHAPE_TOOLS = ['line', 'rectangle', 'circle', 'arrow'];
+
 const DrawingTools = {
+  /**
+   * Draw a geometric shape (used for both the live drag preview and the final render, locally
+   * and on remote clients) - as opposed to freehand strokes, which are just a traced point path.
+   */
+  drawShape(ctx, tool, start, end, color, width) {
+    const [x1, y1] = start;
+    const [x2, y2] = end;
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.globalAlpha = 1;
+    ctx.beginPath();
+
+    if (tool === 'line') {
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+    } else if (tool === 'rectangle') {
+      ctx.rect(Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1), Math.abs(y2 - y1));
+    } else if (tool === 'circle') {
+      const cx = (x1 + x2) / 2;
+      const cy = (y1 + y2) / 2;
+      const rx = Math.max(Math.abs(x2 - x1) / 2, 0.5);
+      const ry = Math.max(Math.abs(y2 - y1) / 2, 0.5);
+      ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    } else if (tool === 'arrow') {
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      const headLen = Math.max(10, width * 4);
+      ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
+    }
+
+    ctx.stroke();
+    ctx.closePath();
+    ctx.restore();
+  },
+
   /**
    * Start drawing on canvas
    */
   startDrawing(e) {
-    if (!['pen', 'highlighter', 'line', 'rectangle', 'circle'].includes(AppState.currentTool)) return;
-    
+    const tool = AppState.currentTool;
+    if (!['pen', 'highlighter', ...SHAPE_TOOLS].includes(tool)) return;
+
     AppState.isDrawing = true;
+    const rect = AppState.canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (SHAPE_TOOLS.includes(tool)) {
+      // Shape tools are a rubber-band drag from a fixed start point to the live cursor
+      // position, not a freehand point trail - snapshot the canvas once so each mousemove
+      // can restore it and redraw just the current preview, without duplicating past frames.
+      window._currentShape = {
+        tool,
+        start: [x, y],
+        color: AppState.currentColor,
+        width: 2,
+        snapshot: AppState.ctx.getImageData(0, 0, AppState.canvas.width, AppState.canvas.height)
+      };
+      return;
+    }
+
     window._currentStroke = {
       points: [],
       color: AppState.currentColor,
@@ -18,15 +80,12 @@ const DrawingTools = {
       width: (AppState.currentTool === 'highlighter' ? 8 : 2),
       alpha: (AppState.currentTool === 'highlighter' ? 0.5 : 1)
     };
-    
-    const rect = AppState.canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+
     if (window._currentStroke) window._currentStroke.points.push([x, y]);
-    
+
     AppState.ctx.beginPath();
     AppState.ctx.moveTo(x, y);
-    
+
     AppState.ctx.strokeStyle = AppState.currentColor;
     AppState.ctx.lineWidth = AppState.currentTool === 'highlighter' ? 8 : 2;
     AppState.ctx.lineCap = 'round';
@@ -77,11 +136,21 @@ const DrawingTools = {
    */
   draw(e) {
     if (!AppState.isDrawing) return;
-    
+
     const rect = AppState.canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
+
+    if (window._currentShape) {
+      // Rubber-band preview: restore the pre-drag snapshot, then draw the shape fresh from
+      // the fixed start point to the live cursor position.
+      AppState.ctx.putImageData(window._currentShape.snapshot, 0, 0);
+      this.drawShape(AppState.ctx, window._currentShape.tool, window._currentShape.start, [x, y],
+        window._currentShape.color, window._currentShape.width);
+      window._currentShape.end = [x, y];
+      return;
+    }
+
     if (window._currentStroke) {
         window._currentStroke.points.push([x, y]);
         if (!this.renderQueue) this.renderQueue = [];
@@ -126,12 +195,39 @@ const DrawingTools = {
    */
   stopDrawing() {
     if (!AppState.isDrawing) return;
-    
+
     AppState.isDrawing = false;
+
+    if (window._currentShape) {
+      const shape = window._currentShape;
+      window._currentShape = null;
+      // The final preview frame (drawn in draw()) is already the finished shape - just
+      // broadcast it, record history, and persist, mirroring the freehand stroke path below.
+      try {
+        if (window.CD && window.CD.boardId && shape.end && typeof CollaboSocket !== 'undefined') {
+          const boardNumeric = String(window.CD.boardId).replace(/^board-/, '');
+          CollaboSocket.publishElement(boardNumeric, {
+            kind: 'shape',
+            payload: {
+              shapeTool: shape.tool,
+              start: shape.start,
+              end: shape.end,
+              color: shape.color,
+              width: shape.width
+            }
+          });
+        }
+      } catch (e) { console.warn('Shape broadcast failed', e); }
+
+      History.saveState();
+      try { Storage.saveBoardState(); } catch (_) { }
+      return;
+    }
+
     this.rendering = false; // ensure rAF loop exits cleanly
     window._lastRenderedPoint = null;
     AppState.ctx.closePath();
-    
+
     const canvasImage = AppState.canvas.toDataURL('image/png');
     const canvasElement = {
       id: AppState.generateId(),
@@ -274,6 +370,15 @@ const DrawingTools = {
     existing.partial = false;
     existing.finalized = true;
     window._remoteStrokePaths[sid] = existing;
+  },
+
+  /**
+   * Render a shape (line/rectangle/circle/arrow) broadcast by another collaborator.
+   */
+  renderRemoteShape(payload) {
+    if (!payload || !Array.isArray(payload.start) || !Array.isArray(payload.end)) return;
+    this.drawShape(AppState.ctx, payload.shapeTool, payload.start, payload.end,
+      payload.color || '#000', payload.width || 2);
   }
 };
 
