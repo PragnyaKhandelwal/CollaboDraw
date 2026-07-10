@@ -29,14 +29,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({CannotGetJdbcConnectionException.class,
             SQLTransientConnectionException.class})
     public ResponseEntity<Map<String, Object>> handleDbConnectivity(Exception ex) {
-        log.error("Database connectivity error: {}", ex.getMessage());
+        log.error("Database connectivity error", ex);
         String hint = "Database is unreachable. For local dev, run with profile 'dev' (H2): " +
                 "mvn spring-boot:run -Dspring-boot.run.profiles=dev";
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(Map.of(
                         "success", false,
                         "error", "database_unavailable",
-                        "message", ex.getMessage(),
+                        "message", "The database is temporarily unavailable. Please try again shortly.",
                         "hint", hint
                 ));
     }
@@ -54,15 +54,23 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public Object handleGenericException(Exception ex, HttpServletRequest request, RedirectAttributes redirectAttributes) {
+        // Never echo ex.getMessage()/class back to the client here: for /api/** most routes
+        // are reached before authentication is enforced, so any leaked detail (SQL text,
+        // table/column names, stack internals) is handed to an anonymous caller. Full detail
+        // goes to the server log only, keyed by a correlation id the client can reference.
+        String correlationId = Long.toHexString(System.nanoTime());
+        log.error("Unhandled exception [{}] on {} {}", correlationId, request.getMethod(), request.getRequestURI(), ex);
+
         if (request.getRequestURI().startsWith("/api/")) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of(
                             "success", false,
-                            "error", ex.getClass().getSimpleName(),
-                            "message", ex.getMessage() != null ? ex.getMessage() : "Unknown error"
+                            "error", "internal_error",
+                            "message", "Something went wrong on our end. Please try again.",
+                            "reference", correlationId
                     ));
         }
-        redirectAttributes.addFlashAttribute("error", "An unexpected error occurred: " + ex.getMessage());
+        redirectAttributes.addFlashAttribute("error", "An unexpected error occurred. Reference: " + correlationId);
         return "redirect:/auth";
     }
 }
