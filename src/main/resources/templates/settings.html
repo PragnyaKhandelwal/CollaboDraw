@@ -1,7 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:attr="data-theme=${pageTheme != null and pageTheme != 'system' ? pageTheme : null}">
 <head>
+  <meta name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
   <script th:src="@{/js/csrf-fetch.js}"></script>
+  <link rel="stylesheet" th:href="@{/css/theme-dark.css}" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="icon"  th:href="@{/images/Preview.png}" type="image/png" sizes="32x32"/>
@@ -764,13 +767,10 @@
         <h1 class="page-title">Settings</h1>
       </div>
       <div class="header-right">
-        <button class="notification-btn" id="settingsNotifBtn">🔔</button>
-        <div id="settingsNotifDropdown" style="display:none; position:absolute; top:70px; right:32px; background:#ffffff; color:#111827; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); width:280px; z-index:50;">
+        <button class="notification-btn" id="settingsNotifBtn" style="position:relative;">🔔<span id="settingsNotifBadge" style="display:none; position:absolute; top:2px; right:2px; width:8px; height:8px; border-radius:50%; background:#ef4444;"></span></button>
+        <div id="settingsNotifDropdown" style="display:none; position:absolute; top:70px; right:32px; background:#ffffff; color:#111827; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); width:280px; max-height:360px; overflow-y:auto; z-index:50;">
           <div style="padding:12px 16px; font-weight:600; border-bottom:1px solid #f3f4f6;">Notifications</div>
-          <div style="padding:12px 16px; font-size:14px;">
-            <div style="margin-bottom:8px;">No new notifications</div>
-            <div style="color:#6b7280;">You're all caught up.</div>
-          </div>
+          <div id="settingsNotifList"></div>
         </div>
         <div class="avatar" th:text="${currentUser?.username?.substring(0,2)?.toUpperCase() ?: 'JD'}">JD</div>
       </div>
@@ -808,8 +808,11 @@
             <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}">Error updating profile</div>
             
             <div class="profile-header">
-              <div class="profile-avatar" th:text="${currentUser?.username?.substring(0,2)?.toUpperCase() ?: 'JD'}">
-                JD
+              <div class="profile-avatar" id="profileAvatar">
+                <img id="profileAvatarImg" th:if="${userSettings?.avatarData}" th:src="${userSettings.avatarData}"
+                     style="width:100%;height:100%;border-radius:50%;object-fit:cover;" alt="Profile picture" />
+                <span id="profileAvatarInitials" th:unless="${userSettings?.avatarData}"
+                      th:text="${currentUser?.username?.substring(0,2)?.toUpperCase() ?: 'JD'}">JD</span>
                 <div class="avatar-overlay">Change</div>
               </div>
               <div class="profile-info">
@@ -878,10 +881,8 @@
                   <label class="form-label">Language</label>
                   <select class="form-input" th:field="*{language}">
                     <option value="en">English</option>
-                    <option value="hi">Hindi</option>
-                    <option value="fr">French</option>
-                    <option value="de">German</option>
                   </select>
+                  <small style="color:var(--gray);">More languages coming soon.</small>
                 </div>
               </div>
 
@@ -993,7 +994,8 @@
                 </select>
                 <button class="btn btn-primary" type="submit">Invite</button>
               </form>
-              <button class="btn btn-secondary" type="button" onclick="alert('CSV import not implemented yet')">Import from CSV</button>
+              <button class="btn btn-secondary" type="button" id="csvImportBtn">Import from CSV</button>
+              <input type="file" id="csvImportInput" accept=".csv,text/csv" style="display:none;" />
             </div>
             <div class="team-members" th:if="${teamMembers != null and !#lists.isEmpty(teamMembers)}">
               <div class="team-member" th:each="member : ${teamMembers}">
@@ -1130,14 +1132,13 @@
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
   <script th:src="@{/js/collab-socket.js}"></script>
+  <script th:src="@{/js/notification-bell.js}"></script>
   <script>
     // Sidebar toggle functionality
     document.addEventListener('DOMContentLoaded', function() {
       const sidebar = document.getElementById('sidebar');
       const toggleBtn = document.getElementById('toggleBtn');
-      const sBtn = document.getElementById('settingsNotifBtn');
-      const sDd = document.getElementById('settingsNotifDropdown');
-      
+
       toggleBtn.addEventListener('click', function() {
         sidebar.classList.toggle('collapsed');
         toggleBtn.innerHTML = sidebar.classList.contains('collapsed') ? '›' : '‹';
@@ -1157,16 +1158,7 @@
       window.addEventListener('resize', checkMobile);
       checkMobile();
 
-      // Notifications dropdown
-      if(sBtn && sDd){
-        sBtn.addEventListener('click', function(e){
-          e.stopPropagation();
-          sDd.style.display = sDd.style.display === 'none' ? 'block' : 'none';
-        });
-        document.addEventListener('click', function(){
-          sDd.style.display = 'none';
-        });
-      }
+      NotificationBell.init('settingsNotifBtn', 'settingsNotifDropdown', 'settingsNotifList', 'settingsNotifBadge');
 
       // Settings navigation
       document.querySelectorAll('.settings-nav a').forEach(link => {
@@ -1205,21 +1197,120 @@
         });
       });
 
-      // Profile avatar change
+      // Profile avatar change - resize client-side to a small square, then upload as a
+      // data: URL to /api/settings/avatar (same base64-in-DB pattern already used for canvas
+      // snapshots, so it needs no new file-storage infrastructure).
       document.querySelector('.profile-avatar')?.addEventListener('click', function() {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/*';
         input.onchange = function(e) {
           const file = e.target.files[0];
-          if (file) {
-            // In a real app, this would upload the image
-            console.log('Avatar changed:', file.name);
-            alert('Profile picture updated!');
+          if (!file) return;
+          if (!file.type.startsWith('image/')) {
+            alert('Please choose an image file.');
+            return;
           }
+
+          const reader = new FileReader();
+          reader.onload = function(ev) {
+            const img = new Image();
+            img.onload = async function() {
+              const size = 200;
+              const canvas = document.createElement('canvas');
+              canvas.width = size;
+              canvas.height = size;
+              const ctx = canvas.getContext('2d');
+              const scale = Math.max(size / img.width, size / img.height);
+              const dw = img.width * scale, dh = img.height * scale;
+              ctx.drawImage(img, (size - dw) / 2, (size - dh) / 2, dw, dh);
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+              try {
+                const res = await fetch('/api/settings/avatar', {
+                  method: 'POST',
+                  credentials: 'include',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ dataUrl })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                  alert(data.message || 'Failed to update profile picture');
+                  return;
+                }
+                const avatarEl = document.getElementById('profileAvatar');
+                let imgEl = document.getElementById('profileAvatarImg');
+                const initialsEl = document.getElementById('profileAvatarInitials');
+                if (initialsEl) initialsEl.style.display = 'none';
+                if (!imgEl) {
+                  imgEl = document.createElement('img');
+                  imgEl.id = 'profileAvatarImg';
+                  imgEl.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover;';
+                  imgEl.alt = 'Profile picture';
+                  avatarEl.insertBefore(imgEl, avatarEl.firstChild);
+                }
+                imgEl.src = data.avatarData;
+              } catch (err) {
+                console.error('Failed to upload avatar:', err);
+                alert('Failed to update profile picture. Please try again.');
+              }
+            };
+            img.src = ev.target.result;
+          };
+          reader.readAsDataURL(file);
         };
         input.click();
       });
+
+      // CSV team import: one email (optionally "email,role") per line, invited one at a time
+      // through the same /settings/team/invite endpoint the manual "Invite" form uses.
+      (function() {
+        const btn = document.getElementById('csvImportBtn');
+        const fileInput = document.getElementById('csvImportInput');
+        if (!btn || !fileInput) return;
+
+        btn.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          const text = await file.text();
+          const validRoles = ['member', 'admin', 'viewer'];
+          const rows = text.split(/\r?\n/)
+            .map(line => line.trim())
+            .filter(line => line.length > 0)
+            .map(line => {
+              const parts = line.split(',').map(p => p.trim());
+              return { email: parts[0], role: validRoles.includes((parts[1] || '').toLowerCase()) ? parts[1].toLowerCase() : 'member' };
+            })
+            .filter(row => row.email && row.email.includes('@') && row.email.toLowerCase() !== 'email'); // skip a header row like "email,role"
+
+          if (!rows.length) {
+            alert('No valid email addresses found in that file.');
+            fileInput.value = '';
+            return;
+          }
+
+          btn.disabled = true;
+          btn.textContent = `Importing 0/${rows.length}...`;
+          let succeeded = 0;
+          for (let i = 0; i < rows.length; i++) {
+            try {
+              const params = new URLSearchParams({ email: rows[i].email, role: rows[i].role });
+              const res = await fetch('/settings/team/invite', { method: 'POST', credentials: 'include', body: params });
+              if (res.ok) succeeded++;
+            } catch (_) { /* count as failed, continue with the rest */ }
+            btn.textContent = `Importing ${i + 1}/${rows.length}...`;
+          }
+
+          fileInput.value = '';
+          btn.disabled = false;
+          btn.textContent = 'Import from CSV';
+          alert(`Imported ${succeeded} of ${rows.length} team invites.` + (succeeded < rows.length ? ' Some rows failed - check the emails/usernames and try again.' : ''));
+          if (succeeded > 0) location.reload();
+        });
+      })();
 
       // Collaboration via WebSockets (STOMP)
       const boardInput = document.getElementById('collabBoardId');
