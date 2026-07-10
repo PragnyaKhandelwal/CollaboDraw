@@ -1,6 +1,5 @@
 package com.example.collabodraw.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -22,11 +21,13 @@ import java.sql.SQLException;
 @EnableTransactionManagement
 public class DatabaseConfig {
 
-    @Autowired
-    private DataSource dataSource;
+    private final DataSource dataSource;
+    private final Environment environment;
 
-    @Autowired
-    private Environment environment;
+    public DatabaseConfig(DataSource dataSource, Environment environment) {
+        this.dataSource = dataSource;
+        this.environment = environment;
+    }
 
     @Bean
     public JdbcTemplate jdbcTemplate(DataSource dataSource) {
