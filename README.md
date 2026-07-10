@@ -148,6 +148,19 @@ Optional alternatives:
 
 - `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`
 
+### CI/CD (GitHub Actions)
+
+`.github/workflows/deploy.yml` runs on every push/PR against `main`:
+
+1. **test** job — builds and runs `./mvnw test` on every push and PR.
+2. **deploy** job — only on a push to `main`, and only if `test` passes, it calls a Render Deploy Hook URL to trigger a deploy. This means a broken commit never reaches Render.
+
+Setup (one-time):
+
+1. In the Render dashboard, open the `collabodraw` service → **Settings** → **Deploy Hook**, and copy the URL.
+2. In GitHub, go to the repo → **Settings** → **Secrets and variables** → **Actions**, and add a new secret named `RENDER_DEPLOY_HOOK_URL` with that URL.
+3. Push to `main` — Actions will test, then deploy automatically. No more manual deploys.
+
 ## Contributing
 
 New contributors are welcome.

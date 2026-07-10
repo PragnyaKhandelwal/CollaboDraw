@@ -1,0 +1,45 @@
+name: CI and Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Make mvnw executable
+        run: chmod +x mvnw
+
+      - name: Run tests
+        run: ./mvnw -B test
+
+  deploy:
+    name: Deploy to Render
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy hook
+        run: |
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL secret is not set. Skipping deploy trigger." >&2
+            exit 1
+          fi
+          curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"

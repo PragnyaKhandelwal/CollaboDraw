@@ -36,6 +36,8 @@ CREATE TABLE board_membership (
     user_id INT NOT NULL,
     role VARCHAR(20) DEFAULT 'viewer',
     joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    is_favorite BOOLEAN DEFAULT FALSE,
+    is_archived BOOLEAN DEFAULT FALSE,
     PRIMARY KEY (board_id, user_id),
     FOREIGN KEY (board_id) REFERENCES boards(board_id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE

@@ -70,3 +70,9 @@ hs_err_pid*.log
 *.doc
 *.docx
 /screenshots
+
+# Video files / recordings (not part of the project)
+*.mp4
+*.mov
+*.avi
+/20260407/

@@ -47,6 +47,7 @@ CREATE TABLE user_settings (
     mentions BOOLEAN DEFAULT TRUE,
     marketing_emails BOOLEAN DEFAULT FALSE,
     two_factor_enabled BOOLEAN DEFAULT FALSE,
+    avatar_data MEDIUMTEXT,
     CONSTRAINT fk_user_settings_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
@@ -92,6 +93,8 @@ CREATE TABLE board_membership (
     user_id INT NOT NULL,
     role ENUM('owner', 'editor', 'viewer') DEFAULT 'viewer',
     joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    is_favorite BOOLEAN DEFAULT FALSE,
+    is_archived BOOLEAN DEFAULT FALSE,
     PRIMARY KEY (board_id, user_id),
     FOREIGN KEY (board_id) REFERENCES boards(board_id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
