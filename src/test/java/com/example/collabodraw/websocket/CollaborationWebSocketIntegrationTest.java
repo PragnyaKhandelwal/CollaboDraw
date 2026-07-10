@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -62,9 +63,16 @@ class CollaborationWebSocketIntegrationTest {
         return "http://localhost:" + port + "/ws";
     }
 
+    /**
+     * Prior to the CollaborationWsController/WebSocketAuthorizationInterceptor access-control
+     * fix, this test connected with no authentication at all and still received a cursor
+     * broadcast for board id 1 - proving that any unauthenticated client could both subscribe
+     * to and publish into any board's live channels. That was the bug, not the desired
+     * behavior: an anonymous STOMP session now gets no reply at all, from either the blocked
+     * SUBSCRIBE or the dropped SEND, so this asserts the receive times out instead.
+     */
     @Test
-    void cursorMessageBroadcastsToTopic() throws Exception {
-        // Subscribe to cursor topic for boardId=1
+    void unauthenticatedCursorMessage_isNotBroadcast() throws Exception {
         CompletableFuture<Map<String, Object>> received = new CompletableFuture<>();
         session.subscribe("/topic/board.1.cursors", new StompFrameHandler() {
             @Override
@@ -78,15 +86,10 @@ class CollaborationWebSocketIntegrationTest {
             }
         });
 
-        // Send a cursor update via app destination
-        String dest = "/app/board/1/cursor";
-        Map<String, Object> cursorMsg = Map.of("x", 42, "y", 21);
-        session.send(dest, cursorMsg);
+        session.send("/app/board/1/cursor", Map.of("x", 42, "y", 21));
 
-        Map<String, Object> event = received.get(5, TimeUnit.SECONDS);
-        assertThat(event).isNotNull();
-        assertThat(event.get("type")).isEqualTo("cursor");
-        assertThat(event.get("x")).isEqualTo(42);
-        assertThat(event.get("y")).isEqualTo(21);
+        assertThatThrownBy(() -> received.get(2, TimeUnit.SECONDS))
+                .as("an unauthenticated caller must not receive a board's cursor broadcasts")
+                .isInstanceOf(TimeoutException.class);
     }
 }
