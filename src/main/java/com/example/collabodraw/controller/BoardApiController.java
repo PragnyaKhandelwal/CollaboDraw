@@ -3,6 +3,7 @@ package com.example.collabodraw.controller;
 import com.example.collabodraw.model.entity.Board;
 import com.example.collabodraw.model.entity.User;
 import com.example.collabodraw.model.dto.WhiteboardDto;
+import com.example.collabodraw.repository.BoardMembershipRepository;
 import com.example.collabodraw.service.DashboardRealtimeService;
 import com.example.collabodraw.service.UserService;
 import com.example.collabodraw.service.WhiteboardService;
@@ -33,14 +34,17 @@ public class BoardApiController {
     private final UserService userService;
     private final WhiteboardService whiteboardService;
     private final DashboardRealtimeService dashboardRealtimeService;
+    private final BoardMembershipRepository boardMembershipRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public BoardApiController(UserService userService,
                               WhiteboardService whiteboardService,
-                              DashboardRealtimeService dashboardRealtimeService) {
+                              DashboardRealtimeService dashboardRealtimeService,
+                              BoardMembershipRepository boardMembershipRepository) {
         this.userService = userService;
         this.whiteboardService = whiteboardService;
         this.dashboardRealtimeService = dashboardRealtimeService;
+        this.boardMembershipRepository = boardMembershipRepository;
     }
 
     /**
@@ -456,6 +460,39 @@ whiteboardService.deleteBoard(numericBoardId, currentUser.getUserId());
                     .body(Map.of("success", false, "message", "Failed to delete board"));
         }
     }
+
+    @PostMapping("/{boardId}/favorite")
+    public ResponseEntity<Map<String, Object>> toggleFavorite(@PathVariable String boardId, Authentication authentication) {
+        return toggleFlag(boardId, authentication, boardMembershipRepository::toggleFavorite, "favorite");
+    }
+
+    @PostMapping("/{boardId}/archive")
+    public ResponseEntity<Map<String, Object>> toggleArchive(@PathVariable String boardId, Authentication authentication) {
+        return toggleFlag(boardId, authentication, boardMembershipRepository::toggleArchived, "archived");
+    }
+
+    private ResponseEntity<Map<String, Object>> toggleFlag(String boardId, Authentication authentication,
+            java.util.function.BiFunction<Long, Long, Boolean> toggle, String fieldName) {
+        try {
+            User currentUser = requireCurrentUser(authentication);
+            Long numericBoardId = resolveBoardId(boardId);
+            Boolean newValue = toggle.apply(numericBoardId, currentUser.getUserId());
+            if (newValue == null) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("success", false, "message", "You are not a member of this board"));
+            }
+            return ResponseEntity.ok(Map.of("success", true, fieldName, newValue));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", ex.getMessage()));
+        } catch (AccessDeniedException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("success", false, "message", ex.getMessage()));
+        } catch (Exception e) {
+            log.error("Failed to toggle {} on board {}", fieldName, boardId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "Failed to update board"));
+        }
+    }
+
     private Long resolveBoardId(String boardId) {
         if (boardId == null || boardId.isBlank()) {
             throw new IllegalArgumentException("Board ID is required");
