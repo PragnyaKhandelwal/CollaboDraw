@@ -8,7 +8,6 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.simp.stomp.*;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
@@ -43,9 +42,8 @@ class CollaborationWebSocketIntegrationTest {
         stompClient = new WebSocketStompClient(sockJsClient);
         stompClient.setMessageConverter(new MappingJackson2MessageConverter());
 
-    // Deprecated connect API used for simplicity; if upgraded, switch to CompletableFuture-based API.
-    ListenableFuture<StompSession> future = stompClient.connect(getWsUrl(), new WebSocketHttpHeaders(), new StompSessionHandlerAdapter() {});
-    session = future.get(5, TimeUnit.SECONDS);
+        CompletableFuture<StompSession> future = stompClient.connectAsync(getWsUrl(), new WebSocketHttpHeaders(), new StompSessionHandlerAdapter() {});
+        session = future.get(5, TimeUnit.SECONDS);
         assertThat(session.isConnected()).isTrue();
     }
 
