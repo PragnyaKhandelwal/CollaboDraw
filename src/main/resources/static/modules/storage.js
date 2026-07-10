@@ -123,10 +123,10 @@ const Storage = {
     };
     
     localStorage.setItem(this.getBoardStorageKey(), JSON.stringify(AppState.boardData));
-    
+
     // Persist to server
     try {
-      if (window.CD && window.CD.boardId) {
+      if (window.CD && window.CD.boardId && AppState.canWrite !== false) {
         const id = window.CD.boardId;
         fetch(`/api/boards/${id}/content`, {
           method: 'POST',
@@ -135,13 +135,44 @@ const Storage = {
           body: JSON.stringify({
             elements: AppState.boardData.elements,
             settings: AppState.boardData.settings,
-            name: AppState.boardData.name
+            name: AppState.boardData.name,
+            expectedLastModified: AppState.lastModified || null
           })
-        }).catch(() => {/* ignore background errors */});
+        }).then(res => this.handleSaveResponse(res)).catch(() => {/* ignore background errors */});
       }
     } catch (e) { /* ignore */ }
-    
+
     this.addToVersionHistory();
+  },
+
+  /**
+   * Shared response handling for both the silent autosave path (saveBoardState) and the
+   * explicit Save button (manualSave). On a 409 the server is telling us someone else saved
+   * this board after we last loaded it - warn once rather than silently clobbering their
+   * change on the next autosave tick.
+   */
+  async handleSaveResponse(response) {
+    if (response.ok) {
+      try {
+        const data = await response.json();
+        if (data && data.lastModified) AppState.lastModified = data.lastModified;
+      } catch (_) {}
+      return true;
+    }
+
+    if (response.status === 409) {
+      try {
+        const data = await response.json();
+        if (data && data.currentLastModified) AppState.lastModified = data.currentLastModified;
+      } catch (_) {}
+      if (!this._warnedConflict) {
+        this._warnedConflict = true;
+        UIControls.showNotification('Someone else saved changes to this board. Reload to see the latest version.');
+      }
+      return false;
+    }
+
+    return false;
   },
 
   /**
@@ -154,6 +185,12 @@ const Storage = {
         const response = await fetch(`/api/boards/${boardId}/content`, { credentials: 'include' });
         if (response.ok) {
           const data = await response.json();
+          AppState.lastModified = data.lastModified || null;
+          AppState.role = data.role || null;
+          AppState.canWrite = data.canWrite !== false;
+          if (typeof UIControls !== 'undefined' && typeof UIControls.applyReadOnlyMode === 'function') {
+            UIControls.applyReadOnlyMode(!AppState.canWrite);
+          }
           if (data && (typeof data.elements === 'string' || data.settings || data.name)) {
             const applied = this.applyBoardState({
               name: data.name || AppState.boardData?.name || 'Untitled Board',
@@ -232,15 +269,29 @@ const Storage = {
   updateVersionHistory() {
     const versionHistory = document.getElementById('versionHistory');
     if (!versionHistory) return;
-    
+
     const versions = this.getVersionHistory();
-    
-    versionHistory.innerHTML = versions.map(version => `
-      <div class="version-item" onclick="Storage.restoreVersion('${version.id}')">
-        <span>🕐</span>
-        <span>${version.timestamp} - ${version.description}</span>
-      </div>
-    `).join('');
+
+    // Built with DOM APIs (not an innerHTML template string) so version.id/description -
+    // which can arrive from a remote WS "version" event, not just this browser's own local
+    // history - can never break out of an HTML/attribute context into script.
+    versionHistory.innerHTML = '';
+    versions.forEach(version => {
+      const item = document.createElement('div');
+      item.className = 'version-item';
+      item.dataset.versionId = version.id;
+
+      const icon = document.createElement('span');
+      icon.textContent = '🕐';
+
+      const label = document.createElement('span');
+      label.textContent = `${version.timestamp} - ${version.description}`;
+
+      item.appendChild(icon);
+      item.appendChild(label);
+      item.addEventListener('click', () => this.restoreVersion(version.id));
+      versionHistory.appendChild(item);
+    });
   },
 
   /**
@@ -325,7 +376,8 @@ const Storage = {
         tool: AppState.currentTool,
         color: AppState.currentColor
       },
-      name: document.getElementById('boardName')?.value || AppState.boardData.name || 'Untitled Board'
+      name: document.getElementById('boardName')?.value || AppState.boardData.name || 'Untitled Board',
+      expectedLastModified: AppState.lastModified || null
     };
 
     fetch(`/api/boards/${boardId}/content`, {
@@ -335,11 +387,17 @@ const Storage = {
       body: JSON.stringify(saveData)
     })
     .then(response => {
+      if (response.status === 409) {
+        this.handleSaveResponse(response);
+        History.isSaving = false;
+        return null;
+      }
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       return response.json();
     })
     .then(data => {
-      console.log('✅ Board saved successfully:', data);
+      if (!data) return; // conflict already handled above
+      if (data.lastModified) AppState.lastModified = data.lastModified;
       UIControls.showNotification('💾 Saved successfully');
       History.isSaving = false;
     })

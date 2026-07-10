@@ -6,12 +6,15 @@ import com.example.collabodraw.model.dto.WhiteboardDto;
 import com.example.collabodraw.service.DashboardRealtimeService;
 import com.example.collabodraw.service.UserService;
 import com.example.collabodraw.service.WhiteboardService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.LinkedHashMap;
@@ -24,6 +27,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @RestController
 @RequestMapping("/api/boards")
 public class BoardApiController {
+
+    private static final Logger log = LoggerFactory.getLogger(BoardApiController.class);
 
     private final UserService userService;
     private final WhiteboardService whiteboardService;
@@ -72,8 +77,9 @@ public class BoardApiController {
             return ResponseEntity.badRequest()
                     .body(Map.of("success", false, "message", ex.getMessage()));
         } catch (Exception ex) {
+            log.error("Failed to load board", ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "Failed to load board: " + ex.getMessage()));
+                    .body(Map.of("success", false, "message", "Failed to load board"));
         }
     }
 
@@ -116,8 +122,9 @@ public class BoardApiController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", ex.getMessage()));
         } catch (Exception ex) {
+            log.error("Failed to resolve session", ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "Failed to resolve session: " + ex.getMessage()));
+                    .body(Map.of("success", false, "message", "Failed to resolve session"));
         }
     }
 
@@ -148,8 +155,9 @@ public class BoardApiController {
                     "name", created.getBoardName()
             ));
         } catch (Exception ex) {
+            log.error("Failed to create board", ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "Failed to create board: " + ex.getMessage()));
+                    .body(Map.of("success", false, "message", "Failed to create board"));
         }
     }
 
@@ -184,8 +192,9 @@ public class BoardApiController {
             return ResponseEntity.badRequest()
                     .body(Map.of("success", false, "message", ex.getMessage()));
         } catch (Exception ex) {
+            log.error("Failed to share board", ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "Failed to share board: " + ex.getMessage()));
+                    .body(Map.of("success", false, "message", "Failed to share board"));
         }
     }
 
@@ -208,6 +217,9 @@ public class BoardApiController {
             String snapshotJson = whiteboardService.getBoardSnapshot(numericBoardId);
             Map<String, Object> payload = new HashMap<>();
             payload.put("success", true);
+            payload.put("role", isOwner ? "owner" : role);
+            payload.put("canWrite", isOwner || "editor".equalsIgnoreCase(role) || "owner".equalsIgnoreCase(role));
+            payload.put("lastModified", board.getLastModified() != null ? board.getLastModified().toString() : null);
             if (snapshotJson != null && !snapshotJson.isBlank()) {
                 // snapshotJson expected to be a JSON with elements and settings
                 @SuppressWarnings("unchecked")
@@ -225,8 +237,9 @@ public class BoardApiController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", ex.getMessage()));
         } catch (Exception ex) {
+            log.error("Failed to load board content", ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "Failed to load content: " + ex.getMessage()));
+                    .body(Map.of("success", false, "message", "Failed to load content"));
         }
     }
 
@@ -254,22 +267,44 @@ public class BoardApiController {
             String name = (String) body.get("name");
             String snapshotJson = objectMapper.writeValueAsString(snapshot);
 
-            whiteboardService.saveBoardSnapshot(numericBoardId, currentUser.getUserId(), snapshotJson);
+            LocalDateTime expectedLastModified = parseTimestamp((String) body.get("expectedLastModified"));
+            boolean saved = whiteboardService.saveBoardSnapshot(numericBoardId, currentUser.getUserId(), snapshotJson, expectedLastModified);
+            if (!saved) {
+                Board latest = whiteboardService.getWhiteboardById(numericBoardId);
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                        "success", false,
+                        "error", "conflict",
+                        "message", "This board changed since you loaded it. Reload to see the latest version before saving.",
+                        "currentLastModified", latest != null && latest.getLastModified() != null ? latest.getLastModified().toString() : null
+                ));
+            }
             if (name != null && !name.isBlank() && !name.equals(board.getBoardName())) {
                 // Update name via repository method
                 // Avoid direct repository access here; reuse service layer if added later.
             }
 
+            Board updated = whiteboardService.getWhiteboardById(numericBoardId);
             return ResponseEntity.ok(Map.of(
                     "success", true,
-                    "message", "Board saved"
+                    "message", "Board saved",
+                    "lastModified", updated != null && updated.getLastModified() != null ? updated.getLastModified().toString() : null
             ));
         } catch (AccessDeniedException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", ex.getMessage()));
         } catch (Exception ex) {
+            log.error("Failed to save board content", ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "Failed to save content: " + ex.getMessage()));
+                    .body(Map.of("success", false, "message", "Failed to save content"));
+        }
+    }
+
+    private LocalDateTime parseTimestamp(String value) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            return LocalDateTime.parse(value);
+        } catch (Exception ex) {
+            return null;
         }
     }
     @GetMapping("/open/{boardId}")
@@ -296,6 +331,9 @@ public class BoardApiController {
             payload.put("success", true);
             payload.put("id", formatBoardId(board.getBoardId()));
             payload.put("name", board.getBoardName());
+            payload.put("role", isOwner ? "owner" : role);
+            payload.put("canWrite", isOwner || "editor".equalsIgnoreCase(role) || "owner".equalsIgnoreCase(role));
+            payload.put("lastModified", board.getLastModified() != null ? board.getLastModified().toString() : null);
 
             String snapshotJson = whiteboardService.getBoardSnapshot(numericBoardId);
             if (snapshotJson != null && !snapshotJson.isBlank()) {
@@ -317,8 +355,9 @@ public class BoardApiController {
             return ResponseEntity.badRequest()
                     .body(Map.of("success", false, "message", ex.getMessage()));
         } catch (Exception ex) {
+            log.error("Failed to open board", ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "Failed to open board: " + ex.getMessage()));
+                    .body(Map.of("success", false, "message", "Failed to open board"));
         }
     }
 
@@ -367,8 +406,9 @@ public class BoardApiController {
             return ResponseEntity.badRequest()
                     .body(Map.of("success", false, "message", ex.getMessage()));
         } catch (Exception ex) {
+            log.error("Failed to open shared board", ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "Failed to open shared board: " + ex.getMessage()));
+                    .body(Map.of("success", false, "message", "Failed to open shared board"));
         }
     }
 
@@ -411,8 +451,9 @@ whiteboardService.deleteBoard(numericBoardId, currentUser.getUserId());
             ));
     
         } catch (Exception e) {
+            log.error("Failed to delete board", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", e.getMessage()));
+                    .body(Map.of("success", false, "message", "Failed to delete board"));
         }
     }
     private Long resolveBoardId(String boardId) {

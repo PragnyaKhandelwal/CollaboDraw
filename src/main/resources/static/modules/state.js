@@ -36,6 +36,11 @@ const AppState = {
     settings: {}
   },
   
+  // Board access/concurrency state
+  lastModified: null, // last_modified timestamp seen from the server, used for save-conflict detection
+  role: null,         // 'owner' | 'editor' | 'viewer' | null
+  canWrite: true,      // server-reported write permission; gates autosave and drawing UI
+
   // Realtime collaboration state
   users: [],
   remoteCursors: {},

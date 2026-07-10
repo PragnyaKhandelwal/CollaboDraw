@@ -85,6 +85,22 @@ public class ElementRepository {
         jdbcTemplate.update(sql, boardId);
     }
 
+    /**
+     * Insert many elements in a single batched round trip instead of one INSERT per row.
+     * Used for board duplication, where a board can hold thousands of elements.
+     */
+    public void saveAll(List<Element> elements) {
+        if (elements == null || elements.isEmpty()) return;
+        String sql = "INSERT INTO elements (board_id, creator_id, type, z_order, data) VALUES (?, ?, ?, ?, ?)";
+        jdbcTemplate.batchUpdate(sql, elements, elements.size(), (ps, element) -> {
+            ps.setLong(1, element.getBoardId());
+            ps.setLong(2, element.getCreatorId());
+            ps.setString(3, element.getType());
+            ps.setInt(4, element.getZOrder() != null ? element.getZOrder() : 0);
+            ps.setString(5, element.getData());
+        });
+    }
+
     public boolean existsById(Long elementId) {
         String sql = "SELECT COUNT(*) FROM elements WHERE element_id = ?";
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, elementId);

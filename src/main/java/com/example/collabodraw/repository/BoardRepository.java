@@ -13,6 +13,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -100,6 +101,24 @@ public class BoardRepository {
     public void updateLastModified(Long boardId) {
         String sql = "UPDATE boards SET last_modified = CURRENT_TIMESTAMP WHERE board_id = ?";
         jdbcTemplate.update(sql, boardId);
+    }
+
+    /**
+     * Optimistic-concurrency guard for board saves. Claims the write by advancing
+     * last_modified only if it still matches what the caller last read; returns false if
+     * someone else's save has already moved it (or the caller never provided a timestamp,
+     * meaning we can't verify - callers should treat that as "proceed without a guard").
+     * MySQL DATETIME here has second-level precision, so two saves within the same second
+     * can still both "win" - this is a best-effort conflict signal, not a strict lock.
+     */
+    public boolean claimWriteIfUnmodified(Long boardId, LocalDateTime expectedLastModified) {
+        if (expectedLastModified == null) {
+            updateLastModified(boardId);
+            return true;
+        }
+        String sql = "UPDATE boards SET last_modified = CURRENT_TIMESTAMP WHERE board_id = ? AND last_modified = ?";
+        int rows = jdbcTemplate.update(sql, boardId, java.sql.Timestamp.valueOf(expectedLastModified));
+        return rows > 0;
     }
 
     public void updateName(Long boardId, String name) {

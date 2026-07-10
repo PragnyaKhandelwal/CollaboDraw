@@ -11,8 +11,8 @@ import com.example.collabodraw.repository.ElementRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.scheduling.annotation.Async;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -122,10 +122,21 @@ public class WhiteboardService {
         return elementRepository.findLatestSnapshotData(boardId);
     }
 
-    @Async
-    public void saveBoardSnapshot(Long boardId, Long userId, String dataJson) {
+    /**
+     * Saves a full board snapshot. When {@code expectedLastModified} is provided (the
+     * last_modified value the client saw when it loaded the board), the write is only applied
+     * if the board hasn't been saved by someone else since then - returns false on conflict so
+     * two concurrent editors' autosaves don't silently overwrite each other with no signal.
+     * Pass null to force the write unconditionally (e.g. first save of a brand-new board).
+     */
+    @Transactional
+    public boolean saveBoardSnapshot(Long boardId, Long userId, String dataJson, LocalDateTime expectedLastModified) {
+        boolean claimed = boardRepository.claimWriteIfUnmodified(boardId, expectedLastModified);
+        if (!claimed) {
+            return false;
+        }
         elementRepository.replaceSnapshot(boardId, userId, dataJson);
-        boardRepository.updateLastModified(boardId);
+        return true;
     }
 
     /**
@@ -256,8 +267,11 @@ public class WhiteboardService {
         // Ensure the new owner is recorded in membership table as owner
         boardMembershipRepository.save(new BoardMembership(newId, newOwnerId, "owner"));
 
-        // Duplicate drawing elements
+        // Duplicate drawing elements in one batched round trip instead of one INSERT per row -
+        // a long-lived board can hold thousands of elements, and duplicating it used to mean
+        // that many individual round trips to the database.
         List<Element> elements = elementRepository.findByBoardId(sourceBoard.getBoardId());
+        List<Element> duplicates = new java.util.ArrayList<>(elements.size());
         for (Element element : elements) {
             Element duplicatedElement = new Element();
             duplicatedElement.setBoardId(newId);
@@ -265,8 +279,9 @@ public class WhiteboardService {
             duplicatedElement.setType(element.getType());
             duplicatedElement.setZOrder(element.getZOrder());
             duplicatedElement.setData(element.getData());
-            elementRepository.save(duplicatedElement);
+            duplicates.add(duplicatedElement);
         }
+        elementRepository.saveAll(duplicates);
 
         return copy;
     }
