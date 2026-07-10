@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
+  <script th:src="@{/js/csrf-fetch.js}"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="icon"  th:href="@{/images/Preview.png}" type="image/png" sizes="32x32"/>
@@ -999,6 +1000,15 @@
       });
     }
 
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     function formatRelative(raw) {
       if (!raw) return 'No activity';
       const ts = Date.parse(raw);
@@ -1044,10 +1054,10 @@
           <div class="shared-board-card" onclick="openSharedBoard('${b.boardId}')" data-permission="${b.userPermission || 'view'}">
             <div class="board-preview">${b.icon || '📊'}<div class="permission-badge badge-${b.userPermission || 'view'}">${(b.userPermission || 'view').toUpperCase()}</div></div>
             <div class="board-info">
-              <div class="board-title"><div class="share-indicator">👥</div><span>${b.title || 'Shared Board'}</span></div>
-              <div class="board-owner"><div class="owner-avatar">${b.ownerInitials || 'SM'}</div><span>Shared by <span>${b.ownerUsername || 'Owner'}</span></span></div>
+              <div class="board-title"><div class="share-indicator">👥</div><span>${escapeHtml(b.title || 'Shared Board')}</span></div>
+              <div class="board-owner"><div class="owner-avatar">${escapeHtml(b.ownerInitials || 'SM')}</div><span>Shared by <span>${escapeHtml(b.ownerUsername || 'Owner')}</span></span></div>
               <div class="board-meta"><div class="last-activity"><div class="activity-dot" style="${b.hasRecentActivity ? '' : 'display:none'}"></div><span data-time="${b.lastActivityAt || ''}">${formatRelative(b.lastActivityAt)}</span></div><span>${b.collaboratorCount || 0} collaborators</span></div>
-              <div class="collaboration-info"><h4>Recent Activity</h4><p>${b.recentActivityText || 'No recent activity'}</p></div>
+              <div class="collaboration-info"><h4>Recent Activity</h4><p>${escapeHtml(b.recentActivityText || 'No recent activity')}</p></div>
               <div class="board-actions">
                 <button class="action-btn primary" onclick="event.stopPropagation(); openSharedBoard('${b.boardId}')">${b.userPermission === 'view' ? 'View' : 'Open'}</button>
                 <button class="action-btn" onclick="event.stopPropagation(); copySharedBoard('${b.boardId}')">Copy</button>
@@ -1083,8 +1093,8 @@
       list.innerHTML = items.map((i) => `
         <div style="display:flex; justify-content:space-between; gap:10px; border:1px solid #f3f4f6; border-radius:8px; padding:10px;">
           <div>
-            <div style="font-weight:600">${i.boardName || 'Board'}</div>
-            <div style="font-size:12px; color:#6b7280">From ${i.inviter || 'Unknown'} as ${i.role || 'viewer'}</div>
+            <div style="font-weight:600">${escapeHtml(i.boardName || 'Board')}</div>
+            <div style="font-size:12px; color:#6b7280">From ${escapeHtml(i.inviter || 'Unknown')} as ${escapeHtml(i.role || 'viewer')}</div>
           </div>
           <div style="display:flex; gap:8px;">
             <button class="action-btn primary" onclick="acceptInvite('${i.inviteId}')">Accept</button>
