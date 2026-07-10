@@ -1,8 +1,10 @@
 package com.example.collabodraw.controller;
 
 import com.example.collabodraw.service.RealtimeEventStore;
+import com.example.collabodraw.service.UserService;
 import com.example.collabodraw.service.WhiteboardService;
 import com.example.collabodraw.model.entity.Board;
+import com.example.collabodraw.model.entity.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
@@ -21,10 +23,12 @@ public class LiveStateController {
 
     private final RealtimeEventStore eventStore;
     private final WhiteboardService whiteboardService;
+    private final UserService userService;
 
-    public LiveStateController(RealtimeEventStore eventStore, WhiteboardService whiteboardService) {
+    public LiveStateController(RealtimeEventStore eventStore, WhiteboardService whiteboardService, UserService userService) {
         this.eventStore = eventStore;
         this.whiteboardService = whiteboardService;
+        this.userService = userService;
     }
 
     @GetMapping("/{boardId}")
@@ -33,18 +37,28 @@ public class LiveStateController {
             if (authentication == null || !authentication.isAuthenticated()) {
                 throw new AccessDeniedException("User must be authenticated");
             }
+            User currentUser = userService.findByUsername(authentication.getName());
+            if (currentUser == null) {
+                throw new AccessDeniedException("User not found");
+            }
             Long numericBoardId = resolveBoardId(boardId);
             Board board = whiteboardService.getWhiteboardById(numericBoardId);
             if (board == null) return ResponseEntity.notFound().build();
-            // Basic access check (owner or member)
-            String role = whiteboardService.getUserRoleInWhiteboard(whiteboardService.getWhiteboardById(numericBoardId).getOwnerId(), numericBoardId);
-            // (Simplified: if board exists we allow fetch; tighten with membership if needed.)
+
+            boolean isOwner = board.getOwnerId() != null && board.getOwnerId().equals(currentUser.getUserId());
+            String role = whiteboardService.getUserRoleInWhiteboard(currentUser.getUserId(), numericBoardId);
+            if (!isOwner && role == null) {
+                throw new AccessDeniedException("You do not have access to this board");
+            }
+
             List<Map<String, Object>> events = eventStore.getEvents(numericBoardId);
             return ResponseEntity.ok(Map.of("success", true, "events", events));
         } catch (AccessDeniedException ex) {
             return ResponseEntity.status(403).body(Map.of("success", false, "message", ex.getMessage()));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", ex.getMessage()));
         } catch (Exception ex) {
-            return ResponseEntity.status(500).body(Map.of("success", false, "message", ex.getMessage()));
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", "Failed to load live events"));
         }
     }
 
