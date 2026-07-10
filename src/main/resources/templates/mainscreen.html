@@ -1,7 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:attr="data-theme=${pageTheme != null and pageTheme != 'system' ? pageTheme : null}">
   <head>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <script th:src="@{/js/csrf-fetch.js}"></script>
+    <link rel="stylesheet" th:href="@{/css/theme-dark.css}" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <link rel="icon"  th:href="@{/images/Preview.png}" type="image/png" sizes="32x32"/> <title>CollaboDraw - Whiteboard</title>
@@ -1149,7 +1152,7 @@
         </button>
         <button
           class="header-btn"
-          onclick="shareBoard()"
+          onclick="shareBoard(window.CD &amp;&amp; window.CD.boardId)"
           data-tooltip="Share board with others"
         >
           <img th:src="@{/images/link-alt.png}" />
@@ -1287,7 +1290,7 @@
         <button class="tool-btn" data-tool="hand" data-tooltip="Pan and navigate canvas<span class='tooltip-shortcut'>Space</span>">
           <span class="tool-icon"><img th:src="@{/images/hand-paper.png}" alt="" /></span><span class="tool-label">Pan</span>
         </button>
-        <button class="tool-btn" data-tool="zoom" data-tooltip="Zoom in on specific areas<span class='tooltip-shortcut'>Z</span>">
+        <button class="tool-btn" data-tool="zoom" data-tooltip="Click to zoom in, shift+click to zoom out<span class='tooltip-shortcut'>Z</span>">
           <span class="tool-icon"><img th:src="@{/images/search.png}" alt="" /></span><span class="tool-label">Zoom</span>
         </button>
       </div>
