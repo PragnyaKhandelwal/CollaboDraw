@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
+  <script th:src="@{/js/csrf-fetch.js}"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="icon"  th:href="@{/images/Preview.png}" type="image/png" sizes="32x32"/>
@@ -352,7 +353,7 @@
         </div>
         <div th:style="${databaseAvailable} ? '' : 'pointer-events:none;opacity:0.55;'">
         <!-- Login form -->
-        <form id="login-form" method="post" action="/login" autocomplete="on" role="tabpanel" aria-labelledby="tab-login">
+        <form id="login-form" method="post" th:action="@{/login}" autocomplete="on" role="tabpanel" aria-labelledby="tab-login">
           <div class="input-field">
             <label for="username">Username</label>
             <input type="text" id="username" name="username" placeholder="Enter your username" autocomplete="username" required th:disabled="${!databaseAvailable}" />
@@ -390,7 +391,7 @@
           <div class="alt-link">Don't have an account? <a id="show-signup">Register</a></div>
         </form>
         <!-- Signup form -->
-        <form id="signup-form" style="display:none;" method="post" action="/register" autocomplete="on"
+        <form id="signup-form" style="display:none;" method="post" th:action="@{/register}" autocomplete="on"
           role="tabpanel" aria-labelledby="tab-signup">
           <div class="input-field">
             <label for="signup-name">Username</label>
