@@ -1,10 +1,14 @@
 package com.example.collabodraw.controller;
 
 import com.example.collabodraw.model.dto.Participant;
+import com.example.collabodraw.model.entity.Board;
 import com.example.collabodraw.model.entity.User;
 import com.example.collabodraw.repository.CursorRepository;
 import com.example.collabodraw.repository.SessionRepository;
 import com.example.collabodraw.service.UserService;
+import com.example.collabodraw.service.WhiteboardService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -22,12 +26,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * STOMP handlers for board presence, cursors, and drawing element broadcast.
+ * Every handler below requires the caller to be a member (or owner) of the
+ * target board - a prior version trusted the client-supplied {boardId} with
+ * no check at all, letting any logged-in user join, watch, or write into any
+ * board on the server just by guessing a numeric id.
+ */
 @Controller
 public class CollaborationWsController {
+    private static final Logger log = LoggerFactory.getLogger(CollaborationWsController.class);
+
     private final SimpMessagingTemplate messagingTemplate;
     private final SessionRepository sessionRepository;
     private final CursorRepository cursorRepository;
     private final UserService userService;
+    private final WhiteboardService whiteboardService;
     private final com.example.collabodraw.service.RealtimeEventStore eventStore;
     private final Map<String, SessionBinding> wsSessionBindings = new ConcurrentHashMap<>();
 
@@ -47,12 +61,32 @@ public class CollaborationWsController {
                                      SessionRepository sessionRepository,
                                      CursorRepository cursorRepository,
                                      UserService userService,
+                                     WhiteboardService whiteboardService,
                                      com.example.collabodraw.service.RealtimeEventStore eventStore) {
         this.messagingTemplate = messagingTemplate;
         this.sessionRepository = sessionRepository;
         this.cursorRepository = cursorRepository;
         this.userService = userService;
+        this.whiteboardService = whiteboardService;
         this.eventStore = eventStore;
+    }
+
+    /**
+     * Resolves the caller's role on a board ("owner", "editor", "viewer") or null if they
+     * have no access at all. Every handler below must check this before doing anything that
+     * reveals or mutates board data - boardId is client-supplied and easy to guess/increment.
+     */
+    private String resolveRole(Long boardId, Long userId) {
+        if (boardId == null || userId == null) return null;
+        Board board = whiteboardService.getWhiteboardById(boardId);
+        if (board == null) return null;
+        if (board.getOwnerId() != null && board.getOwnerId().equals(userId)) return "owner";
+        return whiteboardService.getUserRoleInWhiteboard(userId, boardId);
+    }
+
+    /** Viewers can join/watch a board but must not be able to write drawing data into it. */
+    private boolean canWrite(String role) {
+        return "owner".equalsIgnoreCase(role) || "editor".equalsIgnoreCase(role);
     }
 
     @MessageMapping("/board/{boardId}/join")
@@ -60,6 +94,10 @@ public class CollaborationWsController {
                      @Header("simpSessionId") String wsSessionId) {
         Long userId = resolveUserId(principal);
         if (userId == null) return;
+        if (resolveRole(boardId, userId) == null) {
+            log.debug("Rejected join: user {} has no access to board {}", userId, boardId);
+            return;
+        }
         String username = resolveDisplayName(principal, wsSessionId, null);
 
         // Create one session row per websocket join so multi-tab presence is visible.
@@ -111,6 +149,7 @@ public class CollaborationWsController {
                           @Header("simpSessionId") String wsSessionId) {
         Long userId = resolveUserId(principal);
         if (userId == null) return;
+        if (resolveRole(boardId, userId) == null) return;
 
         SessionBinding binding = wsSessionId != null ? wsSessionBindings.get(wsSessionId) : null;
         if (binding != null) {
@@ -147,8 +186,10 @@ public class CollaborationWsController {
     @MessageMapping("/board/{boardId}/cursor")
     public void cursor(@DestinationVariable Long boardId, @Payload CursorMessage msg, Principal principal,
                        @Header("simpSessionId") String sessionId) {
+        if (msg == null) return;
         Long userId = resolveUserId(principal);
-        String displayName = resolveDisplayName(principal, sessionId, msg != null ? msg.displayName : null);
+        if (resolveRole(boardId, userId) == null) return;
+        String displayName = resolveDisplayName(principal, sessionId, msg.displayName);
         // Update persistent cursor position only for authenticated users
         if (userId != null) {
             Long cursorId = cursorRepository.findCursorId(boardId, userId);
@@ -184,6 +225,9 @@ public class CollaborationWsController {
 
     @MessageMapping("/board/{boardId}/version")
     public void version(@DestinationVariable Long boardId, @Payload VersionMessage msg, Principal principal) {
+        Long userId = resolveUserId(principal);
+        if (!canWrite(resolveRole(boardId, userId))) return;
+
         // Broadcast minimal version event; persistence is handled via REST already
         Map<String, Object> event = new HashMap<>();
         event.put("type", "version");
@@ -196,6 +240,9 @@ public class CollaborationWsController {
 
     @MessageMapping("/board/{boardId}/element")
     public void element(@DestinationVariable Long boardId, @Payload ElementMessage msg, Principal principal) {
+        Long userId = resolveUserId(principal);
+        if (!canWrite(resolveRole(boardId, userId))) return;
+
         Map<String, Object> envelope = new HashMap<>();
         envelope.put("type", "element");
         envelope.put("by", principal != null ? principal.getName() : "");
