@@ -27,10 +27,12 @@ public class MyUserDetailsService implements UserDetailsService {
             throw new AuthenticationServiceException("Database unavailable", ex);
         }
         if (user == null) {
-            System.out.println("DEBUG: No user found with username = " + username);
-            throw new UsernameNotFoundException("User not found: " + username);
+            // Intentionally do not log the attempted username: logging it (or a hash) on
+            // every failed login enables credential harvesting from log/console access and
+            // username enumeration. Authentication failures are already surfaced to Spring
+            // Security's own auth failure handling.
+            throw new UsernameNotFoundException("User not found");
         }
-            System.out.println("DEBUG: Found user " + username + " with hash = " + user.getPasswordHash());
 
         return new org.springframework.security.core.userdetails.User(
             user.getUsername(),
