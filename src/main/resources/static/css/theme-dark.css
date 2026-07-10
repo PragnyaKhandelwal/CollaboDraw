@@ -1,0 +1,72 @@
+/**
+ * theme-dark.css - shared dark-mode overrides.
+ *
+ * Every page defines its palette as CSS custom properties on :root (verified: home.html,
+ * my-content.html, settings.html, templates.html and shared.html use an identical variable
+ * set; mainscreen.html uses an overlapping-but-differently-named set). Declaring an override
+ * for a variable a given page doesn't use is a harmless no-op, so this one file covers all of
+ * them rather than shipping a per-page stylesheet.
+ *
+ * Applies automatically when the OS is in dark mode (prefers-color-scheme) AND the user
+ * hasn't explicitly chosen "light", or unconditionally when the user has explicitly chosen
+ * "dark" in Settings (data-theme="dark", set server-side - see GlobalModelAttributes).
+ *
+ * Known limitation (by design, see the audit): JS-generated modals/dropdowns/dialogs that use
+ * hardcoded inline hex colors (not var()) - notification dropdowns, share/import dialogs -
+ * are not covered here and stay light-themed. Theming those would mean rewriting each one to
+ * use CSS classes instead of inline styles, which is a larger refactor than "add dark mode."
+ */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    /* home/my-content/settings/templates/shared naming */
+    --main-bg: #10151b;
+    --white: #1b222b;
+    --light-gray: #242c37;
+    --gray: #9aa4b2;
+    --border: #2c3542;
+    --text-dark: #e8edf3;
+    --sidebar-text: #d8f5e8;
+
+    /* mainscreen naming (overlaps with the above where names match) */
+    --light-bg: #10151b;
+
+    /* auth naming */
+    --card-bg: rgba(20, 25, 31, 0.72);
+
+    /* semantic accents, brightened slightly for contrast on a dark ground */
+    --blue: #6ea8ff;
+    --purple: #b199ff;
+    --orange: #ffbe5c;
+    --red: #ff8a80;
+  }
+
+  :root:not([data-theme="light"]) body {
+    background: var(--main-bg, #10151b);
+    color: var(--text-dark, #e8edf3);
+  }
+}
+
+:root[data-theme="dark"] {
+  --main-bg: #10151b;
+  --white: #1b222b;
+  --light-gray: #242c37;
+  --gray: #9aa4b2;
+  --border: #2c3542;
+  --text-dark: #e8edf3;
+  --sidebar-text: #d8f5e8;
+
+  --light-bg: #10151b;
+
+  --card-bg: rgba(20, 25, 31, 0.72);
+
+  --blue: #6ea8ff;
+  --purple: #b199ff;
+  --orange: #ffbe5c;
+  --red: #ff8a80;
+}
+
+:root[data-theme="dark"] body {
+  background: var(--main-bg, #10151b);
+  color: var(--text-dark, #e8edf3);
+}
