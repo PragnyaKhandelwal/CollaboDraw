@@ -4,6 +4,8 @@ import com.example.collabodraw.model.entity.User;
 import com.example.collabodraw.service.DashboardRealtimeService;
 import com.example.collabodraw.service.UserService;
 import com.example.collabodraw.service.WhiteboardService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -22,6 +24,8 @@ import java.nio.charset.StandardCharsets;
 @Controller
 @RequestMapping("/boards")
 public class BoardController {
+
+    private static final Logger log = LoggerFactory.getLogger(BoardController.class);
 
     private final UserService userService;
     private final WhiteboardService whiteboardService;
@@ -72,7 +76,8 @@ public class BoardController {
 
             return "mainscreen";
         } catch (Exception e) {
-            return "redirect:/home?error=Failed to load board: " + e.getMessage();
+            log.warn("Failed to load board {}: {}", boardId, e.getMessage());
+            return "redirect:/home?error=" + encodeMessage("Failed to load board");
         }
     }
 
@@ -113,7 +118,8 @@ public class BoardController {
 
             return "mainscreen";
         } catch (Exception e) {
-            return "redirect:/shared?error=Failed to load shared board: " + e.getMessage();
+            log.warn("Failed to load shared board {}: {}", boardId, e.getMessage());
+            return "redirect:/shared?error=" + encodeMessage("Failed to load shared board");
         }
     }
 
@@ -149,7 +155,8 @@ public class BoardController {
 
             return "redirect:/my-content?success=" + encodeMessage("Board shared successfully");
         } catch (Exception e) {
-            return "redirect:/my-content?error=" + encodeMessage("Failed to share board: " + e.getMessage());
+            log.warn("Failed to share board {}: {}", boardId, e.getMessage());
+            return "redirect:/my-content?error=" + encodeMessage("Failed to share board");
         }
     }
     
@@ -172,7 +179,8 @@ public class BoardController {
         } catch (IllegalArgumentException | IllegalStateException ex) {
             return "redirect:/my-content?error=" + encodeMessage(ex.getMessage());
         } catch (Exception ex) {
-            return "redirect:/my-content?error=" + encodeMessage("Failed to duplicate board: " + ex.getMessage());
+            log.warn("Failed to duplicate board {}: {}", boardId, ex.getMessage());
+            return "redirect:/my-content?error=" + encodeMessage("Failed to duplicate board");
         }
     }
     
@@ -195,7 +203,8 @@ public class BoardController {
         } catch (IllegalArgumentException | IllegalStateException ex) {
             return "redirect:/my-content?error=" + encodeMessage(ex.getMessage());
         } catch (Exception ex) {
-            return "redirect:/my-content?error=" + encodeMessage("Failed to delete board: " + ex.getMessage());
+            log.warn("Failed to delete board {}: {}", boardId, ex.getMessage());
+            return "redirect:/my-content?error=" + encodeMessage("Failed to delete board");
         }
     }
     
@@ -218,7 +227,8 @@ public class BoardController {
         } catch (IllegalArgumentException | IllegalStateException ex) {
             return "redirect:/shared?error=" + encodeMessage(ex.getMessage());
         } catch (Exception ex) {
-            return "redirect:/shared?error=" + encodeMessage("Failed to copy shared board: " + ex.getMessage());
+            log.warn("Failed to copy shared board {}: {}", boardId, ex.getMessage());
+            return "redirect:/shared?error=" + encodeMessage("Failed to copy shared board");
         }
     }
     
@@ -241,7 +251,8 @@ public class BoardController {
         } catch (IllegalArgumentException | IllegalStateException ex) {
             return "redirect:/shared?error=" + encodeMessage(ex.getMessage());
         } catch (Exception ex) {
-            return "redirect:/shared?error=" + encodeMessage("Failed to leave shared board: " + ex.getMessage());
+            log.warn("Failed to leave shared board {}: {}", boardId, ex.getMessage());
+            return "redirect:/shared?error=" + encodeMessage("Failed to leave shared board");
         }
     }
 
@@ -275,8 +286,9 @@ public class BoardController {
             return ResponseEntity.badRequest()
                 .body(Map.of("success", false, "message", ex.getMessage()));
         } catch (Exception e) {
+            log.error("Failed to duplicate board {}", boardId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("success", false, "message", "Failed to duplicate board: " + e.getMessage()));
+                .body(Map.of("success", false, "message", "Failed to duplicate board"));
         }
     }
 
@@ -310,8 +322,9 @@ public class BoardController {
             return ResponseEntity.badRequest()
                 .body(Map.of("success", false, "message", ex.getMessage()));
         } catch (Exception e) {
+            log.error("Failed to delete board {}", boardId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("success", false, "message", "Failed to delete board: " + e.getMessage()));
+                .body(Map.of("success", false, "message", "Failed to delete board"));
         }
     }
 
@@ -345,8 +358,9 @@ public class BoardController {
             return ResponseEntity.badRequest()
                 .body(Map.of("success", false, "message", ex.getMessage()));
         } catch (Exception e) {
+            log.error("Failed to copy shared board {}", boardId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("success", false, "message", "Failed to copy shared board: " + e.getMessage()));
+                .body(Map.of("success", false, "message", "Failed to copy shared board"));
         }
     }
 
@@ -378,8 +392,9 @@ public class BoardController {
             return ResponseEntity.badRequest()
                 .body(Map.of("success", false, "message", ex.getMessage()));
         } catch (Exception e) {
+            log.error("Failed to leave board {}", boardId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("success", false, "message", "Failed to leave board: " + e.getMessage()));
+                .body(Map.of("success", false, "message", "Failed to leave board"));
         }
     }
 
