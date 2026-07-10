@@ -3,6 +3,15 @@
  * Handles tool selection, color picker, traybar, timer, properties panel
  */
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 const UIControls = {
   canonicalizePresenceUsers(users) {
     const deduped = new Map();
@@ -343,12 +352,44 @@ const UIControls = {
   },
 
   /**
+   * Reflect the server-reported write permission (AppState.canWrite) in the UI: disables
+   * drawing tools and the canvas surface for viewers. This is a UX affordance, not the
+   * security boundary - the actual enforcement is server-side (BoardApiController's
+   * canWrite check on saves, and the owner/editor check in CollaborationWsController's
+   * element/version handlers), so a viewer who bypasses this client-side can still only
+   * fail their write server-side, not corrupt the board.
+   */
+  applyReadOnlyMode(isReadOnly) {
+    const toolbar = document.querySelector('.toolbar, #toolbar');
+    if (toolbar) {
+      toolbar.querySelectorAll('button, input, select').forEach((el) => {
+        el.disabled = !!isReadOnly;
+      });
+    }
+    const canvasElements = document.getElementById('canvasElements');
+    if (canvasElements) {
+      canvasElements.style.pointerEvents = isReadOnly ? 'none' : '';
+    }
+    const drawingCanvas = document.getElementById('drawingCanvas');
+    if (drawingCanvas) {
+      drawingCanvas.style.pointerEvents = isReadOnly ? 'none' : '';
+    }
+    const banner = document.getElementById('readOnlyBanner');
+    if (banner) {
+      banner.style.display = isReadOnly ? 'block' : 'none';
+    }
+  },
+
+  /**
    * Show notification/toast
    */
   showNotification(message) {
     const notification = document.getElementById('notification');
     if (notification) {
-      notification.innerHTML = message;
+      // textContent, not innerHTML: this renders whatever string is passed in, and some
+      // callers build that string from board/template names - keep it a text sink so it
+      // can never become an innerHTML injection point.
+      notification.textContent = message;
       notification.classList.add('show');
     }
 
@@ -435,8 +476,8 @@ const UIControls = {
       <div style="margin-bottom: 8px; font-weight: 500;">Online (${userCount})</div>
       ${AppState.users.map(user => `
         <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
-          <span style="background: ${user.color}; width: 12px; height: 12px; border-radius: 50%; display: inline-block;"></span>
-          <span>${user.name}</span>
+          <span style="background: ${escapeHtml(user.color)}; width: 12px; height: 12px; border-radius: 50%; display: inline-block;"></span>
+          <span>${escapeHtml(user.name)}</span>
         </div>
       `).join('')}
     `;
