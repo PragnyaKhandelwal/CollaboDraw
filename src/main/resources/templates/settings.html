@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
+  <script th:src="@{/js/csrf-fetch.js}"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="icon"  th:href="@{/images/Preview.png}" type="image/png" sizes="32x32"/>
@@ -1301,7 +1302,7 @@
             if (!Array.isArray(items) || items.length === 0) {
               participantsDiv.textContent = 'No participants yet.';
             } else {
-              participantsDiv.innerHTML = items.map(p => `<span style='display:inline-block; padding:4px 8px; border:1px solid var(--border); border-radius:12px; margin:2px;'>${p.username}</span>`).join('');
+              participantsDiv.innerHTML = items.map(p => `<span style='display:inline-block; padding:4px 8px; border:1px solid var(--border); border-radius:12px; margin:2px;'>${escapeHtml(p.username)}</span>`).join('');
             }
           });
           subs.cursors = CollaboSocket.subscribeCursors(boardId, (evt) => {
