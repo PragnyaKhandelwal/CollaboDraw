@@ -155,13 +155,18 @@ function handleCanvasClick(e) {
   const rect = AppState.mainCanvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
-  
+
   switch(AppState.currentTool) {
     case 'sticky':
       ElementManager.createStickyNote(x, y);
       break;
     case 'text':
       ElementManager.createTextElement(x, y);
+      break;
+    case 'zoom':
+      // Shift+click zooms out, plain click zooms in - the zoom tool was previously
+      // selectable but had no click behavior wired to it at all.
+      if (e.shiftKey) Canvas.zoomOut(); else Canvas.zoomIn();
       break;
   }
 }
@@ -915,10 +920,6 @@ function saveBoard_internal() {
   }, 2000);
 }
 
-// Already defined but ensure global
-function shareBoard() { /* Already defined */ }
-function exportBoard() { /* Already defined */ }
-function goHome() { /* Already defined */ }
 function showHelp() { UIControls.showHelp(); }
 
 /**
