@@ -1,7 +1,12 @@
 package com.example.collabodraw;
 
 import com.example.collabodraw.model.entity.Board;
+import com.example.collabodraw.model.entity.User;
+import com.example.collabodraw.service.UserService;
 import com.example.collabodraw.service.WhiteboardService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,27 +19,45 @@ import java.nio.charset.StandardCharsets;
 @Controller
 public class WhiteboardController {
 
-    private final WhiteboardService whiteboardService;
+    private static final Logger log = LoggerFactory.getLogger(WhiteboardController.class);
 
-    public WhiteboardController(WhiteboardService whiteboardService) {
+    private final WhiteboardService whiteboardService;
+    private final UserService userService;
+
+    public WhiteboardController(WhiteboardService whiteboardService, UserService userService) {
         this.whiteboardService = whiteboardService;
+        this.userService = userService;
     }
 
-    // ✅ NEW: Handle /board/{boardId} route
+    // Handle /board/{boardId} route
     @GetMapping("/board/{boardId}")
     public String viewBoard(
             @PathVariable Long boardId,
+            Authentication authentication,
             Model model) {
-        
+
         try {
             Board board = whiteboardService.getWhiteboardById(boardId);
-            if (board != null) {
-                model.addAttribute("board", board);
-                model.addAttribute("boardId", boardId);
-                return "mainscreen";
+            if (board == null) {
+                return "redirect:/home?error=notfound";
             }
+
+            User currentUser = authentication != null ? userService.findByUsername(authentication.getName()) : null;
+            if (currentUser == null) {
+                return "redirect:/auth";
+            }
+
+            boolean isOwner = board.getOwnerId() != null && board.getOwnerId().equals(currentUser.getUserId());
+            String role = whiteboardService.getUserRoleInWhiteboard(currentUser.getUserId(), boardId);
+            if (!isOwner && role == null) {
+                return "redirect:/home?error=forbidden";
+            }
+
+            model.addAttribute("board", board);
+            model.addAttribute("boardId", boardId);
+            return "mainscreen";
         } catch (Exception e) {
-            System.err.println("Error loading board: " + e.getMessage());
+            log.warn("Error loading board {}: {}", boardId, e.getMessage());
         }
         return "redirect:/home?error=notfound";
     }
