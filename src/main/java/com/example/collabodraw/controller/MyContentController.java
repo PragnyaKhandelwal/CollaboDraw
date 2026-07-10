@@ -1,6 +1,7 @@
 package com.example.collabodraw.controller;
 
 import com.example.collabodraw.model.entity.Board;
+import com.example.collabodraw.model.entity.BoardMembership;
 import com.example.collabodraw.model.entity.User;
 import com.example.collabodraw.repository.BoardMembershipRepository;
 import com.example.collabodraw.repository.ActivityLogRepository;
@@ -12,7 +13,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Controller
 public class MyContentController {
@@ -52,6 +55,15 @@ public class MyContentController {
             long sharedWithOthers = shared.stream().filter(m -> !"owner".equalsIgnoreCase(m.getRole())).count();
             model.addAttribute("sharedWithOthers", sharedWithOthers);
 
+            Set<Long> favoriteBoardIds = new HashSet<>();
+            Set<Long> archivedBoardIds = new HashSet<>();
+            for (BoardMembership m : shared) {
+                if (m.isFavorite()) favoriteBoardIds.add(m.getBoardId());
+                if (m.isArchived()) archivedBoardIds.add(m.getBoardId());
+            }
+            model.addAttribute("favoriteBoardIds", favoriteBoardIds);
+            model.addAttribute("archivedBoardIds", archivedBoardIds);
+
             // Metrics
             int templatesUsed = boardRepository.countByOwnerInDays(currentUser.getUserId(), 30); // proxy for usage
             int recentActivity = activityLogRepository.countRecentActivityForUserBoards(currentUser.getUserId(), 24);
@@ -62,6 +74,8 @@ public class MyContentController {
             List<Board> publicBoards = whiteboardService.getPublicWhiteboards();
             model.addAttribute("boards", publicBoards);
             model.addAttribute("totalBoards", publicBoards != null ? publicBoards.size() : 0);
+            model.addAttribute("favoriteBoardIds", Set.of());
+            model.addAttribute("archivedBoardIds", Set.of());
         }
 
         return "my-content";
