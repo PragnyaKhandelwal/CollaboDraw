@@ -4,71 +4,45 @@
 
 const ElementManager = {
   lastZIndex: 10,
-  
+
+  // Shared drag state for the single document-level mousemove/mouseup pair below. Previously
+  // setupElementInteraction() registered its own mousemove/mouseup listeners on `document` for
+  // every element, and they were never removed - a board with N elements accumulated N
+  // permanently-live document listeners, and restoreElementInteractions() (called on every
+  // undo/redo) re-ran setupElementInteraction for every element again, doubling the count each
+  // time. Tracking the one element currently being dragged in module state and registering the
+  // move/up handlers once (see initGlobalDragHandlers) fixes both the leak and the compounding.
+  _drag: { element: null, startX: 0, startY: 0, startLeft: 0, startTop: 0 },
+  _globalHandlersInstalled: false,
+
   getNextZIndex() {
     this.lastZIndex++;
     return this.lastZIndex;
   },
 
-  /**
-   * Setup interaction handlers for canvas elements
-   */
-  setupElementInteraction(element) {
-    // BUG FIX: Prevent duplicate event listeners on the same element
-    if (element.dataset.hasListeners === 'true') return;
-    element.dataset.hasListeners = 'true';
+  initGlobalDragHandlers() {
+    if (this._globalHandlersInstalled) return;
+    this._globalHandlersInstalled = true;
 
-    let isDragging = false;
-    let startX, startY, startLeft, startTop;
-    
-    element.addEventListener('mousedown', (e) => {
-      if (AppState.currentTool !== 'select') return;
-      
-      // UI FIX: If clicking an input or textarea, don't trigger a drag
-      const tag = e.target.tagName.toLowerCase();
-      if (tag === 'input' || tag === 'textarea') return;
-
-      e.stopPropagation();
-      
-      // UI FIX: Dynamic Z-Index update to bring to front
-      element.style.zIndex = this.getNextZIndex();
-
-      if (e.ctrlKey || e.metaKey || e.shiftKey) {
-        this.toggleElementSelection(element);
-        return;
-      }
-
-      isDragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      
-      // BUG FIX: Use offsetLeft/Top for more stable relative positioning
-      startLeft = element.offsetLeft;
-      startTop = element.offsetTop;
-      
-      this.selectElement(element);
-      element.classList.add('dragging');
-    });
-    
-    // Global mousemove to handle fast dragging without losing focus
     document.addEventListener('mousemove', (e) => {
-      if (!isDragging) return;
-      
-      const deltaX = e.clientX - startX;
-      const deltaY = e.clientY - startY;
-      
-      element.style.left = (startLeft + deltaX) + 'px';
-      element.style.top = (startTop + deltaY) + 'px';
+      const element = this._drag.element;
+      if (!element) return;
+
+      const deltaX = e.clientX - this._drag.startX;
+      const deltaY = e.clientY - this._drag.startY;
+
+      element.style.left = (this._drag.startLeft + deltaX) + 'px';
+      element.style.top = (this._drag.startTop + deltaY) + 'px';
     });
-    
+
     document.addEventListener('mouseup', () => {
-      if (!isDragging) return;
-      
-      isDragging = false;
+      const element = this._drag.element;
+      if (!element) return;
+      this._drag.element = null;
+
       element.classList.remove('dragging');
-      
       History.saveState();
-      
+
       // Sync with Aiven/Socket
       try {
         if (window.CD && window.CD.boardId && typeof CollaboSocket !== 'undefined') {
@@ -79,13 +53,53 @@ const ElementManager = {
               id: element.dataset.id,
               x: parseInt(element.style.left, 10) || 0,
               y: parseInt(element.style.top, 10) || 0,
-              zIndex: element.style.zIndex 
+              zIndex: element.style.zIndex
             }
           });
         }
-      } catch(_){ }
+      } catch (_) { }
     });
-    
+  },
+
+  /**
+   * Setup interaction handlers for canvas elements
+   */
+  setupElementInteraction(element) {
+    this.initGlobalDragHandlers();
+
+    // BUG FIX: Prevent duplicate event listeners on the same element
+    if (element.dataset.hasListeners === 'true') return;
+    element.dataset.hasListeners = 'true';
+
+    element.addEventListener('mousedown', (e) => {
+      if (AppState.currentTool !== 'select') return;
+
+      // UI FIX: If clicking an input or textarea, don't trigger a drag
+      const tag = e.target.tagName.toLowerCase();
+      if (tag === 'input' || tag === 'textarea') return;
+
+      e.stopPropagation();
+
+      // UI FIX: Dynamic Z-Index update to bring to front
+      element.style.zIndex = this.getNextZIndex();
+
+      if (e.ctrlKey || e.metaKey || e.shiftKey) {
+        this.toggleElementSelection(element);
+        return;
+      }
+
+      this._drag.element = element;
+      this._drag.startX = e.clientX;
+      this._drag.startY = e.clientY;
+
+      // BUG FIX: Use offsetLeft/Top for more stable relative positioning
+      this._drag.startLeft = element.offsetLeft;
+      this._drag.startTop = element.offsetTop;
+
+      this.selectElement(element);
+      element.classList.add('dragging');
+    });
+
     element.addEventListener('dblclick', () => {
       this.editElement(element);
     });
@@ -256,6 +270,142 @@ const ElementManager = {
       element.style.zIndex = '1';
     });
     History.saveState();
+  },
+
+  /**
+   * Delete selected elements. Referenced by the context menu and the Delete key
+   * (modules/init.js), but was never defined here - both actions silently did nothing.
+   */
+  deleteSelected() {
+    if (AppState.selectedElements.length === 0) return;
+    AppState.selectedElements.forEach(element => element.remove());
+    AppState.selectedElements = [];
+    History.saveState();
+    if (typeof UIControls !== 'undefined') {
+      UIControls.updatePropertiesPanel(null);
+      UIControls.showNotification('Elements deleted');
+    }
+  },
+
+  /**
+   * Copy selected elements to an in-memory clipboard. Referenced by the context menu and
+   * Ctrl+C (modules/init.js), but was never defined here.
+   */
+  copySelected() {
+    AppState.clipboard = AppState.selectedElements.map(el => ({
+      html: el.outerHTML
+    }));
+    if (typeof UIControls !== 'undefined') UIControls.showNotification('Copied to clipboard');
+  },
+
+  /**
+   * Paste elements from the in-memory clipboard, offset from their original position.
+   * Referenced by the context menu and Ctrl+V (modules/init.js), but was never defined here.
+   */
+  pasteFromClipboard() {
+    if (!AppState.clipboard || AppState.clipboard.length === 0) {
+      if (typeof UIControls !== 'undefined') UIControls.showNotification('Nothing to paste');
+      return;
+    }
+
+    const container = document.getElementById('canvasElements');
+    if (!container) return;
+
+    const pasted = [];
+    AppState.clipboard.forEach(item => {
+      const temp = document.createElement('div');
+      temp.innerHTML = item.html;
+      const element = temp.firstElementChild;
+      if (!element) return;
+      element.dataset.id = AppState.generateId();
+      element.dataset.hasListeners = ''; // force re-registration on the pasted clone
+      delete element.dataset.hasListeners;
+
+      const left = (parseInt(element.style.left, 10) || 0) + 30;
+      const top = (parseInt(element.style.top, 10) || 0) + 30;
+      element.style.left = left + 'px';
+      element.style.top = top + 'px';
+      element.classList.remove('selected');
+
+      container.appendChild(element);
+      this.setupElementInteraction(element);
+      pasted.push(element);
+    });
+
+    this.clearSelection();
+    pasted.forEach(el => this.toggleElementSelection(el));
+
+    History.saveState();
+    if (typeof UIControls !== 'undefined') UIControls.showNotification('Pasted from clipboard');
+  },
+
+  /**
+   * Duplicate selected elements in place, offset from the originals. Referenced by the
+   * context menu (modules/init.js), but was never defined here.
+   */
+  duplicateSelected() {
+    if (AppState.selectedElements.length === 0) return;
+    const container = document.getElementById('canvasElements');
+    if (!container) return;
+
+    const duplicates = [];
+    AppState.selectedElements.forEach(element => {
+      const clone = element.cloneNode(true);
+      clone.dataset.id = AppState.generateId();
+      delete clone.dataset.hasListeners;
+      clone.classList.remove('selected');
+
+      const left = (parseInt(element.style.left, 10) || 0) + 20;
+      const top = (parseInt(element.style.top, 10) || 0) + 20;
+      clone.style.left = left + 'px';
+      clone.style.top = top + 'px';
+
+      container.appendChild(clone);
+      this.setupElementInteraction(clone);
+      duplicates.push(clone);
+    });
+
+    this.clearSelection();
+    duplicates.forEach(el => this.toggleElementSelection(el));
+
+    History.saveState();
+    if (typeof UIControls !== 'undefined') UIControls.showNotification('Elements duplicated');
+  },
+
+  /**
+   * Tag selected elements as a group (shared dataset.groupId) so they can be selected/moved
+   * together later. Referenced by the context menu (modules/init.js), but was never defined
+   * here.
+   */
+  groupSelected() {
+    if (AppState.selectedElements.length < 2) {
+      if (typeof UIControls !== 'undefined') UIControls.showNotification('Select at least two elements to group');
+      return;
+    }
+    const groupId = AppState.generateId();
+    AppState.selectedElements.forEach(element => {
+      element.dataset.groupId = groupId;
+      element.classList.add('grouped');
+    });
+    History.saveState();
+    if (typeof UIControls !== 'undefined') UIControls.showNotification('Elements grouped');
+  },
+
+  /**
+   * Remove the group tag from selected elements. Referenced by the context menu
+   * (modules/init.js), but was never defined here.
+   */
+  ungroupSelected() {
+    if (AppState.selectedElements.length === 0) {
+      if (typeof UIControls !== 'undefined') UIControls.showNotification('Select grouped elements to ungroup');
+      return;
+    }
+    AppState.selectedElements.forEach(element => {
+      delete element.dataset.groupId;
+      element.classList.remove('grouped');
+    });
+    History.saveState();
+    if (typeof UIControls !== 'undefined') UIControls.showNotification('Elements ungrouped');
   },
 
   restoreElementInteractions() {
