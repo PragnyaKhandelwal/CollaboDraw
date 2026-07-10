@@ -48,23 +48,11 @@ function useTemplate(templateId) {
     window.location.href = `/templates/use/${templateId}`;
 }
 
-/**
- * Preview a template without creating a board
- */
-function previewTemplate(templateId) {
-    if (typeof templateId === 'undefined' || templateId === null) {
-        console.error('Template ID is required');
-        return;
-    }
-    
-    // If we're already on mainscreen, load the template in preview mode
-    if (window.location.pathname === '/mainscreen') {
-        loadTemplatePreview(templateId);
-    } else {
-        // Navigate to mainscreen with preview parameter
-        window.location.href = `/mainscreen?preview=${templateId}`;
-    }
-}
+// previewTemplate() used to be declared here as well, redirecting to a mainscreen preview
+// param whose handler was commented out - since templates.html is the only page with a
+// "Preview" button and it already defines its own working modal-based previewTemplate(),
+// this dead-end duplicate (loaded after templates.html's inline script, so it always won)
+// has been removed rather than fixed in place.
 
 /**
  * Share a board with other users
@@ -100,7 +88,9 @@ async function shareBoard(boardId) {
  */
 async function duplicateBoard(boardId) {
     try {
-        const response = await fetch(`/api/boards/duplicate/${boardId}`, {
+        // Note: this hits BoardController (mapped at /boards/**), not BoardApiController
+        // (mapped at /api/boards/**) - they're two different controllers with similar names.
+        const response = await fetch(`/boards/duplicate/${boardId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -158,7 +148,7 @@ async function deleteBoard(boardId) {
  */
 async function copySharedBoard(boardId) {
     try {
-        const response = await fetch(`/api/boards/copy-shared/${boardId}`, {
+        const response = await fetch(`/boards/copy-shared/${boardId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -187,7 +177,7 @@ async function copySharedBoard(boardId) {
 async function leaveBoard(boardId) {
     if (confirm('Are you sure you want to leave this shared board?')) {
         try {
-            const response = await fetch(`/api/boards/leave/${boardId}`, {
+            const response = await fetch(`/boards/leave/${boardId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
