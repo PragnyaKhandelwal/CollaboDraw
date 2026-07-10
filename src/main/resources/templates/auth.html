@@ -1,7 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:attr="data-theme=${pageTheme != null and pageTheme != 'system' ? pageTheme : null}">
 <head>
+  <meta name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
   <script th:src="@{/js/csrf-fetch.js}"></script>
+  <link rel="stylesheet" th:href="@{/css/theme-dark.css}" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="icon"  th:href="@{/images/Preview.png}" type="image/png" sizes="32x32"/>
