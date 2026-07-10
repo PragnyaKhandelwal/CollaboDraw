@@ -220,6 +220,8 @@ const RealTime = {
       
       if (kind === 'stroke' && payload && Array.isArray(payload.points)) {
         DrawingTools.renderRemoteStroke(payload);
+      } else if (kind === 'shape' && payload) {
+        DrawingTools.renderRemoteShape(payload);
       } else if (kind === 'sticky' && payload) {
         if (!document.querySelector(`[data-id="${payload.id}"]`)) {
           const el = ElementManager.createStickyNote(payload.x, payload.y);
@@ -265,6 +267,8 @@ const RealTime = {
       } else if (kind === 'erase' && payload) {
         const r = payload.radius || 20;
         AppState.ctx.clearRect((payload.x||0) - r, (payload.y||0) - r, r*2, r*2);
+      } else if (kind === 'timer' && payload) {
+        UIControls.syncTimerState(!!payload.running, payload.seconds);
       }
     } catch(err){ console.warn('element event handling failed', err); }
   },
