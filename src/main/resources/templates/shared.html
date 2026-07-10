@@ -1,7 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:attr="data-theme=${pageTheme != null and pageTheme != 'system' ? pageTheme : null}">
 <head>
+  <meta name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
   <script th:src="@{/js/csrf-fetch.js}"></script>
+  <link rel="stylesheet" th:href="@{/css/theme-dark.css}" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="icon"  th:href="@{/images/Preview.png}" type="image/png" sizes="32x32"/>
@@ -700,7 +703,11 @@
         <input type="text" class="search-input" placeholder="Search shared boards...">
       </div>
       <div class="header-right">
-        <button class="notification-btn">🔔</button>
+        <button class="notification-btn" id="sharedNotifBtn" style="position:relative;">🔔<span id="sharedNotifBadge" style="display:none; position:absolute; top:2px; right:2px; width:8px; height:8px; border-radius:50%; background:#ef4444;"></span></button>
+        <div id="sharedNotifDropdown" style="display:none; position:absolute; top:70px; right:32px; background:#ffffff; color:#111827; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); width:280px; max-height:360px; overflow-y:auto; z-index:50;">
+          <div style="padding:12px 16px; font-weight:600; border-bottom:1px solid #f3f4f6;">Notifications</div>
+          <div id="sharedNotifList"></div>
+        </div>
         <div class="avatar" onclick="window.location.href='/settings'" th:text="${currentUser?.username?.substring(0,2)?.toUpperCase() ?: 'JD'}">JD</div>      </div>
     </header>
 
@@ -903,6 +910,7 @@
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
   <script th:src="@{/js/collab-socket.js}"></script>
+  <script th:src="@{/js/notification-bell.js}"></script>
 
   <script th:inline="javascript">
     const currentUserId = /*[[${currentUser != null ? currentUser.userId : null}]]*/ null;
@@ -910,7 +918,9 @@
     document.addEventListener('DOMContentLoaded', function() {
       const sidebar = document.getElementById('sidebar');
       const toggleBtn = document.getElementById('toggleBtn');
-      
+
+      NotificationBell.init('sharedNotifBtn', 'sharedNotifDropdown', 'sharedNotifList', 'sharedNotifBadge');
+
       toggleBtn.addEventListener('click', function() {
         sidebar.classList.toggle('collapsed');
         toggleBtn.innerHTML = sidebar.classList.contains('collapsed') ? '›' : '‹';
