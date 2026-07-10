@@ -1,7 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:attr="data-theme=${pageTheme != null and pageTheme != 'system' ? pageTheme : null}">
 <head>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <script th:src="@{/js/csrf-fetch.js}"></script>
+    <link rel="stylesheet" th:href="@{/css/theme-dark.css}" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <link rel="icon"  th:href="@{/images/Preview.png}" type="image/png" sizes="32x32"/>
@@ -663,13 +666,10 @@
         <input type="text" class="search-input" placeholder="Search boards, templates, or teammates...">
       </div>
       <div class="header-right">
-        <button class="notification-btn" id="homeNotifBtn">🔔</button>
-        <div id="homeNotifDropdown" style="display:none; position:absolute; top:70px; right:32px; background:#ffffff; color:#111827; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); width:280px; z-index:50;">
+        <button class="notification-btn" id="homeNotifBtn" style="position:relative;">🔔<span id="homeNotifBadge" style="display:none; position:absolute; top:2px; right:2px; width:8px; height:8px; border-radius:50%; background:#ef4444;"></span></button>
+        <div id="homeNotifDropdown" style="display:none; position:absolute; top:70px; right:32px; background:#ffffff; color:#111827; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); width:280px; max-height:360px; overflow-y:auto; z-index:50;">
           <div style="padding:12px 16px; font-weight:600; border-bottom:1px solid #f3f4f6;">Notifications</div>
-          <div style="padding:12px 16px; font-size:14px;">
-            <div style="margin-bottom:8px;">No new notifications</div>
-            <div style="color:#6b7280;">You're all caught up.</div>
-          </div>
+          <div id="homeNotifList"></div>
         </div>
         <div class="avatar" onclick="window.location.href='/settings'" th:text="${currentUser?.username?.substring(0,2)?.toUpperCase() ?: 'JD'}">JD</div>
       </div>
@@ -784,21 +784,11 @@
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
   <script th:src="@{/js/collab-socket.js}"></script>
+  <script th:src="@{/js/notification-bell.js}"></script>
   <script th:src="@{/sidebar-toggle.js}"></script>
   <script th:inline="javascript">
     const currentUserId = /*[[${currentUser != null ? currentUser.userId : null}]]*/ null;
-    // Notifications dropdown for Home header
-    (function(){
-      const b = document.getElementById('homeNotifBtn');
-      const d = document.getElementById('homeNotifDropdown');
-      if(b && d){
-        b.addEventListener('click', function(e){
-          e.stopPropagation();
-          d.style.display = d.style.display === 'none' ? 'block' : 'none';
-        });
-        document.addEventListener('click', function(){ d.style.display = 'none'; });
-      }
-    })();
+    NotificationBell.init('homeNotifBtn', 'homeNotifDropdown', 'homeNotifList', 'homeNotifBadge');
 
     // Use global openBoard from static/board-operations.js
 
