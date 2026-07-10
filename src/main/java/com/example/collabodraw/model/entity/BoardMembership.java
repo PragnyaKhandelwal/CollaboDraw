@@ -11,6 +11,8 @@ public class BoardMembership {
     private Long userId;
     private String role; // 'owner', 'editor', 'viewer'
     private LocalDateTime joinedAt;
+    private boolean favorite;
+    private boolean archived;
 
     // Constructors
     public BoardMembership() {}
@@ -33,7 +35,14 @@ public class BoardMembership {
 
     public LocalDateTime getJoinedAt() { return joinedAt; }
     public void setJoinedAt(LocalDateTime joinedAt) { this.joinedAt = joinedAt; }
-    
+
+    public boolean isFavorite() { return favorite; }
+    public void setFavorite(boolean favorite) { this.favorite = favorite; }
+
+    public boolean isArchived() { return archived; }
+    public void setArchived(boolean archived) { this.archived = archived; }
+
+
     // For backward compatibility with Participant naming
     public LocalDateTime getCreatedAt() { return joinedAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.joinedAt = createdAt; }

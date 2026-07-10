@@ -82,6 +82,32 @@ public class BoardMembershipRepository {
         return count != null && count > 0;
     }
 
+    /**
+     * Toggles favorite/archived on a user's own membership row and returns the new value.
+     * Returns null if the caller has no membership row for that board (e.g. not a member).
+     */
+    public Boolean toggleFavorite(Long boardId, Long userId) {
+        return toggleFlag(boardId, userId, "is_favorite");
+    }
+
+    public Boolean toggleArchived(Long boardId, Long userId) {
+        return toggleFlag(boardId, userId, "is_archived");
+    }
+
+    private Boolean toggleFlag(Long boardId, Long userId, String column) {
+        // Column name is a fixed internal constant (never user input), so string-building the
+        // SQL here is safe - it's not concatenating any request-supplied value.
+        Boolean current = jdbcTemplate.query(
+                "SELECT " + column + " FROM board_membership WHERE board_id = ? AND user_id = ?",
+                rs -> rs.next() ? rs.getBoolean(1) : null,
+                boardId, userId);
+        if (current == null) return null;
+        boolean next = !current;
+        jdbcTemplate.update("UPDATE board_membership SET " + column + " = ? WHERE board_id = ? AND user_id = ?",
+                next, boardId, userId);
+        return next;
+    }
+
     private static class BoardMembershipRowMapper implements RowMapper<BoardMembership> {
         @Override
         public BoardMembership mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
@@ -89,13 +115,15 @@ public class BoardMembershipRepository {
             membership.setBoardId(rs.getLong("board_id"));
             membership.setUserId(rs.getLong("user_id"));
             membership.setRole(rs.getString("role"));
-            
+            membership.setFavorite(rs.getBoolean("is_favorite"));
+            membership.setArchived(rs.getBoolean("is_archived"));
+
             // Handle timestamp
             java.sql.Timestamp joinedTimestamp = rs.getTimestamp("joined_at");
             if (joinedTimestamp != null) {
                 membership.setJoinedAt(joinedTimestamp.toLocalDateTime());
             }
-            
+
             return membership;
         }
     }
