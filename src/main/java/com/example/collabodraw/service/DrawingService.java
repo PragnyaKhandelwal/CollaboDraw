@@ -4,6 +4,8 @@ import com.example.collabodraw.model.dto.DrawingElementDTO;
 import com.example.collabodraw.model.entity.Element;
 import com.example.collabodraw.repository.ElementRepository;
 import com.example.collabodraw.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +16,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class DrawingService {
+
+    private static final Logger log = LoggerFactory.getLogger(DrawingService.class);
 
     @Autowired
     private ElementRepository elementRepository;
@@ -39,13 +43,12 @@ public class DrawingService {
     @Transactional
     public void saveDrawing(Long boardId, List<DrawingElementDTO> elements, String username) {
         Long userId = userRepository.findByUsername(username).getUserId();
-        
-        System.out.println("🔵 [DrawingService] Saving " + elements.size() + " elements for board " + boardId);
-        
+
+        log.debug("Saving {} elements for board {}", elements.size(), boardId);
+
         // Clear existing
         elementRepository.deleteByBoardId(boardId);
-        System.out.println("🔵 [DrawingService] Cleared old elements");
-        
+
         // Save new
         for (DrawingElementDTO dto : elements) {
             Element element = new Element();
@@ -56,9 +59,8 @@ public class DrawingService {
             element.setZOrder(dto.getzOrder());
             element.setCreatedAt(LocalDateTime.now());
             element.setUpdatedAt(LocalDateTime.now());
-            
-            Long elementId = elementRepository.save(element);
-            System.out.println("🟢 [DrawingService] Saved element ID: " + elementId + " type: " + dto.getType());
+
+            elementRepository.save(element);
         }
     }
     

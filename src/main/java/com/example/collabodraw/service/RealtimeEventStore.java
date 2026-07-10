@@ -21,12 +21,12 @@ public class RealtimeEventStore {
         if (boardId == null || event == null) return;
         List<Map<String, Object>> list = boardEvents.computeIfAbsent(boardId, k -> new CopyOnWriteArrayList<>());
         list.add(event);
-        // Trim if oversized
-        if (list.size() > MAX_EVENTS_PER_BOARD) {
-            int removeCount = list.size() - MAX_EVENTS_PER_BOARD;
-            for (int i = 0; i < removeCount; i++) {
-                list.remove(0);
-            }
+        // Trim if oversized. A single subList().clear() call is one structural change on the
+        // backing array (CopyOnWriteArrayList copies once), unlike removing index 0 in a loop
+        // which would copy the whole backing array on every single removal (O(n^2) overall).
+        int overflow = list.size() - MAX_EVENTS_PER_BOARD;
+        if (overflow > 0) {
+            list.subList(0, overflow).clear();
         }
     }
 

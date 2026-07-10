@@ -8,13 +8,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.prefs.Preferences;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
 public class TemplateService {
     private final TemplateRepository templateRepository;
-    private final Preferences prefs = Preferences.userRoot().node("collabodraw/template-usage");
+    // Fallback only: used when the DB usage-count update fails. Previously backed by
+    // java.util.prefs.Preferences, which on Windows is the registry and on Linux is a
+    // per-user file store that may be unwritable/non-existent in a container - it would
+    // silently no-op or diverge per instance. An in-memory map has the same "not shared
+    // across instances" limitation as any per-process fallback, but at least behaves
+    // identically on every OS/deployment target instead of failing unpredictably.
+    private final Map<String, AtomicInteger> fallbackUsage = new ConcurrentHashMap<>();
 
     public TemplateService(TemplateRepository templateRepository) {
         this.templateRepository = templateRepository;
@@ -114,12 +121,12 @@ public class TemplateService {
 
     private int getFallbackUsage(String key) {
         if (key == null || key.isBlank()) return 0;
-        return prefs.getInt(key, 0);
+        AtomicInteger count = fallbackUsage.get(key);
+        return count != null ? count.get() : 0;
     }
 
     private void incrementFallbackUsage(String key) {
         if (key == null || key.isBlank()) return;
-        int current = prefs.getInt(key, 0);
-        prefs.putInt(key, current + 1);
+        fallbackUsage.computeIfAbsent(key, k -> new AtomicInteger()).incrementAndGet();
     }
 }

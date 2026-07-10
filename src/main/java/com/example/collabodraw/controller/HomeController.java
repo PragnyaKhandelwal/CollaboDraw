@@ -8,6 +8,8 @@ import com.example.collabodraw.service.DashboardRealtimeService;
 import com.example.collabodraw.service.TemplateService;
 import com.example.collabodraw.service.UserService;
 import com.example.collabodraw.service.WhiteboardService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -26,6 +28,8 @@ import java.util.Map;
  */
 @Controller
 public class HomeController {
+
+    private static final Logger log = LoggerFactory.getLogger(HomeController.class);
 
     private final UserService userService;
     private final WhiteboardService whiteboardService;
@@ -62,7 +66,7 @@ public class HomeController {
                     model.addAttribute("popularTemplates", templateService.getPopularTemplates(10));
                 }
             } catch (Exception e) {
-                System.err.println("Error loading user data: " + e.getMessage());
+                log.warn("Error loading user data for {}: {}", username, e.getMessage());
                 model.addAttribute("username", username);
                 model.addAttribute("whiteboards", java.util.Collections.emptyList());
                 model.addAttribute("popularTemplates", templateService.getPopularTemplates(10));
@@ -160,10 +164,9 @@ public class HomeController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            System.err.println("Error creating board: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Error creating board", e);
             response.put("success", false);
-            response.put("message", e.getMessage());
+            response.put("message", "Failed to create board");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
