@@ -144,6 +144,11 @@ public class SettingsController {
                 existing.setTwoFactorEnabled(userSettings.isTwoFactorEnabled());
                 settingsService.update(existing);
                 model.addAttribute("successMessage", "Advanced settings updated");
+                // GlobalModelAttributes.pageTheme() already ran earlier in this request, before
+                // the save above, so it's holding the pre-save value - override it here so the
+                // page that renders from this same response reflects the theme immediately
+                // instead of only taking effect after the next navigation.
+                model.addAttribute("pageTheme", (existing.getTheme() == null || existing.getTheme().isBlank()) ? "system" : existing.getTheme());
             }
         }
         return settings(authentication, model);
@@ -199,6 +204,39 @@ public class SettingsController {
             }
         }
         return settings(authentication, model);
+    }
+
+    /**
+     * Profile picture upload. The "Change" button previously just showed a fake "updated!"
+     * alert with no upload at all - this stores the (client-resized) image as a data: URL,
+     * the same pattern already used for canvas snapshots (see DrawingController), so it needs
+     * no new file-storage infrastructure.
+     */
+    @PostMapping("/api/settings/avatar")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateAvatar(@RequestBody Map<String, String> body, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("success", false, "message", "Unauthorized"));
+        }
+        User user = userService.findByUsername(authentication.getName());
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("success", false, "message", "User not found"));
+        }
+        String dataUrl = body != null ? body.get("dataUrl") : null;
+        if (dataUrl == null || dataUrl.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "No image provided"));
+        }
+        if (!dataUrl.startsWith("data:image/")) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Image must be a data: URL"));
+        }
+        // Client resizes to a small avatar before upload, but don't trust that - cap the
+        // stored payload so a crafted request can't stuff megabytes into this row.
+        if (dataUrl.length() > 500_000) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Image is too large"));
+        }
+
+        settingsService.updateAvatar(user.getUserId(), dataUrl);
+        return ResponseEntity.ok(Map.of("success", true, "avatarData", dataUrl));
     }
 
     @GetMapping("/api/settings/collaboration/{boardId}")
