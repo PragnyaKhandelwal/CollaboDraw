@@ -11,6 +11,9 @@
   <title>CollaboDraw - Auth</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
     :root {
       --main-green: #20b97c;
       --main-blue: #50a8fc;
@@ -324,6 +327,70 @@
         padding: 18px 6vw;
       }
     }
+    /* Dark mode: this page is a self-contained brand moment, not the app shell,
+       so it gets its own dark palette instead of relying on theme-dark.css. */
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) { --card-bg: rgba(17, 24, 20, 0.7); }
+      :root:not([data-theme="light"]) html,
+      :root:not([data-theme="light"]) body { background: linear-gradient(120deg, #0a120e 60%, #0a2e22 100%); }
+      :root:not([data-theme="light"]) body::before {
+        background: radial-gradient(circle at 80% 20%, #0f4433 0%, transparent 60%),
+                    radial-gradient(circle at 20% 80%, #1c5a8c33 0%, transparent 70%),
+                    radial-gradient(circle at 60% 60%, #6b581944 0%, transparent 80%);
+      }
+      :root:not([data-theme="light"]) .auth-card { border-color: #1e5540; box-shadow: 0 8px 48px 8px rgba(0, 0, 0, 0.4); }
+      :root:not([data-theme="light"]) .logo-panel { background: linear-gradient(120deg, #0d1f18 60%, #0a120e 100%); box-shadow: 12px 0 32px -16px rgba(0,0,0,0.4); }
+      :root:not([data-theme="light"]) .glass-form { background: rgba(13, 18, 15, 0.88); box-shadow: 0 6px 36px 8px rgba(0, 0, 0, 0.35); }
+      :root:not([data-theme="light"]) .glass-form h1 { color: #7ee8c4; }
+      :root:not([data-theme="light"]) label { color: #8fd9bb; }
+      :root:not([data-theme="light"]) input {
+        background: #141b17; color: #d8f5e8; border-color: #28503f;
+        box-shadow: 0 0 2px #133b2c;
+      }
+      :root:not([data-theme="light"]) input:hover,
+      :root:not([data-theme="light"]) input:focus { box-shadow: 0 0 8px 2px #1f6b4d; }
+      :root:not([data-theme="light"]) .tab-btn { color: #7fbf99; }
+      :root:not([data-theme="light"]) .tab-btn.active,
+      :root:not([data-theme="light"]) .tab-btn:focus { background: #123425; }
+      :root:not([data-theme="light"]) .tab-btn:hover { background: #1a2e22; }
+      :root:not([data-theme="light"]) .social-btn { background: #123425; color: #5be8c0; box-shadow: 0 1px 6px rgba(0,0,0,0.3); }
+      :root:not([data-theme="light"]) .social-btn:hover,
+      :root:not([data-theme="light"]) .social-btn:focus { background: #163c2e; }
+      :root:not([data-theme="light"]) .alt-link { color: #7fd9b8; }
+      :root:not([data-theme="light"]) .alt-link a { color: #3fe6a8; }
+      :root:not([data-theme="light"]) .forgot-link { color: #4fd192; }
+      :root:not([data-theme="light"]) .alert-warning { background: #3a2f10 !important; color: #f5d98a !important; border-color: #5c4a1a !important; }
+    }
+    :root[data-theme="dark"] { --card-bg: rgba(17, 24, 20, 0.7); }
+    :root[data-theme="dark"] html,
+    :root[data-theme="dark"] body { background: linear-gradient(120deg, #0a120e 60%, #0a2e22 100%); }
+    :root[data-theme="dark"] body::before {
+      background: radial-gradient(circle at 80% 20%, #0f4433 0%, transparent 60%),
+                  radial-gradient(circle at 20% 80%, #1c5a8c33 0%, transparent 70%),
+                  radial-gradient(circle at 60% 60%, #6b581944 0%, transparent 80%);
+    }
+    :root[data-theme="dark"] .auth-card { border-color: #1e5540; box-shadow: 0 8px 48px 8px rgba(0, 0, 0, 0.4); }
+    :root[data-theme="dark"] .logo-panel { background: linear-gradient(120deg, #0d1f18 60%, #0a120e 100%); box-shadow: 12px 0 32px -16px rgba(0,0,0,0.4); }
+    :root[data-theme="dark"] .glass-form { background: rgba(13, 18, 15, 0.88); box-shadow: 0 6px 36px 8px rgba(0, 0, 0, 0.35); }
+    :root[data-theme="dark"] .glass-form h1 { color: #7ee8c4; }
+    :root[data-theme="dark"] label { color: #8fd9bb; }
+    :root[data-theme="dark"] input {
+      background: #141b17; color: #d8f5e8; border-color: #28503f;
+      box-shadow: 0 0 2px #133b2c;
+    }
+    :root[data-theme="dark"] input:hover,
+    :root[data-theme="dark"] input:focus { box-shadow: 0 0 8px 2px #1f6b4d; }
+    :root[data-theme="dark"] .tab-btn { color: #7fbf99; }
+    :root[data-theme="dark"] .tab-btn.active,
+    :root[data-theme="dark"] .tab-btn:focus { background: #123425; }
+    :root[data-theme="dark"] .tab-btn:hover { background: #1a2e22; }
+    :root[data-theme="dark"] .social-btn { background: #123425; color: #5be8c0; box-shadow: 0 1px 6px rgba(0,0,0,0.3); }
+    :root[data-theme="dark"] .social-btn:hover,
+    :root[data-theme="dark"] .social-btn:focus { background: #163c2e; }
+    :root[data-theme="dark"] .alt-link { color: #7fd9b8; }
+    :root[data-theme="dark"] .alt-link a { color: #3fe6a8; }
+    :root[data-theme="dark"] .forgot-link { color: #4fd192; }
+    :root[data-theme="dark"] .alert-warning { background: #3a2f10 !important; color: #f5d98a !important; border-color: #5c4a1a !important; }
   </style>
 </head>
 <body>
