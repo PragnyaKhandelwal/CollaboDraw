@@ -33,3 +33,19 @@
   --light-green: #a7f3d0;
   --tooltip-bg: var(--text-dark);
 }
+
+/* Shared sprite icons (see fragments/icons.html) - stroke-based and currentColor, so
+   they theme automatically instead of needing separate light/dark image assets. */
+.icon {
+  width: 1.15em;
+  height: 1.15em;
+  display: inline-block;
+  vertical-align: -0.15em;
+  flex-shrink: 0;
+}
+.icon.icon-fill-on-active {
+  fill: none;
+}
+.icon.icon-fill-on-active.active {
+  fill: currentColor;
+}
