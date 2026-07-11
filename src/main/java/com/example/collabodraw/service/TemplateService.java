@@ -5,7 +5,6 @@ import com.example.collabodraw.repository.TemplateRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -58,16 +57,23 @@ public class TemplateService {
                 .orElse(null);
     }
 
-    public Map<String, Integer> getCategoryCounts() {
-        Map<String, Integer> counts = new HashMap<>();
-        counts.put("all", templateRepository.countAll());
-        // Common categories (extendable)
-        counts.put("popular", templateRepository.countByCategory("popular"));
-        counts.put("business", templateRepository.countByCategory("business"));
-        counts.put("design", templateRepository.countByCategory("design"));
-        counts.put("education", templateRepository.countByCategory("education"));
-        counts.put("planning", templateRepository.countByCategory("planning"));
-        return counts;
+    public int getTotalTemplateCount() {
+        return templateRepository.countAll();
+    }
+
+    // The category filter pills used to be a hardcoded list (Business/Design/Education/
+    // Planning) that assumed a fixed taxonomy. The templates actually in the database use
+    // their own categories (e.g. "Collaboration", "Project Management") that don't match
+    // any of those - every one of those filter buttons always showed zero results. Deriving
+    // the pill list from whatever categories are actually present means the filter always
+    // reflects real data instead of a taxonomy nobody's using.
+    public List<String> getDistinctCategories() {
+        return getAllTemplates().stream()
+                .map(Template::getCategory)
+                .filter(c -> c != null && !c.isBlank())
+                .distinct()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .collect(Collectors.toList());
     }
 
     public void incrementUsage(String templateKey) {
@@ -118,12 +124,16 @@ public class TemplateService {
             "product_roadmap", "bar-chart",
             "kanban_board", "grid"
     );
-    private static final Map<String, String> ICON_BY_CATEGORY = Map.of(
-            "popular", "zap",
-            "business", "bar-chart",
-            "design", "palette",
-            "education", "file-text",
-            "planning", "target"
+    private static final Map<String, String> ICON_BY_CATEGORY = Map.ofEntries(
+            Map.entry("popular", "zap"),
+            Map.entry("business", "bar-chart"),
+            Map.entry("design", "palette"),
+            Map.entry("education", "file-text"),
+            Map.entry("planning", "target"),
+            // Categories actually used by the live data, as opposed to the taxonomy above
+            Map.entry("collaboration", "users"),
+            Map.entry("project management", "bar-chart"),
+            Map.entry("productivity", "grid")
     );
     private static final String DEFAULT_ICON = "file-text";
 

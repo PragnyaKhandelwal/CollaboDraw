@@ -13,8 +13,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.util.Map;
-
 /**
  * Controller for template-related operations
  */
@@ -50,13 +48,8 @@ public class TemplateController {
         }
 
         model.addAttribute("templates", templateService.getAllTemplates());
-        Map<String, Integer> counts = templateService.getCategoryCounts();
-        model.addAttribute("totalTemplates", counts.getOrDefault("all", 0));
-        model.addAttribute("popularTemplates", counts.getOrDefault("popular", 0));
-        model.addAttribute("businessTemplates", counts.getOrDefault("business", 0));
-        model.addAttribute("designTemplates", counts.getOrDefault("design", 0));
-        model.addAttribute("educationTemplates", counts.getOrDefault("education", 0));
-        model.addAttribute("planningTemplates", counts.getOrDefault("planning", 0));
+        model.addAttribute("totalTemplates", templateService.getTotalTemplateCount());
+        model.addAttribute("categories", templateService.getDistinctCategories());
 
         return "templates";
     }

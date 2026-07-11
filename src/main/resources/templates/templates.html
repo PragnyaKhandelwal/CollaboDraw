@@ -675,17 +675,17 @@
         <p>Start with professionally designed templates to accelerate your workflow and spark creativity</p>
       </div>
 
-      <!-- Category Filters -->
+      <!-- Category Filters: "All" and "Popular" are fixed (Popular is usage/featured-based,
+           not a real category); the rest reflect whatever categories actually exist in the
+           template data, so a new category shows up here automatically instead of needing
+           a matching hardcoded pill added by hand. -->
       <div class="category-filters">
         <div class="category-filter active" data-category="all">All Templates</div>
         <div class="category-filter" data-category="popular">Popular</div>
-        <div class="category-filter" data-category="business">Business</div>
-        <div class="category-filter" data-category="design">Design</div>
-        <div class="category-filter" data-category="education">Education</div>
-        <div class="category-filter" data-category="planning">Planning</div>
+        <div class="category-filter" th:each="cat : ${categories}" th:text="${cat}" th:attr="data-category=${cat}">Category</div>
       </div>
 
-      <div class="template-section" th:if="${templates != null and not #lists.isEmpty(templates)}">
+      <div class="template-section featured-section" th:if="${templates != null and not #lists.isEmpty(templates)}">
         <div class="section-header">
           <h2 class="section-title">Popular Picks</h2>
           <span class="section-count">Most used by teams</span>
@@ -769,19 +769,25 @@
     });
 
     function filterTemplates(category) {
+      // Category pills now render real category strings from the data (e.g.
+      // "Collaboration"), not the all-lowercase hardcoded values this used to compare
+      // against - lowercase both sides so casing can't cause a false non-match.
+      const target = (category || '').toLowerCase();
       const templates = document.querySelectorAll('.template-card');
       templates.forEach(template => {
-        if (category === 'all') {
+        if (target === 'all') {
           template.style.display = 'block';
           return;
         }
         const cardCategory = (template.getAttribute('data-category') || '').toLowerCase();
         const featured = (template.getAttribute('data-featured') || '').toLowerCase() === 'true';
-        const matches = category === 'popular'
+        const matches = target === 'popular'
           ? featured || cardCategory === 'popular'
-          : cardCategory === category;
+          : cardCategory === target;
         template.style.display = matches ? 'block' : 'none';
       });
+
+      syncFeaturedSectionVisibility();
     }
 
     function searchTemplates(searchTerm) {
@@ -789,10 +795,23 @@
       templates.forEach(template => {
         const title = template.querySelector('.template-title').textContent.toLowerCase();
         const description = template.querySelector('.template-description').textContent.toLowerCase();
-        
+
         const matches = title.includes(searchTerm) || description.includes(searchTerm);
         template.style.display = matches ? 'block' : 'none';
       });
+      syncFeaturedSectionVisibility();
+    }
+
+    // The "Popular Picks" section shows the same 4 featured cards regardless of which
+    // filter/search is active - if none of them are currently visible, hide the whole
+    // section (header included) instead of leaving an empty "Popular Picks" heading with
+    // nothing under it.
+    function syncFeaturedSectionVisibility() {
+      const popularSection = document.querySelector('.template-section.featured-section');
+      if (!popularSection) return;
+      const anyVisible = Array.from(popularSection.querySelectorAll('.template-card'))
+        .some(card => card.style.display !== 'none');
+      popularSection.style.display = anyVisible ? '' : 'none';
     }
 
     function useTemplate(templateId) {
