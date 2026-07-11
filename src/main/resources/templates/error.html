@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:attr="data-theme=${pageTheme != null and pageTheme != 'system' ? pageTheme : null}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" th:href="@{/images/Preview.png}" type="image/png" sizes="32x32" />
+  <title>CollaboDraw - Something Went Wrong</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" th:href="@{/css/theme.css}" />
+  <link rel="stylesheet" th:href="@{/css/theme-dark.css}" />
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      background: var(--main-bg);
+      color: var(--text-dark);
+    }
+    .error-card {
+      text-align: center;
+      padding: 48px 40px;
+      max-width: 420px;
+    }
+    .error-code {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 5rem;
+      font-weight: 700;
+      color: var(--main-green);
+      line-height: 1;
+      margin: 0 0 8px;
+    }
+    .error-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin: 0 0 12px;
+    }
+    .error-desc {
+      color: var(--gray);
+      margin: 0 0 28px;
+      line-height: 1.5;
+    }
+    .error-home-link {
+      display: inline-block;
+      background: var(--main-green);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 12px 28px;
+      border-radius: 8px;
+      transition: background 0.18s;
+    }
+    .error-home-link:hover {
+      background: var(--sidebar-bg, #0e7e58);
+    }
+  </style>
+</head>
+<body>
+  <div class="error-card">
+    <p class="error-code" th:text="${status} ?: '500'">500</p>
+    <h1 class="error-title">Something went wrong</h1>
+    <p class="error-desc">An unexpected error occurred on our end. Please try again shortly.</p>
+    <a class="error-home-link" href="/home">Back to Home</a>
+  </div>
+</body>
+</html>
