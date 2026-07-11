@@ -282,7 +282,13 @@ const Storage = {
       item.dataset.versionId = version.id;
 
       const icon = document.createElement('span');
-      icon.textContent = '🕐';
+      const iconSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      iconSvg.setAttribute('class', 'icon');
+      iconSvg.setAttribute('aria-hidden', 'true');
+      const iconUse = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+      iconUse.setAttribute('href', '#icon-clock');
+      iconSvg.appendChild(iconUse);
+      icon.appendChild(iconSvg);
 
       const label = document.createElement('span');
       label.textContent = `${version.timestamp} - ${version.description}`;
@@ -397,12 +403,12 @@ const Storage = {
     .then(data => {
       if (!data) return; // conflict already handled above
       if (data.lastModified) AppState.lastModified = data.lastModified;
-      UIControls.showNotification('💾 Saved successfully');
+      UIControls.showNotification('Saved successfully');
       History.isSaving = false;
     })
     .catch(error => {
       console.error('❌ Error saving board:', error);
-      UIControls.showNotification('❌ Error saving board');
+      UIControls.showNotification('Error saving board');
       History.isSaving = false;
     });
   },
