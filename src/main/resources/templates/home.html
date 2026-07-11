@@ -54,7 +54,7 @@
             color: #fff;
             margin: 20px 0 30px 0;
             cursor: pointer;
-            padding: 0 10px;
+            padding: 0 18px;
             white-space: nowrap;
             transition: all 0.3s cubic-bezier(.4,0,.2,1);
             box-sizing: border-box;
@@ -657,6 +657,7 @@
     </style>
 </head>
 <body>
+  <div th:replace="~{fragments/icons :: sprite}"></div>
   <div class="sidebar" id="sidebar" role="navigation" aria-label="Main sidebar navigation">
     <div class="logo" id="sidebar-logo" tabindex="0" aria-label="CollaboDraw logo" onclick="window.location.href='/home'">
       <svg viewBox="0 0 24 24" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -690,7 +691,7 @@
         <input type="text" class="search-input" placeholder="Search boards, templates, or teammates...">
       </div>
       <div class="header-right">
-        <button class="notification-btn" id="homeNotifBtn" style="position:relative;">🔔<span id="homeNotifBadge" style="display:none; position:absolute; top:2px; right:2px; width:8px; height:8px; border-radius:50%; background:#ef4444;"></span></button>
+        <button class="notification-btn" id="homeNotifBtn" style="position:relative;"><svg class="icon" style="width:18px;height:18px" aria-hidden="true"><use href="#icon-bell"></use></svg><span id="homeNotifBadge" style="display:none; position:absolute; top:2px; right:2px; width:8px; height:8px; border-radius:50%; background:#ef4444;"></span></button>
         <div id="homeNotifDropdown" style="display:none; position:absolute; top:70px; right:32px; background:var(--white,#ffffff); color:var(--text-dark,#111827); border:1px solid var(--border,#e5e7eb); border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.3); width:280px; max-height:360px; overflow-y:auto; z-index:50;">
           <div style="padding:12px 16px; font-weight:600; border-bottom:1px solid var(--border,#f3f4f6);">Notifications</div>
           <div id="homeNotifList"></div>
@@ -726,12 +727,12 @@
           <div class="action-description">Start with a clean canvas</div>
         </div>
         <div class="action-card" onclick="window.location.href='/templates'">
-          <div class="action-icon">📊</div>
+          <div class="action-icon"><svg class="icon" aria-hidden="true"><use href="#icon-bar-chart"></use></svg></div>
           <div class="action-title">From Template</div>
           <div class="action-description">Choose from pre-made layouts</div>
         </div>
         <div class="action-card" onclick="showHomeImportDialog()">
-          <div class="action-icon">📁</div>
+          <div class="action-icon"><svg class="icon" aria-hidden="true"><use href="#icon-folder"></use></svg></div>
           <div class="action-title">Import File</div>
           <div class="action-description">Upload existing documents</div>
         </div>
@@ -750,7 +751,7 @@
         </div>
         <div class="boards-grid" id="homeBoardsGrid" th:if="${whiteboards != null and not #lists.isEmpty(whiteboards)}">
           <div class="board-card" th:each="board : ${whiteboards}" th:attr="onclick='openBoard(' + ${board?.boardId ?: 'board-1'} + ')'">
-            <div class="board-preview">🎯</div>
+            <div class="board-preview"><svg class="icon" aria-hidden="true"><use href="#icon-target"></use></svg></div>
             <div class="board-info">
               <div class="board-title" th:text="${board?.boardName ?: 'Board Name'}">Board Name</div>
               <div class="board-meta">
@@ -769,7 +770,7 @@
         <!-- Default Recent Boards (fallback when no data) -->
         <div class="boards-grid" id="homeBoardsFallback" th:if="${whiteboards == null or #lists.isEmpty(whiteboards)}">
           <div class="board-card" onclick="openBoard('board-1')">
-            <div class="board-preview">🎯</div>
+            <div class="board-preview"><svg class="icon" aria-hidden="true"><use href="#icon-target"></use></svg></div>
             <div class="board-info">
               <div class="board-title">Product Strategy Meeting</div>
               <div class="board-meta">
@@ -800,7 +801,7 @@
         </div>
         <div class="templates-grid" id="homeTemplatesFallback" th:if="${popularTemplates == null or #lists.isEmpty(popularTemplates)}">
           <div class="template-card" onclick="useTemplate('mindmap')">
-            <div class="template-icon">🧠</div>
+            <div class="template-icon"><svg class="icon" aria-hidden="true"><use href="#icon-zap"></use></svg></div>
             <div class="template-title">Mind Map</div>
             <div class="template-description">Organize ideas and concepts visually</div>
           </div>
