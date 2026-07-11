@@ -78,9 +78,10 @@
       box-sizing: border-box;
     }
 
-    .logo img {
-      height: 36px;
-      border-radius: 8px;
+    .logo svg {
+      height: 26px;
+      width: 26px;
+      flex-shrink: 0;
       transition: margin 0.3s cubic-bezier(.4,0,.2,1), opacity 0.3s;
     }
 
@@ -232,6 +233,8 @@
       border: 2px solid var(--border);
       border-radius: 12px;
       font-size: 15px;
+      background: var(--light-gray);
+      color: var(--text-dark);
       transition: all 0.3s;
     }
 
@@ -608,12 +611,38 @@
         flex-shrink: 0;
       }
     }
+
+    @media (max-width: 480px) {
+      .header {
+        padding: 0 12px;
+        gap: 8px;
+      }
+      .page-title {
+        font-size: 1.2rem;
+      }
+      #templatesNotifDropdown {
+        right: 8px;
+        left: 8px;
+        width: auto;
+      }
+      .templates-content {
+        padding: 16px 12px;
+      }
+      .hero-section h1 {
+        font-size: 1.6rem;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="sidebar" id="sidebar" role="navigation" aria-label="Main sidebar navigation">
     <div class="logo" id="sidebar-logo" tabindex="0" aria-label="CollaboDraw logo" onclick="window.location.href='/home'">
-      <img th:src="@{/images/Preview.png}" alt="CollaboDraw logo" />
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="2.5" y="4" width="19" height="13" rx="2.5" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M8 20h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M12 17v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M6.5 13.5l3.5-5 2.5 3 4-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
       <span class="logo-text">CollaboDraw</span>
     </div>
     <nav class="sidebar-nav" role="menu" aria-label="Main menu">
@@ -640,8 +669,8 @@
       </div>
       <div class="header-right">
         <button class="notification-btn" id="templatesNotifBtn" style="position:relative;">🔔<span id="templatesNotifBadge" style="display:none; position:absolute; top:2px; right:2px; width:8px; height:8px; border-radius:50%; background:#ef4444;"></span></button>
-        <div id="templatesNotifDropdown" style="display:none; position:absolute; top:70px; right:32px; background:#ffffff; color:#111827; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); width:280px; max-height:360px; overflow-y:auto; z-index:50;">
-          <div style="padding:12px 16px; font-weight:600; border-bottom:1px solid #f3f4f6;">Notifications</div>
+        <div id="templatesNotifDropdown" style="display:none; position:absolute; top:70px; right:32px; background:var(--white,#ffffff); color:var(--text-dark,#111827); border:1px solid var(--border,#e5e7eb); border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.3); width:280px; max-height:360px; overflow-y:auto; z-index:50;">
+          <div style="padding:12px 16px; font-weight:600; border-bottom:1px solid var(--border,#f3f4f6);">Notifications</div>
           <div id="templatesNotifList"></div>
         </div>
         <div class="avatar" onclick="window.location.href='/settings'" th:text="${currentUser?.username?.substring(0,2)?.toUpperCase() ?: 'JD'}">JD</div>
@@ -810,22 +839,22 @@
         const modal = document.createElement('div');
         modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:10000;';
         modal.innerHTML = `
-          <div style="width:min(920px,92vw);background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.25)">
-            <div style="padding:14px 16px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">
+          <div style="width:min(920px,92vw);background:var(--white,#fff);color:var(--text-dark,#1f2937);border-radius:14px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.35)">
+            <div style="padding:14px 16px;border-bottom:1px solid var(--border,#e5e7eb);display:flex;justify-content:space-between;align-items:center">
               <strong>${escapeHtml(data.title || 'Template Preview')}</strong>
-              <button id="tplPreviewClose" style="border:none;background:#f3f4f6;border-radius:8px;padding:6px 10px;cursor:pointer">Close</button>
+              <button id="tplPreviewClose" style="border:none;background:var(--light-gray,#f3f4f6);color:inherit;border-radius:8px;padding:6px 10px;cursor:pointer">Close</button>
             </div>
-            <div style="padding:16px;max-height:68vh;overflow:auto;background:#f8fafc">
+            <div style="padding:16px;max-height:68vh;overflow:auto;background:var(--light-gray,#f8fafc)">
               <!-- data.elements is trusted saved canvas markup (sticky notes/text/etc), not
                    plain text, so it is intentionally rendered as HTML rather than escaped -
                    escaping it would just show raw tags instead of the template preview.
                    It can only have been written by an authenticated board editor/owner
                    after the CollaborationWsController/BoardApiController access-control
                    fixes, which narrows but does not eliminate this as a stored-HTML sink. -->
-              <div style="position:relative;min-height:420px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;padding:12px" id="tplPreviewCanvas">${data.elements || '<em>Blank template</em>'}</div>
-              <div style="margin-top:12px;color:#6b7280;font-size:13px">${escapeHtml(data.description || '')}</div>
+              <div style="position:relative;min-height:420px;border:1px solid var(--border,#e5e7eb);border-radius:10px;background:#fff;padding:12px" id="tplPreviewCanvas">${data.elements || '<em>Blank template</em>'}</div>
+              <div style="margin-top:12px;color:var(--gray,#6b7280);font-size:13px">${escapeHtml(data.description || '')}</div>
             </div>
-            <div style="padding:12px 16px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:8px">
+            <div style="padding:12px 16px;border-top:1px solid var(--border,#e5e7eb);display:flex;justify-content:flex-end;gap:8px">
               <button id="tplPreviewUse" style="background:#20b97c;color:#fff;border:none;border-radius:8px;padding:8px 12px;cursor:pointer">Use Template</button>
             </div>
           </div>`;
