@@ -133,7 +133,9 @@ java -jar .\target\whiteboard-0.0.1-SNAPSHOT.jar
 
 ## Project Structure
 
-See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for the updated structure map.
+See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for the updated structure map, and
+[ARCHITECTURE.md](ARCHITECTURE.md) for the design rationale, request/data flow, and the
+scaling path beyond a single instance.
 
 ## Deployment (Render)
 
