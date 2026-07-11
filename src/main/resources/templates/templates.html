@@ -46,8 +46,8 @@
       width: 100%;
       display: flex;
       align-items: center;
-      gap: 12px;
-      font-size: 1.6rem;
+      gap: 10px;
+      font-size: 1.4rem;
       font-weight: 800;
       font-family: 'Montserrat', sans-serif;
       color: #fff;
@@ -70,6 +70,7 @@
       transition: opacity 0.3s cubic-bezier(.4,0,.2,1), width 0.3s cubic-bezier(.4,0,.2,1);
       white-space: nowrap;
       overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .sidebar.collapsed .logo-text {
@@ -646,7 +647,7 @@
         <h1 class="page-title">Templates</h1>
       </div>
       <div class="search-bar">
-        <span class="search-icon">🔍</span>
+        <span class="search-icon"><svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg></span>
         <input type="text" class="search-input" placeholder="Search templates...">
       </div>
       <div class="header-right">
@@ -692,7 +693,7 @@
         <div class="templates-grid">
           <div class="template-card featured" th:each="t, i : ${templates}" th:if="${i.index < 4}"
                th:attr="data-category=${t.category},data-featured=${t.featured},data-key=${t.templateKey},onclick='useTemplate(\'' + ${t.templateKey} + '\')'">
-            <div class="template-icon" th:text="${t.icon != null ? t.icon : '📄'}">📄</div>
+            <div class="template-icon"><svg class="icon" aria-hidden="true"><use th:attr="href='#icon-' + (${t.icon} ?: 'file-text')"></use></svg></div>
             <h3 class="template-title" th:text="${t.name}">Template Name</h3>
             <p class="template-description" th:text="${t.description}">Description</p>
             <div class="template-meta">
@@ -715,7 +716,7 @@
         <div class="templates-grid">
           <div class="template-card" th:each="t : ${templates}"
                th:attr="data-category=${t.category},data-featured=${t.featured},data-key=${t.templateKey},onclick='useTemplate(\'' + ${t.templateKey} + '\')'">
-            <div class="template-icon" th:text="${t.icon != null ? t.icon : '📄'}">📄</div>
+            <div class="template-icon"><svg class="icon" aria-hidden="true"><use th:attr="href='#icon-' + (${t.icon} ?: 'file-text')"></use></svg></div>
             <h3 class="template-title" th:text="${t.name}">Template Name</h3>
             <p class="template-description" th:text="${t.description}">Description</p>
             <div class="template-meta">

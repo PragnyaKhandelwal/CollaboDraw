@@ -10,7 +10,7 @@
   --main-green: #20b97c;
   --sidebar-bg: #0e7e58;
   --sidebar-text: #ccece1;
-  --sidebar-width: 240px;
+  --sidebar-width: 264px;
   --sidebar-collapsed-width: 60px;
   --nav-height: 56px;
   --shadow-green: rgba(32, 185, 124, 0.15);
@@ -32,6 +32,14 @@
   --yellow: #fde68a;
   --light-green: #a7f3d0;
   --tooltip-bg: var(--text-dark);
+}
+
+/* Browsers give <button> its own UA-default text color (not inherited from the page),
+   so a currentColor SVG icon inside an unstyled button stays near-black regardless of
+   dark mode unless something overrides it. Reset once here instead of re-declaring
+   color on every button class that holds an icon. */
+button {
+  color: inherit;
 }
 
 /* Shared sprite icons (see fragments/icons.html) - stroke-based and currentColor, so

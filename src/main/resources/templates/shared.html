@@ -47,8 +47,8 @@
       width: 100%;
       display: flex;
       align-items: center;
-      gap: 12px;
-      font-size: 1.6rem;
+      gap: 10px;
+      font-size: 1.4rem;
       font-weight: 800;
       font-family: 'Montserrat', sans-serif;
       color: #fff;
@@ -71,6 +71,7 @@
       transition: opacity 0.3s cubic-bezier(.4,0,.2,1), width 0.3s cubic-bezier(.4,0,.2,1);
       white-space: nowrap;
       overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .sidebar.collapsed .logo-text {
@@ -770,7 +771,7 @@
       <div class="boards-grid" id="sharedBoardsGrid">
         <div class="shared-board-card" th:each="board : ${sharedBoards}" th:onclick="'openSharedBoard(\'' + ${board.id} + '\')'" th:data-permission="${board.userPermission}">
           <div class="board-preview">
-            <span th:text="${board.icon ?: '📊'}">📊</span>
+            <svg class="icon" aria-hidden="true"><use href="#icon-bar-chart"></use></svg>
             <div class="permission-badge" th:classappend="'badge-' + ${board.userPermission}" th:text="${#strings.capitalize(board.userPermission)}">Edit</div>
           </div>
           <div class="board-info">
@@ -1075,7 +1076,7 @@
         if (empty) empty.style.display = 'none';
         grid.innerHTML = boards.map((b) => `
           <div class="shared-board-card" onclick="openSharedBoard('${b.boardId}')" data-permission="${b.userPermission || 'view'}">
-            <div class="board-preview">${b.icon || '📊'}<div class="permission-badge badge-${b.userPermission || 'view'}">${(b.userPermission || 'view').toUpperCase()}</div></div>
+            <div class="board-preview"><svg class="icon" aria-hidden="true"><use href="#icon-bar-chart"></use></svg><div class="permission-badge badge-${b.userPermission || 'view'}">${(b.userPermission || 'view').toUpperCase()}</div></div>
             <div class="board-info">
               <div class="board-title"><div class="share-indicator"><svg class="icon" aria-hidden="true"><use href="#icon-users"></use></svg></div><span>${escapeHtml(b.title || 'Shared Board')}</span></div>
               <div class="board-owner"><div class="owner-avatar">${escapeHtml(b.ownerInitials || 'SM')}</div><span>Shared by <span>${escapeHtml(b.ownerUsername || 'Owner')}</span></span></div>

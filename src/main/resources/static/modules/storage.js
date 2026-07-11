@@ -276,6 +276,16 @@ const Storage = {
     // which can arrive from a remote WS "version" event, not just this browser's own local
     // history - can never break out of an HTML/attribute context into script.
     versionHistory.innerHTML = '';
+
+    if (!versions.length) {
+      const empty = document.createElement('div');
+      empty.className = 'version-empty';
+      empty.style.cssText = 'font-size:13px;color:var(--gray);padding:4px 0;';
+      empty.textContent = 'No versions saved yet - your first save will appear here.';
+      versionHistory.appendChild(empty);
+      return;
+    }
+
     versions.forEach(version => {
       const item = document.createElement('div');
       item.className = 'version-item';

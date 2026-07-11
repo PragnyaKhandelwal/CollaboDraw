@@ -47,8 +47,8 @@
             width: 100%;
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-size: 1.6rem;
+            gap: 10px;
+            font-size: 1.4rem;
             font-weight: 800;
             font-family: 'Montserrat', sans-serif;
             color: #fff;
@@ -71,6 +71,7 @@
             transition: opacity 0.3s cubic-bezier(.4,0,.2,1), width 0.3s cubic-bezier(.4,0,.2,1);
             white-space: nowrap;
             overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .sidebar.collapsed .logo-text {
@@ -794,7 +795,7 @@
         </div>
         <div class="templates-grid" id="homeTemplatesGrid" th:if="${popularTemplates != null and not #lists.isEmpty(popularTemplates)}">
           <div class="template-card" th:each="t : ${popularTemplates}" th:attr="onclick='useTemplate(\'' + ${t.templateKey} + '\')'">
-            <div class="template-icon" th:text="${t.icon != null ? t.icon : '📄'}">📄</div>
+            <div class="template-icon"><svg class="icon" aria-hidden="true"><use th:attr="href='#icon-' + (${t.icon} ?: 'file-text')"></use></svg></div>
             <div class="template-title" th:text="${t.name}">Template</div>
             <div class="template-description" th:text="${t.description}">Template description</div>
           </div>
@@ -1062,7 +1063,7 @@ async function showNewBoardDialog(e) {
         const title = board.boardName || 'Untitled Board';
         const when = board.lastModified || board.createdAt || null;
         return `<div class="board-card" onclick="openBoard('${id}')">
-          <div class="board-preview">🎯</div>
+          <div class="board-preview"><svg class="icon" aria-hidden="true"><use href="#icon-target"></use></svg></div>
           <div class="board-info">
             <div class="board-title">${escapeHtml(title)}</div>
             <div class="board-meta">
@@ -1082,11 +1083,16 @@ async function showNewBoardDialog(e) {
       grid.id = 'homeTemplatesGrid';
       grid.innerHTML = templates.map((tpl) => {
         const key = tpl.templateKey || 'blank';
-        const icon = tpl.icon || '📄';
+        // Icon keys are sprite symbol names (e.g. "zap"), not emoji - allowlist to
+        // lowercase letters/hyphens before it ever reaches innerHTML, since this value
+        // came over the network rather than being a compile-time constant like the
+        // th:href-built ones elsewhere in this file.
+        const rawIcon = tpl.icon || 'file-text';
+        const icon = /^[a-z-]+$/.test(rawIcon) ? rawIcon : 'file-text';
         const name = tpl.name || 'Template';
         const desc = tpl.description || 'Start quickly with a reusable layout';
         return `<div class="template-card" onclick="useTemplate('${key}')">
-          <div class="template-icon">${escapeHtml(icon)}</div>
+          <div class="template-icon"><svg class="icon" aria-hidden="true"><use href="#icon-${icon}"></use></svg></div>
           <div class="template-title">${escapeHtml(name)}</div>
           <div class="template-description">${escapeHtml(desc)}</div>
         </div>`;
