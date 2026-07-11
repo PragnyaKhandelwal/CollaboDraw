@@ -32,6 +32,7 @@ public class TemplateService {
         if (fromDb == null || fromDb.isEmpty()) {
             return defaultTemplates();
         }
+        fromDb.forEach(this::applyIconFallback);
         return fromDb;
     }
 
@@ -48,6 +49,7 @@ public class TemplateService {
         if (key == null || key.isBlank()) return null;
         Template dbTemplate = templateRepository.findByKey(key);
         if (dbTemplate != null) {
+            applyIconFallback(dbTemplate);
             return dbTemplate;
         }
         return defaultTemplates().stream()
@@ -83,18 +85,18 @@ public class TemplateService {
 
     private List<Template> defaultTemplates() {
         List<Template> items = new ArrayList<>();
-        items.add(template("mindmap", "Mind Map", "Organize ideas and branches quickly", "popular", "🧠", "FREE", false, true, 128));
-        items.add(template("kanban", "Kanban Board", "Track backlog, in-progress, and done", "popular", "📋", "FREE", false, true, 114));
-        items.add(template("flowchart", "Flowchart", "Visualize processes and decisions", "business", "🔀", "FREE", false, true, 96));
-        items.add(template("wireframe", "Wireframe", "Design web and app layouts", "design", "📐", "FREE", false, true, 88));
-        items.add(template("swot", "SWOT Analysis", "Map strengths, weaknesses, opportunities, threats", "business", "🎯", "FREE", false, false, 77));
-        items.add(template("retrospective", "Sprint Retrospective", "Capture what went well and action items", "planning", "🧩", "FREE", true, false, 68));
-        items.add(template("roadmap", "Product Roadmap", "Plan timeline and milestones", "planning", "🛣️", "PRO", false, true, 63));
-        items.add(template("customer-journey", "Customer Journey", "Map user touchpoints and pain points", "design", "🧭", "PRO", false, false, 55));
-        items.add(template("lecture-notes", "Lecture Notes", "Collaborative lecture and class notes", "education", "📚", "FREE", false, false, 49));
-        items.add(template("research-board", "Research Board", "Collect findings and references", "education", "🔬", "FREE", true, false, 42));
-        items.add(template("okrs", "OKR Planner", "Set objectives and key results", "business", "📈", "PRO", false, false, 37));
-        items.add(template("blank", "Blank Board", "Start from an empty canvas", "popular", "⬜", "FREE", false, false, 999));
+        items.add(template("mindmap", "Mind Map", "Organize ideas and branches quickly", "popular", "zap", "FREE", false, true, 128));
+        items.add(template("kanban", "Kanban Board", "Track backlog, in-progress, and done", "popular", "grid", "FREE", false, true, 114));
+        items.add(template("flowchart", "Flowchart", "Visualize processes and decisions", "business", "shuffle", "FREE", false, true, 96));
+        items.add(template("wireframe", "Wireframe", "Design web and app layouts", "design", "edit", "FREE", false, true, 88));
+        items.add(template("swot", "SWOT Analysis", "Map strengths, weaknesses, opportunities, threats", "business", "target", "FREE", false, false, 77));
+        items.add(template("retrospective", "Sprint Retrospective", "Capture what went well and action items", "planning", "lightbulb", "FREE", true, false, 68));
+        items.add(template("roadmap", "Product Roadmap", "Plan timeline and milestones", "planning", "bar-chart", "PRO", false, true, 63));
+        items.add(template("customer-journey", "Customer Journey", "Map user touchpoints and pain points", "design", "users", "PRO", false, false, 55));
+        items.add(template("lecture-notes", "Lecture Notes", "Collaborative lecture and class notes", "education", "file-text", "FREE", false, false, 49));
+        items.add(template("research-board", "Research Board", "Collect findings and references", "education", "search", "FREE", true, false, 42));
+        items.add(template("okrs", "OKR Planner", "Set objectives and key results", "business", "target", "PRO", false, false, 37));
+        items.add(template("blank", "Blank Board", "Start from an empty canvas", "popular", "file-text", "FREE", false, false, 999));
         for (Template item : items) {
             int fallback = getFallbackUsage(item.getTemplateKey());
             if (fallback > 0) {
@@ -102,6 +104,38 @@ public class TemplateService {
             }
         }
         return items;
+    }
+
+    // Templates loaded from the DB predate the icon column being used - every row today has
+    // icon = NULL, which made every card in the gallery render the exact same placeholder.
+    // Rather than requiring a manual DB write per template, pick a sensible icon from the
+    // template's key (specific templates we know about) or its category (generic fallback),
+    // so a newly-added template row gets a reasonable icon for free. Values are icon-sprite
+    // symbol names (see fragments/icons.html), not emoji - callers render
+    // <use th:attr="href='#icon-' + ${t.icon}">, not text.
+    private static final Map<String, String> ICON_BY_TEMPLATE_KEY = Map.of(
+            "team_brainstorm", "zap",
+            "product_roadmap", "bar-chart",
+            "kanban_board", "grid"
+    );
+    private static final Map<String, String> ICON_BY_CATEGORY = Map.of(
+            "popular", "zap",
+            "business", "bar-chart",
+            "design", "palette",
+            "education", "file-text",
+            "planning", "target"
+    );
+    private static final String DEFAULT_ICON = "file-text";
+
+    private void applyIconFallback(Template t) {
+        if (t == null || (t.getIcon() != null && !t.getIcon().isBlank())) return;
+        String byKey = t.getTemplateKey() != null ? ICON_BY_TEMPLATE_KEY.get(t.getTemplateKey().toLowerCase()) : null;
+        if (byKey != null) {
+            t.setIcon(byKey);
+            return;
+        }
+        String byCategory = t.getCategory() != null ? ICON_BY_CATEGORY.get(t.getCategory().toLowerCase()) : null;
+        t.setIcon(byCategory != null ? byCategory : DEFAULT_ICON);
     }
 
     private Template template(String key, String name, String description, String category,
