@@ -8,7 +8,8 @@
     <link rel="stylesheet" th:href="@{/css/theme-dark.css}" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <link rel="icon"  th:href="@{/images/Preview.png}" type="image/png" sizes="32x32"/> <title>CollaboDraw - Whiteboard</title>
+    <link rel="icon"  th:href="@{/images/Preview.png}" type="image/png" sizes="32x32"/>
+    <title>CollaboDraw - Whiteboard</title>
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
@@ -266,21 +267,26 @@
         transform: translateY(-1px);
       }
 
+      /* Same outlined-pill footprint as the other header buttons, just tinted red so a
+         destructive/exit action still reads as distinct without clashing with the row of
+         square icon buttons next to it (was previously a solid red block). */
       .leave-session-btn {
         width: auto;
-        min-width: 112px;
+        min-width: 88px;
+        height: 36px;
         padding: 0 14px;
         gap: 8px;
-        border: 2px solid #ef4444;
-        background: #ef4444;
-        color: white;
+        border: 1px solid rgba(239, 68, 68, 0.6);
+        background: rgba(239, 68, 68, 0.12);
+        color: #fecaca;
         font-weight: 600;
         font-size: 14px;
       }
 
       .leave-session-btn:hover {
-        background: #dc2626;
-        border-color: #dc2626;
+        background: rgba(239, 68, 68, 0.28);
+        border-color: #ef4444;
+        color: white;
         transform: translateY(-1px);
       }
 
@@ -1183,35 +1189,35 @@
           onclick="undo()"
           data-tooltip="Undo last action<span class='tooltip-shortcut'>Ctrl+Z</span>"
         >
-          <img th:src="@{/images/undo-alt.png}" alt="Undo" />
+          <svg class="icon" aria-hidden="true"><use href="#icon-undo"></use></svg>
         </button>
         <button
           class="header-btn"
           onclick="redo()"
           data-tooltip="Redo last undone action<span class='tooltip-shortcut'>Ctrl+Y</span>"
         >
-          <img th:src="@{/images/redo-alt.png}" alt="Redo" />
+          <svg class="icon" aria-hidden="true"><use href="#icon-redo"></use></svg>
         </button>
         <button
           class="header-btn"
           onclick="shareBoard(window.CD &amp;&amp; window.CD.boardId)"
           data-tooltip="Share board with others"
         >
-          <img th:src="@{/images/link-alt.png}" alt="Share board" />
+          <svg class="icon" aria-hidden="true"><use href="#icon-share"></use></svg>
         </button>
         <button
           class="header-btn"
           onclick="exportBoard()"
           data-tooltip="Export board as PNG image"
         >
-          <img th:src="@{/images/file-export.png}" alt="Export board" />
+          <svg class="icon" aria-hidden="true"><use href="#icon-download"></use></svg>
         </button>
         <button
           class="header-btn"
           onclick="showHelp()"
           data-tooltip="Keyboard shortcuts help<span class='tooltip-shortcut'>F1</span>"
         >
-          <img th:src="@{/images/interrogation.png}" alt="Help" />
+          <svg class="icon" aria-hidden="true"><use href="#icon-help"></use></svg>
         </button>
         <!-- Notifications dropdown trigger and panel -->
         <button class="header-btn" id="notifBtn" data-tooltip="Notifications">
