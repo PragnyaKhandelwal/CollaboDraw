@@ -97,6 +97,7 @@ public class SecurityConfig {
                 .requestMatchers("/*.js").permitAll()
                 .requestMatchers("/*.css").permitAll()
                 .requestMatchers("/favicon.ico").permitAll()
+                .requestMatchers("/manifest.json").permitAll()
                 .requestMatchers("/error").permitAll()
 
                 // PUBLIC ENDPOINTS

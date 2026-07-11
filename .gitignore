@@ -1,6 +1,7 @@
 # Cloud SQL proxy & credentials
 scripts/cloud-sql-proxy/
 *.json
+!src/main/resources/static/manifest.json
 *.pem
 *.p12
 HELP.md
