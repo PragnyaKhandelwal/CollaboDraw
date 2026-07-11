@@ -106,8 +106,8 @@ const ElementManager = {
       element.classList.add('dragging');
     });
 
-    element.addEventListener('dblclick', () => {
-      this.editElement(element);
+    element.addEventListener('dblclick', (e) => {
+      this.editElement(element, e.target);
     });
   },
 
@@ -241,18 +241,24 @@ const ElementManager = {
     }
   },
 
-  editElement(element) {
-    const inputs = element.querySelectorAll('input, textarea');
-    inputs.forEach(input => {
-      input.removeAttribute('readonly');
-      input.focus();
-      if (input.select) input.select();
-      
-      input.addEventListener('blur', () => {
-        input.setAttribute('readonly', 'true');
-        History.saveState();
-      }, { once: true });
-    });
+  editElement(element, target) {
+    // Only unlock the field that was actually double-clicked (a sticky note has both a
+    // title input and a content textarea) - looping over every input/textarea and calling
+    // focus() on each in turn meant only the last one ever ended up editable, since each
+    // earlier field's blur handler re-applied readonly before the user could type into it.
+    // That's why typing into a sticky note's title silently did nothing.
+    const input = (target && target.closest && target.closest('input, textarea'))
+      || element.querySelector('input, textarea');
+    if (!input) return;
+
+    input.removeAttribute('readonly');
+    input.focus();
+    if (input.select) input.select();
+
+    input.addEventListener('blur', () => {
+      input.setAttribute('readonly', 'true');
+      History.saveState();
+    }, { once: true });
   },
 
   bringToFront() {
