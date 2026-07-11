@@ -762,11 +762,22 @@
                 <svg class="icon icon-fill-on-active favorite-star" th:classappend="${favoriteBoardIds.contains(board.boardId)} ? ' active' : ''" aria-hidden="true"><use href="#icon-star"></use></svg>
                 <span class="favorite-label" th:text="${favoriteBoardIds.contains(board.boardId)} ? 'Favorited' : 'Favorite'">Favorite</span>
               </button>
-              <button class="action-btn archive-btn" th:attr="onclick='event.stopPropagation(); toggleArchive(' + ${board.boardId} + ', this)'"
-                      th:text="${archivedBoardIds.contains(board.boardId)} ? 'Unarchive' : 'Archive'">Archive</button>
-              <button class="action-btn" th:attr="onclick='event.stopPropagation(); shareBoard(' + ${board.boardId} + ')'">Share</button>
-              <button class="action-btn" th:attr="onclick='event.stopPropagation(); duplicateBoard(' + ${board.boardId} + ')'">Duplicate</button>
-              <button class="action-btn danger" th:attr="onclick='event.stopPropagation(); deleteBoard(' + ${board.boardId} + ')'">Delete</button>
+              <button class="action-btn archive-btn" th:attr="onclick='event.stopPropagation(); toggleArchive(' + ${board.boardId} + ', this)'">
+                <svg class="icon" aria-hidden="true"><use href="#icon-archive"></use></svg>
+                <span class="archive-label" th:text="${archivedBoardIds.contains(board.boardId)} ? 'Unarchive' : 'Archive'">Archive</span>
+              </button>
+              <button class="action-btn" th:attr="onclick='event.stopPropagation(); shareBoard(' + ${board.boardId} + ')'">
+                <svg class="icon" aria-hidden="true"><use href="#icon-share"></use></svg>
+                <span>Share</span>
+              </button>
+              <button class="action-btn" th:attr="onclick='event.stopPropagation(); duplicateBoard(' + ${board.boardId} + ')'">
+                <svg class="icon" aria-hidden="true"><use href="#icon-copy"></use></svg>
+                <span>Duplicate</span>
+              </button>
+              <button class="action-btn danger" th:attr="onclick='event.stopPropagation(); deleteBoard(' + ${board.boardId} + ')'">
+                <svg class="icon" aria-hidden="true"><use href="#icon-trash"></use></svg>
+                <span>Delete</span>
+              </button>
             </div>
           </div>
         </div>
@@ -965,7 +976,8 @@
         }
         const card = btnEl.closest('.board-card');
         card.setAttribute('data-archived', data.archived ? 'true' : 'false');
-        btnEl.textContent = data.archived ? 'Unarchive' : 'Archive';
+        const archiveLabel = btnEl.querySelector('.archive-label');
+        if (archiveLabel) archiveLabel.textContent = data.archived ? 'Unarchive' : 'Archive';
         const activeFilter = document.querySelector('.filter-btn.active');
         if (activeFilter) filterBoards(activeFilter.getAttribute('data-filter'));
       } catch (e) {
