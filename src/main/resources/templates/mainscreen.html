@@ -12,10 +12,6 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link
-      href="https://www.flaticon.com/uicons/interface-icons"
-      rel="stylesheet"
-    />
     <style>
       /* Basic Reset */
       * {
@@ -203,11 +199,10 @@
         transform: none;
       }
 
-      .logo-icon img {
-        width: 32px;
-        height: 32px;
-        object-fit: contain;
-        border-radius: 6px;
+      .logo-icon svg {
+        width: 26px;
+        height: 26px;
+        flex-shrink: 0;
       }
 
       .board-name {
@@ -385,7 +380,7 @@
         top: 50%;
         transform: translateY(-50%);
         width: 72px;
-        background: rgba(255, 255, 255, 0.96);
+        background: var(--white);
         border-radius: 16px;
         padding: 12px 8px;
         box-shadow: 0 10px 30px rgba(15, 23, 42, 0.14);
@@ -525,7 +520,7 @@
         flex-wrap: wrap;
         gap: 4px;
         padding: 8px;
-        background: white;
+        background: var(--white);
         border-radius: 12px;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
         position: absolute;
@@ -586,7 +581,7 @@
     margin-top: 60px;
     margin-right: 280px;
     height: calc(100vh - 60px);
-    background: white;
+    background: var(--white);
     position: relative;
     overflow: hidden;
     width: 100%;
@@ -627,7 +622,7 @@
         right: 20px;
         display: flex;
         gap: 8px;
-        background: white;
+        background: var(--white);
         padding: 8px;
         border-radius: 12px;
         border: 1px solid var(--border);
@@ -670,7 +665,7 @@
         right: 20px;
         display: flex;
         gap: 8px;
-        background: white;
+        background: var(--white);
         padding: 8px;
         border-radius: 12px;
         border: 1px solid var(--border);
@@ -794,7 +789,7 @@
       /* Context Menu */
       .context-menu {
         position: absolute;
-        background: white;
+        background: var(--white);
         color: var(--gray);
         border-radius: 12px;
         padding: 8px;
@@ -878,7 +873,7 @@
         backdrop-filter: blur(2px);
       }
       .connection-box {
-        background: white;
+        background: var(--white);
         padding: 24px 32px;
         border-radius: 12px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.2);
@@ -915,7 +910,7 @@
       }
 
       .panel-section {
-        background: white;
+        background: var(--white);
         border: 1px solid var(--border);
         border-radius: 12px;
         padding: 16px;
@@ -959,7 +954,7 @@
         position: fixed;
         top: 80px;
         right: 20px;
-        background: white;
+        background: var(--white);
         border: 1px solid var(--border);
         border-radius: 12px;
         padding: 16px;
@@ -1019,7 +1014,7 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        background: white;
+        background: var(--white);
         border-radius: 16px;
         padding: 24px;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
@@ -1074,6 +1069,53 @@
         .header-center {
           display: none;
         }
+        .top-header {
+          padding: 0 10px;
+        }
+        .header-left {
+          gap: 8px;
+        }
+        .board-name {
+          min-width: 70px;
+          max-width: 34vw;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .header-right {
+          gap: 6px;
+        }
+        .header-btn {
+          width: 32px;
+          height: 32px;
+        }
+        .leave-session-btn {
+          min-width: 0;
+          padding: 0 10px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .logo {
+          font-size: 0;
+          gap: 0;
+        }
+        .board-name {
+          max-width: 26vw;
+        }
+        .header-right {
+          gap: 4px;
+        }
+        .user-avatars {
+          display: none;
+        }
+        .floating-traybar {
+          width: 56px;
+          padding: 10px 6px;
+        }
+        .floating-traybar.expanded {
+          width: 180px;
+        }
       }
     </style>
   </head>
@@ -1095,7 +1137,12 @@
           data-tooltip="Go to Dashboard"
         >
           <div class="logo-icon">
-            <img th:src="@{/images/Preview.png}" alt="CollaboDraw" />
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="2.5" y="4" width="19" height="13" rx="2.5" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M8 20h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M12 17v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M6.5 13.5l3.5-5 2.5 3 4-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </div>
           CollaboDraw
         </div>
@@ -1105,7 +1152,12 @@
           aria-disabled="true"
         >
           <div class="logo-icon">
-            <img th:src="@{/images/Preview.png}" alt="CollaboDraw" />
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="2.5" y="4" width="19" height="13" rx="2.5" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M8 20h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M12 17v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M6.5 13.5l3.5-5 2.5 3 4-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </div>
           CollaboDraw
         </div>
@@ -1182,9 +1234,9 @@
             position: absolute;
             top: 56px;
             right: 16px;
-            background: #ffffff;
-            color: #111827;
-            border: 1px solid #e5e7eb;
+            background: var(--white);
+            color: var(--text-dark);
+            border: 1px solid var(--border);
             border-radius: 8px;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             width: 280px;
