@@ -1105,6 +1105,7 @@
     </style>
   </head>
   <body>
+    <div th:replace="~{fragments/icons :: sprite}"></div>
     <!-- Tooltip Element -->
     <div class="tooltip" id="tooltip"></div>
 
@@ -1210,7 +1211,7 @@
         </button>
         <!-- Notifications dropdown trigger and panel -->
         <button class="header-btn" id="notifBtn" data-tooltip="Notifications">
-          🔔
+          <svg class="icon" aria-hidden="true"><use href="#icon-bell"></use></svg>
         </button>
         <div
           id="notifDropdown"
@@ -1276,7 +1277,7 @@
           <span class="tool-icon">↷</span><span class="tool-label">Redo</span>
         </button>
         <button class="tool-btn" id="btnSave" data-tooltip="Save board<span class='tooltip-shortcut'>Ctrl+S</span>">
-          <span class="tool-icon">💾</span><span class="tool-label">Save</span>
+          <span class="tool-icon"><svg class="icon" aria-hidden="true"><use href="#icon-save"></use></svg></span><span class="tool-label">Save</span>
         </button>
       </div>
       <div class="tool-divider"></div>
@@ -1419,14 +1420,14 @@
           data-action="clear-board"
           data-tooltip="Clear Board canvas"
         >
-          🗑️
+          <svg class="icon" aria-hidden="true"><use href="#icon-trash"></use></svg>
         </button>
         <button
           class="toolbar-btn"
           data-action="download-image"
           data-tooltip="Download as PNG"
         >
-          ⬇️
+          <svg class="icon" aria-hidden="true"><use href="#icon-download"></use></svg>
         </button>
       </div>
 
@@ -1483,28 +1484,28 @@
         data-action="edit"
         data-tooltip="Edit selected element"
       >
-        ✏️ Edit
+        <svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg> Edit
       </div>
       <div
         class="menu-item"
         data-action="duplicate"
         data-tooltip="Create a copy"
       >
-        📋 Duplicate
+        <svg class="icon" aria-hidden="true"><use href="#icon-copy"></use></svg> Duplicate
       </div>
       <div
         class="menu-item"
         data-action="copy"
         data-tooltip="Copy to clipboard<span class='tooltip-shortcut'>Ctrl+C</span>"
       >
-        📄 Copy
+        <svg class="icon" aria-hidden="true"><use href="#icon-file-text"></use></svg> Copy
       </div>
       <div
         class="menu-item"
         data-action="paste"
         data-tooltip="Paste from clipboard<span class='tooltip-shortcut'>Ctrl+V</span>"
       >
-        📥 Paste
+        <svg class="icon" aria-hidden="true"><use href="#icon-paste"></use></svg> Paste
       </div>
       <div class="menu-divider"></div>
       <div
@@ -1512,14 +1513,14 @@
         data-action="bring-front"
         data-tooltip="Move to front layer"
       >
-        ⬆️ Bring to Front
+        <svg class="icon" aria-hidden="true"><use href="#icon-arrow-up"></use></svg> Bring to Front
       </div>
       <div
         class="menu-item"
         data-action="send-back"
         data-tooltip="Move to back layer"
       >
-        ⬇️ Send to Back
+        <svg class="icon" aria-hidden="true"><use href="#icon-download"></use></svg> Send to Back
       </div>
       <div class="menu-divider"></div>
       <div
@@ -1527,14 +1528,14 @@
         data-action="group"
         data-tooltip="Group selected elements"
       >
-        👥 Group
+        <svg class="icon" aria-hidden="true"><use href="#icon-users"></use></svg> Group
       </div>
       <div
         class="menu-item"
         data-action="ungroup"
         data-tooltip="Ungroup selected elements"
       >
-        💥 Ungroup
+        <svg class="icon" aria-hidden="true"><use href="#icon-shuffle"></use></svg> Ungroup
       </div>
       <div class="menu-divider"></div>
       <div
@@ -1542,7 +1543,7 @@
         data-action="delete"
         data-tooltip="Delete selected<span class='tooltip-shortcut'>Del</span>"
       >
-        🗑️ Delete
+        <svg class="icon" aria-hidden="true"><use href="#icon-trash"></use></svg> Delete
       </div>
     </div>
 
