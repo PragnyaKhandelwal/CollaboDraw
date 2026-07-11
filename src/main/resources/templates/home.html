@@ -77,9 +77,10 @@
             box-sizing: border-box;
         }
 
-        .logo img {
-            height: 36px;
-            border-radius: 8px;
+        .logo svg {
+            height: 26px;
+            width: 26px;
+            flex-shrink: 0;
             transition: margin 0.3s cubic-bezier(.4,0,.2,1), opacity 0.3s;
         }
 
@@ -230,6 +231,8 @@
             border: 2px solid var(--border);
             border-radius: 12px;
             font-size: 15px;
+            background: var(--light-gray);
+            color: var(--text-dark);
             transition: all 0.3s;
         }
 
@@ -346,6 +349,7 @@
             font-weight: 700;
             color: var(--text-dark);
             margin-bottom: 8px;
+            overflow-wrap: anywhere;
         }
 
         .welcome-text p {
@@ -630,6 +634,38 @@
             }
         }
 
+        @media (max-width: 480px) {
+            .header {
+                padding: 0 12px;
+                gap: 8px;
+            }
+            .page-title {
+                font-size: 1.2rem;
+            }
+            .header-right {
+                gap: 8px;
+            }
+            .notification-btn,
+            .avatar {
+                width: 34px;
+                height: 34px;
+            }
+            #homeNotifDropdown {
+                right: 8px;
+                left: 8px;
+                width: auto;
+            }
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+            .dashboard-content {
+                padding: 16px 12px;
+            }
+            .welcome-text h1 {
+                font-size: 1.4rem;
+            }
+        }
+
         @media (min-width: 701px) {
             .sidebar-toggle {
                 opacity: 1;
@@ -640,7 +676,12 @@
 <body>
   <div class="sidebar" id="sidebar" role="navigation" aria-label="Main sidebar navigation">
     <div class="logo" id="sidebar-logo" tabindex="0" aria-label="CollaboDraw logo" onclick="window.location.href='/home'">
-      <img th:src="@{/images/Preview.png}" alt="CollaboDraw logo" />
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="2.5" y="4" width="19" height="13" rx="2.5" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M8 20h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M12 17v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M6.5 13.5l3.5-5 2.5 3 4-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
       <span class="logo-text">CollaboDraw</span>
     </div>
     <nav class="sidebar-nav" role="menu" aria-label="Main menu">
@@ -667,8 +708,8 @@
       </div>
       <div class="header-right">
         <button class="notification-btn" id="homeNotifBtn" style="position:relative;">🔔<span id="homeNotifBadge" style="display:none; position:absolute; top:2px; right:2px; width:8px; height:8px; border-radius:50%; background:#ef4444;"></span></button>
-        <div id="homeNotifDropdown" style="display:none; position:absolute; top:70px; right:32px; background:#ffffff; color:#111827; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); width:280px; max-height:360px; overflow-y:auto; z-index:50;">
-          <div style="padding:12px 16px; font-weight:600; border-bottom:1px solid #f3f4f6;">Notifications</div>
+        <div id="homeNotifDropdown" style="display:none; position:absolute; top:70px; right:32px; background:var(--white,#ffffff); color:var(--text-dark,#111827); border:1px solid var(--border,#e5e7eb); border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.3); width:280px; max-height:360px; overflow-y:auto; z-index:50;">
+          <div style="padding:12px 16px; font-weight:600; border-bottom:1px solid var(--border,#f3f4f6);">Notifications</div>
           <div id="homeNotifList"></div>
         </div>
         <div class="avatar" onclick="window.location.href='/settings'" th:text="${currentUser?.username?.substring(0,2)?.toUpperCase() ?: 'JD'}">JD</div>
@@ -838,16 +879,16 @@
       const modal = document.createElement('div');
       modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:10000;';
       const dialog = document.createElement('div');
-      dialog.style.cssText = 'background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.2);width:92%;max-width:420px;padding:20px 20px 16px;';
+      dialog.style.cssText = 'background:var(--white,#fff);color:var(--text-dark,#1f2937);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.35);width:92%;max-width:420px;padding:20px 20px 16px;';
       dialog.innerHTML = `
-        <h2 style="margin:0 0 12px;color:#111827">New blank board</h2>
+        <h2 style="margin:0 0 12px;color:inherit">New blank board</h2>
         <div style="display:flex;flex-direction:column;gap:12px">
-          <label style="font-size:14px;color:#374151">Board Name
-            <input id="bb-name" type="text" placeholder="e.g. Ideas" style="margin-top:6px;width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px"/>
+          <label style="font-size:14px;color:var(--gray,#374151)">Board Name
+            <input id="bb-name" type="text" placeholder="e.g. Ideas" style="margin-top:6px;width:100%;padding:10px 12px;border:1px solid var(--border,#e5e7eb);border-radius:10px;font-size:14px;background:var(--light-gray,#fff);color:inherit"/>
           </label>
         </div>
         <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
-          <button id="bb-cancel" style="background:#e5e7eb;border:none;border-radius:10px;padding:10px 14px;cursor:pointer">Cancel</button>
+          <button id="bb-cancel" style="background:var(--light-gray,#e5e7eb);color:inherit;border:none;border-radius:10px;padding:10px 14px;cursor:pointer">Cancel</button>
           <button id="bb-create" style="background:#20b97c;color:#fff;border:none;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600">Create</button>
         </div>
       `;
@@ -879,29 +920,29 @@ async function showNewBoardDialog(e) {
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:10000';
   
   const dialog = document.createElement('div');
-  dialog.style.cssText = 'background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.2);width:92%;max-width:520px;padding:20px 20px 16px';
-  
+  dialog.style.cssText = 'background:var(--white,#fff);color:var(--text-dark,#1f2937);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.35);width:92%;max-width:520px;padding:20px 20px 16px';
+
   dialog.innerHTML = `
-    <h2 style="margin:0 0 12px;color:#111827">Create new board</h2>
+    <h2 style="margin:0 0 12px;color:inherit">Create new board</h2>
     <div style="display:flex;flex-direction:column;gap:12px">
-      <label style="font-size:14px;color:#374151">Board Name
-        <input id="nb-name" type="text" placeholder="e.g. Sprint Planning" 
-               style="margin-top:6px;width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px">
+      <label style="font-size:14px;color:var(--gray,#374151)">Board Name
+        <input id="nb-name" type="text" placeholder="e.g. Sprint Planning"
+               style="margin-top:6px;width:100%;padding:10px 12px;border:1px solid var(--border,#e5e7eb);border-radius:10px;font-size:14px;background:var(--light-gray,#fff);color:inherit">
       </label>
-      
-      <div style="font-size:14px;color:#374151">Type</div>
+
+      <div style="font-size:14px;color:var(--gray,#374151)">Type</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <label style="border:1px solid #e5e7eb;border-radius:10px;padding:10px;display:flex;align-items:center;gap:8px;cursor:pointer">
+        <label style="border:1px solid var(--border,#e5e7eb);border-radius:10px;padding:10px;display:flex;align-items:center;gap:8px;cursor:pointer;color:inherit">
           <input type="radio" name="nb-type" value="blank" checked> Blank
         </label>
-        <label style="border:1px solid #e5e7eb;border-radius:10px;padding:10px;display:flex;align-items:center;gap:8px;cursor:pointer">
+        <label style="border:1px solid var(--border,#e5e7eb);border-radius:10px;padding:10px;display:flex;align-items:center;gap:8px;cursor:pointer;color:inherit">
           <input type="radio" name="nb-type" value="template"> From template
         </label>
       </div>
-      
+
       <div id="nb-template-row" style="display:none">
-        <label style="font-size:14px;color:#374151">Template
-          <select id="nb-template" style="margin-top:6px;width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px">
+        <label style="font-size:14px;color:var(--gray,#374151)">Template
+          <select id="nb-template" style="margin-top:6px;width:100%;padding:10px 12px;border:1px solid var(--border,#e5e7eb);border-radius:10px;font-size:14px;background:var(--light-gray,#fff);color:inherit">
             <option value="mindmap" selected>Mind Map</option>
             <option value="kanban">Kanban Board</option>
             <option value="flowchart">Flowchart</option>
@@ -909,9 +950,9 @@ async function showNewBoardDialog(e) {
         </label>
       </div>
     </div>
-    
+
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
-      <button id="nb-cancel" style="background:#e5e7eb;border:none;border-radius:10px;padding:10px 14px;cursor:pointer">Cancel</button>
+      <button id="nb-cancel" style="background:var(--light-gray,#e5e7eb);color:inherit;border:none;border-radius:10px;padding:10px 14px;cursor:pointer">Cancel</button>
       <button id="nb-create" style="background:#20b97c;color:#fff;border:none;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600">Create</button>
     </div>
   `;
