@@ -4,6 +4,7 @@
     <meta name="_csrf" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <script th:src="@{/js/csrf-fetch.js}"></script>
+    <link rel="stylesheet" th:href="@{/css/theme.css}" />
     <link rel="stylesheet" th:href="@{/css/theme-dark.css}" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -21,22 +22,6 @@
       }
 
       /* Main Colors */
-      :root {
-        --green: #20b97c;
-        --dark-green: #0e7e58;
-        --light-bg: #f8fffe;
-        --white: #ffffff;
-        --gray: #666666;
-        --border: #e5e7eb;
-        --yellow: #fde68a;
-        --light-green: #a7f3d0;
-        --blue: #3b82f6;
-        --red: #ef4444;
-        --purple: #8b5cf6;
-        --orange: #f59e0b;
-        --text-dark: #1f2937;
-        --tooltip-bg: #1f2937;
-      }
 
       /* Body Layout */
       body {
@@ -1193,35 +1178,35 @@
           onclick="undo()"
           data-tooltip="Undo last action<span class='tooltip-shortcut'>Ctrl+Z</span>"
         >
-          <img th:src="@{/images/undo-alt.png}" />
+          <img th:src="@{/images/undo-alt.png}" alt="Undo" />
         </button>
         <button
           class="header-btn"
           onclick="redo()"
           data-tooltip="Redo last undone action<span class='tooltip-shortcut'>Ctrl+Y</span>"
         >
-          <img th:src="@{/images/redo-alt.png}" />
+          <img th:src="@{/images/redo-alt.png}" alt="Redo" />
         </button>
         <button
           class="header-btn"
           onclick="shareBoard(window.CD &amp;&amp; window.CD.boardId)"
           data-tooltip="Share board with others"
         >
-          <img th:src="@{/images/link-alt.png}" />
+          <img th:src="@{/images/link-alt.png}" alt="Share board" />
         </button>
         <button
           class="header-btn"
           onclick="exportBoard()"
           data-tooltip="Export board as PNG image"
         >
-          <img th:src="@{/images/file-export.png}" />
+          <img th:src="@{/images/file-export.png}" alt="Export board" />
         </button>
         <button
           class="header-btn"
           onclick="showHelp()"
           data-tooltip="Keyboard shortcuts help<span class='tooltip-shortcut'>F1</span>"
         >
-          <img th:src="@{/images/interrogation.png}" />
+          <img th:src="@{/images/interrogation.png}" alt="Help" />
         </button>
         <!-- Notifications dropdown trigger and panel -->
         <button class="header-btn" id="notifBtn" data-tooltip="Notifications">
@@ -1314,23 +1299,23 @@
       <div class="traybar-section">
         <div class="traybar-group-label">Shapes</div>
         <button class="tool-btn" data-tool="rectangle" data-tooltip="Draw rectangles and squares<span class='tooltip-shortcut'>R</span>">
-          <span class="tool-icon"><img th:src="@{/images/rectangle-horizontal (1).png}" alt="" /></span><span class="tool-label">Rectangle</span>
+          <span class="tool-icon"><img th:src="@{/images/rectangle-horizontal.png}" alt="" /></span><span class="tool-label">Rectangle</span>
         </button>
         <button class="tool-btn" data-tool="circle" data-tooltip="Draw circles and ellipses<span class='tooltip-shortcut'>O</span>">
-          <span class="tool-icon"><img th:src="@{/images/circle (1).png}" alt="" /></span><span class="tool-label">Circle</span>
+          <span class="tool-icon"><img th:src="@{/images/circle.png}" alt="" /></span><span class="tool-label">Circle</span>
         </button>
         <button class="tool-btn" data-tool="arrow" data-tooltip="Draw arrows and connectors<span class='tooltip-shortcut'>A</span>">
           <span class="tool-icon"><img th:src="@{/images/arrow-up-right.png}" alt="" /></span><span class="tool-label">Arrow</span>
         </button>
         <button class="tool-btn" data-tool="line" data-tooltip="Draw straight lines<span class='tooltip-shortcut'>L</span>">
-          <span class="tool-icon"><img th:src="@{/images/slash (2).png}" alt="" /></span><span class="tool-label">Line</span>
+          <span class="tool-icon"><img th:src="@{/images/slash.png}" alt="" /></span><span class="tool-label">Line</span>
         </button>
       </div>
       <div class="tool-divider"></div>
       <div class="traybar-section">
         <div class="traybar-group-label">Content</div>
         <button class="tool-btn" data-tool="text" data-tooltip="Add text labels<span class='tooltip-shortcut'>T</span>">
-          <span class="tool-icon"><img th:src="@{/images/text (1).png}" alt="" /></span><span class="tool-label">Text</span>
+          <span class="tool-icon"><img th:src="@{/images/text.png}" alt="" /></span><span class="tool-label">Text</span>
         </button>
         <button class="tool-btn" data-tool="sticky" data-tooltip="Add sticky notes<span class='tooltip-shortcut'>S</span>">
           <span class="tool-icon"><img th:src="@{/images/file-edit.png}" alt="" /></span><span class="tool-label">Sticky Note</span>
@@ -1412,21 +1397,21 @@
           data-action="move"
           data-tooltip="Move and pan canvas<span class='tooltip-shortcut'>M</span>"
         >
-          <img th:src="@{/images/move.png}" />
+          <img th:src="@{/images/move.png}" alt="Move and pan canvas" />
         </button>
         <button
           class="toolbar-btn"
           data-action="zoom-in"
           data-tooltip="Zoom in<span class='tooltip-shortcut'>+</span>"
         >
-          <img th:src="@{/images/search.png}" />
+          <img th:src="@{/images/search.png}" alt="Zoom in" />
         </button>
         <button
           class="toolbar-btn"
           data-action="fit"
           data-tooltip="Fit canvas to screen<span class='tooltip-shortcut'>0</span>"
         >
-          <img th:src="@{/images/apps.png}" />
+          <img th:src="@{/images/apps.png}" alt="Fit canvas to screen" />
         </button>
         <div style="width: 1px; background: var(--border); margin: 0 4px;"></div>
         <button
@@ -1462,7 +1447,7 @@
           onclick="zoomOut()"
           data-tooltip="Zoom out<span class='tooltip-shortcut'>-</span>"
         >
-          <img th:src="@{/images/minus-small.png}" />
+          <img th:src="@{/images/minus-small.png}" alt="Zoom out" />
         </button>
         <div
           class="zoom-level"
@@ -1476,7 +1461,7 @@
           onclick="zoomIn()"
           data-tooltip="Zoom in<span class='tooltip-shortcut'>+</span>"
         >
-          <img th:src="@{/images/plus.png}" />
+          <img th:src="@{/images/plus.png}" alt="Zoom in" />
         </button>
       </div>
 
