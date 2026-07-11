@@ -53,7 +53,7 @@
       color: #fff;
       margin: 20px 0 30px 0;
       cursor: pointer;
-      padding: 0 10px;
+      padding: 0 18px;
       white-space: nowrap;
       transition: all 0.3s cubic-bezier(.4,0,.2,1);
       box-sizing: border-box;
@@ -616,6 +616,7 @@
   </style>
 </head>
 <body>
+  <div th:replace="~{fragments/icons :: sprite}"></div>
   <div class="sidebar" id="sidebar" role="navigation" aria-label="Main sidebar navigation">
     <div class="logo" id="sidebar-logo" tabindex="0" aria-label="CollaboDraw logo" onclick="window.location.href='/home'">
       <svg viewBox="0 0 24 24" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -649,7 +650,7 @@
         <input type="text" class="search-input" placeholder="Search templates...">
       </div>
       <div class="header-right">
-        <button class="notification-btn" id="templatesNotifBtn" style="position:relative;">🔔<span id="templatesNotifBadge" style="display:none; position:absolute; top:2px; right:2px; width:8px; height:8px; border-radius:50%; background:#ef4444;"></span></button>
+        <button class="notification-btn" id="templatesNotifBtn" style="position:relative;"><svg class="icon" style="width:18px;height:18px" aria-hidden="true"><use href="#icon-bell"></use></svg><span id="templatesNotifBadge" style="display:none; position:absolute; top:2px; right:2px; width:8px; height:8px; border-radius:50%; background:#ef4444;"></span></button>
         <div id="templatesNotifDropdown" style="display:none; position:absolute; top:70px; right:32px; background:var(--white,#ffffff); color:var(--text-dark,#111827); border:1px solid var(--border,#e5e7eb); border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.3); width:280px; max-height:360px; overflow-y:auto; z-index:50;">
           <div style="padding:12px 16px; font-weight:600; border-bottom:1px solid var(--border,#f3f4f6);">Notifications</div>
           <div id="templatesNotifList"></div>
@@ -690,13 +691,12 @@
         </div>
         <div class="templates-grid">
           <div class="template-card featured" th:each="t, i : ${templates}" th:if="${i.index < 4}"
-               th:attr="data-category=${t.category},data-featured=${t.featured},data-key=${t.templateKey}"
-               th:onclick="|useTemplate('${t.templateKey}')|">
+               th:attr="data-category=${t.category},data-featured=${t.featured},data-key=${t.templateKey},onclick='useTemplate(\'' + ${t.templateKey} + '\')'">
             <div class="template-icon" th:text="${t.icon != null ? t.icon : '📄'}">📄</div>
             <h3 class="template-title" th:text="${t.name}">Template Name</h3>
             <p class="template-description" th:text="${t.description}">Description</p>
             <div class="template-meta">
-              <div class="template-usage" th:text="'👥 ' + ${t.usageCount} + ' uses'">👥 0 uses</div>
+              <div class="template-usage"><svg class="icon" aria-hidden="true"><use href="#icon-users"></use></svg><span th:text="${t.usageCount} + ' uses'">0 uses</span></div>
               <div class="template-badge"
                    th:classappend="${t.plan == 'PRO'} ? ' badge-pro' : ' badge-free'"
                    th:text="${t.plan == 'PRO'} ? 'Pro' : 'Free'">Free</div>
@@ -714,13 +714,12 @@
         </div>
         <div class="templates-grid">
           <div class="template-card" th:each="t : ${templates}"
-               th:attr="data-category=${t.category},data-featured=${t.featured},data-key=${t.templateKey}"
-               th:onclick="|useTemplate('${t.templateKey}')|">
+               th:attr="data-category=${t.category},data-featured=${t.featured},data-key=${t.templateKey},onclick='useTemplate(\'' + ${t.templateKey} + '\')'">
             <div class="template-icon" th:text="${t.icon != null ? t.icon : '📄'}">📄</div>
             <h3 class="template-title" th:text="${t.name}">Template Name</h3>
             <p class="template-description" th:text="${t.description}">Description</p>
             <div class="template-meta">
-              <div class="template-usage" th:text="'👥 ' + ${t.usageCount} + ' uses'">👥 0 uses</div>
+              <div class="template-usage"><svg class="icon" aria-hidden="true"><use href="#icon-users"></use></svg><span th:text="${t.usageCount} + ' uses'">0 uses</span></div>
               <div class="template-badge"
                    th:classappend="${t.plan == 'PRO'} ? ' badge-pro' : ' badge-free'"
                    th:text="${t.plan == 'PRO'} ? 'Pro' : 'Free'">Free</div>
@@ -730,9 +729,9 @@
             </div>
             <div class="template-actions">
               <button class="template-btn btn-primary"
-                      th:onclick="|event.stopPropagation(); useTemplate('${t.templateKey}')|">Use Template</button>
+                      th:attr="onclick='event.stopPropagation(); useTemplate(\'' + ${t.templateKey} + '\')'">Use Template</button>
               <button class="template-btn btn-secondary"
-                      th:onclick="|event.stopPropagation(); previewTemplate('${t.templateKey}')|">Preview</button>
+                      th:attr="onclick='event.stopPropagation(); previewTemplate(\'' + ${t.templateKey} + '\')'">Preview</button>
             </div>
             <div class="featured-badge" th:if="${t.featured}">Featured</div>
           </div>
