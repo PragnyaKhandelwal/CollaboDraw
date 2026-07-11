@@ -61,15 +61,5 @@
       btn.setAttribute('aria-label', sidebar.classList.contains('collapsed') ? 'Expand sidebar' : 'Collapse sidebar');
     }
   });
-
-  // Optional: click effects to any generic ".card" elements (non-breaking)
-  try {
-    document.querySelectorAll('.card').forEach((card) => {
-      card.addEventListener('click', () => {
-        // placeholder effect; safe to keep for dev
-        // console.log('Card clicked');
-      });
-    });
-  } catch {}
 })();
  

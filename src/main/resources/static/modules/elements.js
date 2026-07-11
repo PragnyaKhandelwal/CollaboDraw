@@ -413,7 +413,6 @@ const ElementManager = {
       delete element.dataset.hasListeners;
       this.setupElementInteraction(element);
     });
-    console.log('🔗 Element interactions fully restored');
   }
 };
 

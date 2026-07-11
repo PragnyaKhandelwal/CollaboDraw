@@ -101,7 +101,6 @@ const UIControls = {
     } catch(_){ }
 
     this.updateCanvasCursor();
-    console.log(`🔧 Tool selected: ${tool}`);
   },
 
   /**

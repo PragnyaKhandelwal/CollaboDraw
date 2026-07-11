@@ -302,8 +302,7 @@ const RealTime = {
       const body = await resp.json();
       const events = Array.isArray(body) ? body : (Array.isArray(body?.events) ? body.events : []);
       if (!Array.isArray(events)) return;
-      
-      console.log(`🕘 Replaying ${events.length} prior events for board ${bid}`);
+
       events.forEach(ev => {
         try {
           const kind = ev.kind || ev.type || ev.eventType;

@@ -301,8 +301,7 @@ async function loadBoardData(boardId) {
         
         if (response.ok) {
             const receivedBoardData = await response.json();
-            console.log('Loading board data:', receivedBoardData);
-            
+
             // Clear current board state
             clearBoard();
             
@@ -385,8 +384,7 @@ async function loadSharedBoardData(boardId) {
         
         if (response.ok) {
             const receivedBoardData = await response.json();
-            console.log('Loading shared board data:', receivedBoardData);
-            
+
             // Clear current board state
             clearBoard();
             
@@ -472,8 +470,7 @@ async function loadTemplateData(templateId) {
         
         if (response.ok) {
             const templateData = await response.json();
-            console.log('Loading template data:', templateData);
-            
+
             // Clear current board state
             clearBoard();
             
@@ -564,8 +561,7 @@ async function loadTemplatePreview(templateId) {
         
         if (response.ok) {
             const templateData = await response.json();
-            console.log('Loading template preview:', templateData);
-            
+
             // Clear current board state
             clearBoard();
             
@@ -718,8 +714,6 @@ function setReadOnlyMode(isReadOnly) {
         elements.forEach(element => {
             element.style.pointerEvents = 'none';
         });
-        
-        console.log('Read-only mode enabled');
     } else {
         body.classList.remove('read-only-mode');
         
@@ -741,7 +735,5 @@ function setReadOnlyMode(isReadOnly) {
         elements.forEach(element => {
             element.style.pointerEvents = '';
         });
-        
-        console.log('Read-only mode disabled');
     }
 }

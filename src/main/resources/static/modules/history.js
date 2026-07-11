@@ -73,8 +73,6 @@ const History = {
     
     AppState.redoStack = [];
     this.updateUndoRedoButtons();
-    
-    console.log(`💾 State saved (${AppState.undoStack.length} states)`);
   },
 
   /**
@@ -97,7 +95,6 @@ const History = {
     }
 
     this.updateUndoRedoButtons();
-    console.log(`↶ Undo performed (${AppState.undoStack.length} states left)`);
   },
 
   /**
@@ -116,7 +113,6 @@ const History = {
     }
 
     this.updateUndoRedoButtons();
-    console.log(`↷ Redo performed (${AppState.redoStack.length} states left)`);
   },
 
   /**
@@ -221,7 +217,6 @@ const History = {
     AppState.redoStack = [];
     this.lastSaveState = null;
     this.updateUndoRedoButtons();
-    console.log('🗑️ Undo/Redo history cleared');
   },
 
   /**
@@ -237,7 +232,6 @@ const History = {
     }
     
     this.updateUndoRedoButtons();
-    console.log('✅ Undo/Redo system initialized');
   }
 };
 

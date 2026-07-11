@@ -353,7 +353,6 @@ const Storage = {
    */
   manualSave() {
     if (History.isSaving) {
-      console.log('⏳ Save in progress...');
       return;
     }
     
@@ -421,7 +420,6 @@ const Storage = {
       const currentState = History.createStateSnapshot();
       
       if (!History.lastSaveState || History.lastSaveState.checksum !== currentState.checksum) {
-        console.log('🔄 Auto-saving...');
         this.manualSave();
       }
     }, AppState.CONFIG.AUTO_SAVE_INTERVAL);

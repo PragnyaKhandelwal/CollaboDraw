@@ -12,8 +12,6 @@ let lastPanClientY = 0;
  */
 async function initializeApp() {
   try {
-    console.log('🚀 Initializing CollaboDraw...');
-
     // Get DOM elements
     AppState.canvas = document.getElementById('drawingCanvas');
     AppState.ctx = AppState.canvas?.getContext('2d');
@@ -23,8 +21,6 @@ async function initializeApp() {
       console.error('❌ Critical DOM elements missing - cannot initialize');
       return;
     }
-    
-    console.log('✅ DOM elements loaded');
 
     // Handle new board parameters
     try {
@@ -78,8 +74,6 @@ async function initializeApp() {
         loading.classList.remove('show');
       }
     }, 1000);
-
-    console.log('✅ App initialization complete');
   } catch(e) {
     console.error('❌ Initialization error:', e);
   }
@@ -386,7 +380,6 @@ async function loadBoardName() {
       if (boardNameInput) {
         boardNameInput.value = data.name;
       }
-      console.log(`✅ Board name loaded: ${data.name}`);
     }
   } catch (error) {
     console.error('❌ Failed to load board name:', error);
@@ -872,7 +865,6 @@ function exportBoard() {
     link.click();
     
     UIControls.showNotification('Board exported successfully!');
-    console.log('✅ Board exported to PNG');
   } catch (error) {
     console.error('❌ Export failed:', error);
     UIControls.showNotification('Export failed');
@@ -1002,8 +994,6 @@ function initializeTooltips() {
     document.addEventListener('mousedown', () => {
       globalTooltip.classList.remove('show');
     });
-
-    console.log('✅ Global tooltips initialized');
   } catch (e) {
     console.warn('⚠️ Tooltip initialization error:', e);
   }
@@ -1032,8 +1022,6 @@ function attachTraybarListeners() {
     if (undoBtn) undoBtn.addEventListener('click', () => undo());
     if (redoBtn) redoBtn.addEventListener('click', () => redo());
     if (saveBtn) saveBtn.addEventListener('click', () => saveBoard());
-    
-    console.log('✅ Traybar listeners attached');
   } catch (e) {
     console.warn('⚠️ Traybar listener attachment error:', e);
   }
