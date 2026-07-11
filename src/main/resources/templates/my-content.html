@@ -54,7 +54,7 @@
       color: #fff;
       margin: 20px 0 30px 0;
       cursor: pointer;
-      padding: 0 10px;
+      padding: 0 18px;
       white-space: nowrap;
       transition: all 0.3s cubic-bezier(.4,0,.2,1);
       box-sizing: border-box;
@@ -482,6 +482,9 @@
     }
 
     .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       padding: 6px 12px;
       border: 1px solid var(--border);
       border-radius: 6px;
@@ -637,6 +640,7 @@
   </style>
 </head>
 <body>
+  <div th:replace="~{fragments/icons :: sprite}"></div>
   <div class="sidebar" id="sidebar" role="navigation" aria-label="Main sidebar navigation">
     <div class="logo" id="sidebar-logo" tabindex="0" aria-label="CollaboDraw logo" onclick="window.location.href='/home'">
       <svg viewBox="0 0 24 24" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -665,11 +669,11 @@
         <h1 class="page-title">My Content</h1>
       </div>
       <div class="search-bar">
-        <span class="search-icon">🔍</span>
+        <span class="search-icon"><svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg></span>
         <input type="text" class="search-input" placeholder="Search your boards...">
       </div>
       <div class="header-right">
-        <button class="notification-btn" id="mcNotifBtn">🔔</button>
+        <button class="notification-btn" id="mcNotifBtn"><svg class="icon" style="width:18px;height:18px" aria-hidden="true"><use href="#icon-bell"></use></svg></button>
         <div id="mcNotifDropdown" style="display:none; position:absolute; top:70px; right:32px; background:var(--white,#ffffff); color:var(--text-dark,#111827); border:1px solid var(--border,#e5e7eb); border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.3); width:280px; z-index:50;">
           <div style="padding:12px 16px; font-weight:600; border-bottom:1px solid var(--border,#f3f4f6);">Notifications</div>
           <div style="padding:12px 16px; font-size:14px;">
@@ -692,28 +696,28 @@
       <!-- Stats -->
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-icon boards">📁</div>
+          <div class="stat-icon boards"><svg class="icon" aria-hidden="true"><use href="#icon-folder"></use></svg></div>
           <div class="stat-info">
             <h3 th:text="${totalBoards}">0</h3>
             <p>Total Boards</p>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon shared">👥</div>
+          <div class="stat-icon shared"><svg class="icon" aria-hidden="true"><use href="#icon-users"></use></svg></div>
           <div class="stat-info">
             <h3 th:text="${sharedWithOthers}">0</h3>
             <p>Shared with Others</p>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon templates">🎨</div>
+          <div class="stat-icon templates"><svg class="icon" aria-hidden="true"><use href="#icon-palette"></use></svg></div>
           <div class="stat-info">
             <h3 th:text="${templatesUsed}">0</h3>
             <p>Templates Used</p>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon recent">⏱️</div>
+          <div class="stat-icon recent"><svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg></div>
           <div class="stat-info">
             <h3 th:text="${recentActivity}">0</h3>
             <p>Recent Activity</p>
@@ -730,8 +734,8 @@
           <button class="filter-btn" data-filter="archived">Archived</button>
         </div>
         <div class="view-toggle">
-          <button class="view-btn active" data-view="grid">🔲</button>
-          <button class="view-btn" data-view="list">📋</button>
+          <button class="view-btn active" data-view="grid"><svg class="icon" aria-hidden="true"><use href="#icon-grid"></use></svg></button>
+          <button class="view-btn" data-view="list"><svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg></button>
         </div>
       </div>
 
@@ -743,7 +747,7 @@
                       data-modified=${board.lastModified ?: board.createdAt},
                       data-favorite=${favoriteBoardIds.contains(board.boardId)},
                       data-archived=${archivedBoardIds.contains(board.boardId)}">
-          <div class="board-preview">🎯</div>
+          <div class="board-preview"><svg class="icon" aria-hidden="true"><use href="#icon-target"></use></svg></div>
           <div class="board-info">
             <div class="board-title" th:text="${board.boardName}">Board</div>
             <div class="board-meta">
@@ -753,8 +757,10 @@
             <div class="board-actions">
               <button class="action-btn primary" th:attr="onclick='event.stopPropagation(); openBoard(' + ${board.boardId} + ')'">Open</button>
               <button class="action-btn favorite-btn" th:classappend="${favoriteBoardIds.contains(board.boardId)} ? ' active' : ''"
-                      th:attr="onclick='event.stopPropagation(); toggleFavorite(' + ${board.boardId} + ', this)'"
-                      th:text="${favoriteBoardIds.contains(board.boardId)} ? '★ Favorited' : '☆ Favorite'">☆ Favorite</button>
+                      th:attr="onclick='event.stopPropagation(); toggleFavorite(' + ${board.boardId} + ', this)'">
+                <svg class="icon icon-fill-on-active favorite-star" th:classappend="${favoriteBoardIds.contains(board.boardId)} ? ' active' : ''" aria-hidden="true"><use href="#icon-star"></use></svg>
+                <span class="favorite-label" th:text="${favoriteBoardIds.contains(board.boardId)} ? 'Favorited' : 'Favorite'">Favorite</span>
+              </button>
               <button class="action-btn archive-btn" th:attr="onclick='event.stopPropagation(); toggleArchive(' + ${board.boardId} + ', this)'"
                       th:text="${archivedBoardIds.contains(board.boardId)} ? 'Unarchive' : 'Archive'">Archive</button>
               <button class="action-btn" th:attr="onclick='event.stopPropagation(); shareBoard(' + ${board.boardId} + ')'">Share</button>
@@ -797,7 +803,7 @@
 
       <!-- Empty State (completely hidden when there are boards) -->
       <div class="empty-state" style="display: none;">
-        <div class="empty-icon">📁</div>
+        <div class="empty-icon"><svg class="icon" aria-hidden="true"><use href="#icon-folder"></use></svg></div>
         <h3>No boards yet</h3>
         <p>Create your first board to get started with CollaboDraw</p>
         <button class="create-btn" onclick="window.location.href='/mainscreen?new=1'">Create Board</button>
@@ -935,7 +941,10 @@
         }
         const card = btnEl.closest('.board-card');
         card.setAttribute('data-favorite', data.favorite ? 'true' : 'false');
-        btnEl.textContent = data.favorite ? '★ Favorited' : '☆ Favorite';
+        const starIcon = btnEl.querySelector('.favorite-star');
+        const label = btnEl.querySelector('.favorite-label');
+        if (starIcon) starIcon.classList.toggle('active', !!data.favorite);
+        if (label) label.textContent = data.favorite ? 'Favorited' : 'Favorite';
         btnEl.classList.toggle('active', !!data.favorite);
         const activeFilter = document.querySelector('.filter-btn.active');
         if (activeFilter) filterBoards(activeFilter.getAttribute('data-filter'));
