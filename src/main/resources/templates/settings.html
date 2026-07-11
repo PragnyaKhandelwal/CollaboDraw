@@ -54,7 +54,7 @@
       color: #fff;
       margin: 20px 0 30px 0;
       cursor: pointer;
-      padding: 0 10px;
+      padding: 0 18px;
       white-space: nowrap;
       transition: all 0.3s cubic-bezier(.4,0,.2,1);
       box-sizing: border-box;
@@ -749,6 +749,7 @@
   </style>
 </head>
 <body>
+  <div th:replace="~{fragments/icons :: sprite}"></div>
   <div class="sidebar" id="sidebar" role="navigation" aria-label="Main sidebar navigation">
         <div class="logo" id="sidebar-logo" tabindex="0" aria-label="CollaboDraw logo" onclick="window.location.href='/home'">      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <rect x="2.5" y="4" width="19" height="13" rx="2.5" stroke="currentColor" stroke-width="1.8"/>
@@ -776,7 +777,7 @@
         <h1 class="page-title">Settings</h1>
       </div>
       <div class="header-right">
-        <button class="notification-btn" id="settingsNotifBtn" style="position:relative;">🔔<span id="settingsNotifBadge" style="display:none; position:absolute; top:2px; right:2px; width:8px; height:8px; border-radius:50%; background:#ef4444;"></span></button>
+        <button class="notification-btn" id="settingsNotifBtn" style="position:relative;"><svg class="icon" style="width:18px;height:18px" aria-hidden="true"><use href="#icon-bell"></use></svg><span id="settingsNotifBadge" style="display:none; position:absolute; top:2px; right:2px; width:8px; height:8px; border-radius:50%; background:#ef4444;"></span></button>
         <div id="settingsNotifDropdown" style="display:none; position:absolute; top:70px; right:32px; background:var(--white,#ffffff); color:var(--text-dark,#111827); border:1px solid var(--border,#e5e7eb); border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.3); width:280px; max-height:360px; overflow-y:auto; z-index:50;">
           <div style="padding:12px 16px; font-weight:600; border-bottom:1px solid var(--border,#f3f4f6);">Notifications</div>
           <div id="settingsNotifList"></div>
@@ -797,11 +798,11 @@
         <!-- Settings Sidebar -->
         <div class="settings-sidebar">
           <ul class="settings-nav">
-            <li><a href="#profile" class="active"><span class="settings-nav-icon">👤</span>Profile</a></li>
-            <li><a href="#account"><span class="settings-nav-icon">⚙️</span>Advanced Settings</a></li>
-            <li><a href="#notifications"><span class="settings-nav-icon">🔔</span>Notifications</a></li>
-            <li><a href="#team"><span class="settings-nav-icon">👥</span>Team Management</a></li>
-            <li><a href="#collab"><span class="settings-nav-icon">🧑‍🤝‍🧑</span>Collaboration</a></li>
+            <li><a href="#profile" class="active"><span class="settings-nav-icon"><svg class="icon" aria-hidden="true"><use href="#icon-user"></use></svg></span>Profile</a></li>
+            <li><a href="#account"><span class="settings-nav-icon"><svg class="icon" aria-hidden="true"><use href="#icon-settings"></use></svg></span>Advanced Settings</a></li>
+            <li><a href="#notifications"><span class="settings-nav-icon"><svg class="icon" aria-hidden="true"><use href="#icon-bell"></use></svg></span>Notifications</a></li>
+            <li><a href="#team"><span class="settings-nav-icon"><svg class="icon" aria-hidden="true"><use href="#icon-users"></use></svg></span>Team Management</a></li>
+            <li><a href="#collab"><span class="settings-nav-icon"><svg class="icon" aria-hidden="true"><use href="#icon-users"></use></svg></span>Collaboration</a></li>
           </ul>
         </div>
 
