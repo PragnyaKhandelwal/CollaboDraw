@@ -91,12 +91,11 @@ function setupEventListeners() {
     AppState.canvas.addEventListener('mouseout', () => DrawingTools.stopDrawing());
   }
 
-  // Main canvas
+  // Main canvas. Eraser is handled by the drawingCanvas mousedown/mousemove/mouseup
+  // listeners above (DrawingTools.startDrawing/draw/stopDrawing) so it can erase
+  // continuously while dragging, not just once per click here.
   AppState.mainCanvas.addEventListener('click', (e) => {
-    if (AppState.currentTool === 'eraser') {
-      DrawingTools.handleEraserClick(e);
-      return;
-    }
+    if (AppState.currentTool === 'eraser') return;
     handleCanvasClick(e);
   });
   

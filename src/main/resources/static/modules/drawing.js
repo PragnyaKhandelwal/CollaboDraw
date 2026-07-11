@@ -52,6 +52,12 @@ const DrawingTools = {
    */
   startDrawing(e) {
     const tool = AppState.currentTool;
+    if (tool === 'eraser') {
+      AppState.isDrawing = true;
+      const rect = AppState.canvas.getBoundingClientRect();
+      this.eraseAt(e.clientX - rect.left, e.clientY - rect.top);
+      return;
+    }
     if (!['pen', 'highlighter', ...SHAPE_TOOLS].includes(tool)) return;
 
     AppState.isDrawing = true;
@@ -141,6 +147,11 @@ const DrawingTools = {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    if (AppState.currentTool === 'eraser') {
+      this.eraseAt(x, y);
+      return;
+    }
+
     if (window._currentShape) {
       // Rubber-band preview: restore the pre-drag snapshot, then draw the shape fresh from
       // the fixed start point to the live cursor position.
@@ -197,6 +208,14 @@ const DrawingTools = {
     if (!AppState.isDrawing) return;
 
     AppState.isDrawing = false;
+
+    if (AppState.currentTool === 'eraser') {
+      // Erasing itself already happened continuously in eraseAt() as the mouse moved;
+      // only the history/persistence needs to happen once, at the end of the drag.
+      History.saveState();
+      try { Storage.saveBoardState(); } catch(_){ }
+      return;
+    }
 
     if (window._currentShape) {
       const shape = window._currentShape;
@@ -280,36 +299,37 @@ const DrawingTools = {
   },
 
   /**
-   * Handle eraser click on canvas
+   * Erase a circular area at the given canvas-local coordinates. Called on every mousedown
+   * and mousemove tick while the eraser tool is active and the mouse is down, so erasing
+   * tracks the cursor continuously like a real eraser instead of clearing one static circle
+   * per click. History/persistence are handled once in stopDrawing(), not here, to avoid
+   * pushing dozens of undo-stack entries and server saves during a single drag.
    */
-  handleEraserClick(e) {
-    if (AppState.currentTool !== 'eraser') return;
-    
-    const rect = AppState.canvas.getBoundingClientRect();
-    const eraserX = e.clientX - rect.left;
-    const eraserY = e.clientY - rect.top;
+  eraseAt(eraserX, eraserY) {
     const eraserRadius = 20;
-    
+
     AppState.ctx.clearRect(
       eraserX - eraserRadius,
       eraserY - eraserRadius,
       eraserRadius * 2,
       eraserRadius * 2
     );
-        
-    History.saveState();
-    
-    try {
-      if (window.CD && window.CD.boardId && typeof CollaboSocket !== 'undefined') {
-        const boardNumeric = String(window.CD.boardId).replace(/^board-/, '');
-        CollaboSocket.publishElement(boardNumeric, {
-          kind: 'erase',
-          payload: { x: eraserX, y: eraserY, radius: eraserRadius }
-        });
-      }
-    } catch(e){}
-    
-    try { Storage.saveBoardState(); } catch(_){ }
+
+    // Throttle the realtime broadcast (not the erasing itself) so a fast drag doesn't flood
+    // the socket - matches the ~20ms cadence the pen tool's stroke broadcast already uses.
+    const now = Date.now();
+    if (!this._lastEraseBroadcast || now - this._lastEraseBroadcast > 20) {
+      this._lastEraseBroadcast = now;
+      try {
+        if (window.CD && window.CD.boardId && typeof CollaboSocket !== 'undefined') {
+          const boardNumeric = String(window.CD.boardId).replace(/^board-/, '');
+          CollaboSocket.publishElement(boardNumeric, {
+            kind: 'erase',
+            payload: { x: eraserX, y: eraserY, radius: eraserRadius }
+          });
+        }
+      } catch(e){}
+    }
   },
 
   /**

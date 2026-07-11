@@ -72,21 +72,28 @@ const ElementManager = {
     element.dataset.hasListeners = 'true';
 
     element.addEventListener('mousedown', (e) => {
-      if (AppState.currentTool !== 'select') return;
-
       // UI FIX: If clicking an input or textarea, don't trigger a drag
       const tag = e.target.tagName.toLowerCase();
       if (tag === 'input' || tag === 'textarea') return;
 
       e.stopPropagation();
 
-      // UI FIX: Dynamic Z-Index update to bring to front
-      element.style.zIndex = this.getNextZIndex();
-
       if (e.ctrlKey || e.metaKey || e.shiftKey) {
         this.toggleElementSelection(element);
         return;
       }
+
+      // Selecting an element (which populates the Properties panel) should always work,
+      // even while a drawing tool is active - this whole handler used to bail out unless
+      // the Select tool was the current tool, so clicking an existing element to check or
+      // edit its color/opacity silently did nothing unless you switched tools first.
+      this.selectElement(element);
+
+      // Only dragging (and the z-index bump-to-front that goes with it) is select-tool-only;
+      // otherwise picking up a sticky note while mid-drawing would move it unexpectedly.
+      if (AppState.currentTool !== 'select') return;
+
+      element.style.zIndex = this.getNextZIndex();
 
       this._drag.element = element;
       this._drag.startX = e.clientX;
@@ -96,7 +103,6 @@ const ElementManager = {
       this._drag.startLeft = element.offsetLeft;
       this._drag.startTop = element.offsetTop;
 
-      this.selectElement(element);
       element.classList.add('dragging');
     });
 
