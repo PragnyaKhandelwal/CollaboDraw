@@ -78,9 +78,10 @@
       box-sizing: border-box;
     }
 
-    .logo img {
-      height: 36px;
-      border-radius: 8px;
+    .logo svg {
+      height: 26px;
+      width: 26px;
+      flex-shrink: 0;
       transition: margin 0.3s cubic-bezier(.4,0,.2,1), opacity 0.3s;
     }
 
@@ -232,6 +233,8 @@
       border: 2px solid var(--border);
       border-radius: 12px;
       font-size: 15px;
+      background: var(--light-gray);
+      color: var(--text-dark);
       transition: all 0.3s;
     }
 
@@ -531,7 +534,7 @@
     .action-btn.favorite-btn.active {
       border-color: #f59e0b;
       color: #f59e0b;
-      background: #fffbeb;
+      background: rgba(245, 158, 11, 0.12);
     }
 
     /* Empty State */
@@ -628,12 +631,39 @@
         grid-template-columns: 1fr;
       }
     }
+
+    @media (max-width: 480px) {
+      .header {
+        padding: 0 12px;
+        gap: 8px;
+      }
+      .page-title {
+        font-size: 1.2rem;
+      }
+      #mcNotifDropdown {
+        right: 8px;
+        left: 8px;
+        width: auto;
+      }
+      .content {
+        padding: 16px 12px;
+      }
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="sidebar" id="sidebar" role="navigation" aria-label="Main sidebar navigation">
     <div class="logo" id="sidebar-logo" tabindex="0" aria-label="CollaboDraw logo" onclick="window.location.href='/home'">
-      <img th:src="@{/images/Preview.png}" alt="CollaboDraw logo" />      <span class="logo-text">CollaboDraw</span>
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="2.5" y="4" width="19" height="13" rx="2.5" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M8 20h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M12 17v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M6.5 13.5l3.5-5 2.5 3 4-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="logo-text">CollaboDraw</span>
     </div>
     <nav class="sidebar-nav" role="menu" aria-label="Main menu">
       <ul>
@@ -658,8 +688,8 @@
       </div>
       <div class="header-right">
         <button class="notification-btn" id="mcNotifBtn">🔔</button>
-        <div id="mcNotifDropdown" style="display:none; position:absolute; top:70px; right:32px; background:#ffffff; color:#111827; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); width:280px; z-index:50;">
-          <div style="padding:12px 16px; font-weight:600; border-bottom:1px solid #f3f4f6;">Notifications</div>
+        <div id="mcNotifDropdown" style="display:none; position:absolute; top:70px; right:32px; background:var(--white,#ffffff); color:var(--text-dark,#111827); border:1px solid var(--border,#e5e7eb); border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.3); width:280px; z-index:50;">
+          <div style="padding:12px 16px; font-weight:600; border-bottom:1px solid var(--border,#f3f4f6);">Notifications</div>
           <div style="padding:12px 16px; font-size:14px;">
             <div style="margin-bottom:8px;">No new notifications</div>
             <div style="color:#6b7280;">You're all caught up.</div>
