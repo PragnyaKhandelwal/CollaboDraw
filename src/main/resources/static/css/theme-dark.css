@@ -11,10 +11,14 @@
  * hasn't explicitly chosen "light", or unconditionally when the user has explicitly chosen
  * "dark" in Settings (data-theme="dark", set server-side - see GlobalModelAttributes).
  *
- * Known limitation (by design, see the audit): JS-generated modals/dropdowns/dialogs that use
- * hardcoded inline hex colors (not var()) - notification dropdowns, share/import dialogs -
- * are not covered here and stay light-themed. Theming those would mean rewriting each one to
- * use CSS classes instead of inline styles, which is a larger refactor than "add dark mode."
+ * v2: the first pass missed two things, caught after actually looking at it rendered -
+ * (1) --sidebar-bg/--dark-green (the sidebar and whiteboard header) were never overridden at
+ * all, so they stayed the same bright light-mode green next to an otherwise-dark page instead
+ * of reading as an intentional accent; (2) several surfaces across the templates hardcode
+ * "background: white" directly in their <style> blocks instead of using var(--white), so this
+ * file's override never reached them - those call sites were switched to var(--white) in the
+ * templates themselves. JS-generated dialogs were similarly switched from hardcoded hex to
+ * var() references so they inherit dark mode for free, same as everything else.
  */
 
 @media (prefers-color-scheme: dark) {
@@ -26,10 +30,13 @@
     --gray: #9aa4b2;
     --border: #2c3542;
     --text-dark: #e8edf3;
+    --sidebar-bg: #0a2e22;
     --sidebar-text: #d8f5e8;
 
     /* mainscreen naming (overlaps with the above where names match) */
     --light-bg: #10151b;
+    --dark-green: #0a2e22;
+    --tooltip-bg: #05100c;
 
     /* auth naming */
     --card-bg: rgba(20, 25, 31, 0.72);
@@ -45,6 +52,18 @@
     background: var(--main-bg, #10151b);
     color: var(--text-dark, #e8edf3);
   }
+
+  /* Monochrome PNG toolbar/header icons are baked black-on-transparent, so they'd otherwise
+     disappear against a dark surface - flip them light. Doesn't touch photo/avatar/logo
+     images, only icon-holding containers. */
+  :root:not([data-theme="light"]) .tool-icon img,
+  :root:not([data-theme="light"]) .header-btn img,
+  :root:not([data-theme="light"]) .toolbar-btn img,
+  :root:not([data-theme="light"]) .canvas-toolbar img,
+  :root:not([data-theme="light"]) .floating-traybar img,
+  :root:not([data-theme="light"]) .action-icon img {
+    filter: invert(1) brightness(1.7);
+  }
 }
 
 :root[data-theme="dark"] {
@@ -54,9 +73,12 @@
   --gray: #9aa4b2;
   --border: #2c3542;
   --text-dark: #e8edf3;
+  --sidebar-bg: #0a2e22;
   --sidebar-text: #d8f5e8;
 
   --light-bg: #10151b;
+  --dark-green: #0a2e22;
+  --tooltip-bg: #05100c;
 
   --card-bg: rgba(20, 25, 31, 0.72);
 
@@ -70,3 +92,17 @@
   background: var(--main-bg, #10151b);
   color: var(--text-dark, #e8edf3);
 }
+
+:root[data-theme="dark"] .tool-icon img,
+:root[data-theme="dark"] .header-btn img,
+:root[data-theme="dark"] .toolbar-btn img,
+:root[data-theme="dark"] .canvas-toolbar img,
+:root[data-theme="dark"] .floating-traybar img,
+:root[data-theme="dark"] .action-icon img {
+  filter: invert(1) brightness(1.7);
+}
+
+/* The drawing canvas itself intentionally stays light in both themes - it's the "paper", and
+   most people's saved strokes use black/dark ink that would go invisible on a dark canvas.
+   This mirrors how Figma/Sketch/most whiteboard tools handle dark mode: dark chrome, light
+   canvas. #drawingCanvas/#mainCanvas keep their own hardcoded white and are not touched here. */
