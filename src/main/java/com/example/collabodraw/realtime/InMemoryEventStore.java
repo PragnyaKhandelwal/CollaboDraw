@@ -1,4 +1,4 @@
-package com.example.collabodraw.service;
+package com.example.collabodraw.realtime;
 
 import org.springframework.stereotype.Service;
 
@@ -7,16 +7,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * In-memory store for live collaboration element events.
- * Provides simple persistence across user joins during a single JVM run.
- * NOTE: This is volatile; consider replacing with database persistence for durability.
+ * Default {@link EventStore}: an in-memory map, alive only for this JVM's lifetime.
+ * Correct for a single server process; see {@link EventStore} for what changes when a
+ * second instance enters the picture.
  */
 @Service
-public class RealtimeEventStore {
+public class InMemoryEventStore implements EventStore {
 
     private static final int MAX_EVENTS_PER_BOARD = 5000; // safeguard
     private final Map<Long, List<Map<String, Object>>> boardEvents = new ConcurrentHashMap<>();
 
+    @Override
     public void addEvent(Long boardId, Map<String, Object> event) {
         if (boardId == null || event == null) return;
         List<Map<String, Object>> list = boardEvents.computeIfAbsent(boardId, k -> new CopyOnWriteArrayList<>());
@@ -30,6 +31,7 @@ public class RealtimeEventStore {
         }
     }
 
+    @Override
     public List<Map<String, Object>> getEvents(Long boardId) {
         if (boardId == null) return Collections.emptyList();
         return boardEvents.getOrDefault(boardId, Collections.emptyList());

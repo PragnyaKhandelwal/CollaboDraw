@@ -1,6 +1,6 @@
 package com.example.collabodraw.controller;
 
-import com.example.collabodraw.service.RealtimeEventStore;
+import com.example.collabodraw.realtime.EventStore;
 import com.example.collabodraw.service.UserService;
 import com.example.collabodraw.service.WhiteboardService;
 import com.example.collabodraw.model.entity.Board;
@@ -21,11 +21,11 @@ import java.util.Map;
 @RequestMapping("/api/live")
 public class LiveStateController {
 
-    private final RealtimeEventStore eventStore;
+    private final EventStore eventStore;
     private final WhiteboardService whiteboardService;
     private final UserService userService;
 
-    public LiveStateController(RealtimeEventStore eventStore, WhiteboardService whiteboardService, UserService userService) {
+    public LiveStateController(EventStore eventStore, WhiteboardService whiteboardService, UserService userService) {
         this.eventStore = eventStore;
         this.whiteboardService = whiteboardService;
         this.userService = userService;

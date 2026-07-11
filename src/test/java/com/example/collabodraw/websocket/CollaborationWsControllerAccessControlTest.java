@@ -5,7 +5,7 @@ import com.example.collabodraw.model.entity.Board;
 import com.example.collabodraw.model.entity.User;
 import com.example.collabodraw.repository.CursorRepository;
 import com.example.collabodraw.repository.SessionRepository;
-import com.example.collabodraw.service.RealtimeEventStore;
+import com.example.collabodraw.realtime.InMemoryEventStore;
 import com.example.collabodraw.service.UserService;
 import com.example.collabodraw.service.WhiteboardService;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,7 +48,7 @@ class CollaborationWsControllerAccessControlTest {
         CursorRepository cursorRepository = mock(CursorRepository.class);
         userService = mock(UserService.class);
         whiteboardService = mock(WhiteboardService.class);
-        RealtimeEventStore eventStore = new RealtimeEventStore();
+        InMemoryEventStore eventStore = new InMemoryEventStore();
 
         controller = new CollaborationWsController(messagingTemplate, sessionRepository, cursorRepository,
                 userService, whiteboardService, eventStore);

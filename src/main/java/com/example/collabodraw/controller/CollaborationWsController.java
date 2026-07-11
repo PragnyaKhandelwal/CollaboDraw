@@ -42,7 +42,7 @@ public class CollaborationWsController {
     private final CursorRepository cursorRepository;
     private final UserService userService;
     private final WhiteboardService whiteboardService;
-    private final com.example.collabodraw.service.RealtimeEventStore eventStore;
+    private final com.example.collabodraw.realtime.EventStore eventStore;
     private final Map<String, SessionBinding> wsSessionBindings = new ConcurrentHashMap<>();
 
     private static final class SessionBinding {
@@ -62,7 +62,7 @@ public class CollaborationWsController {
                                      CursorRepository cursorRepository,
                                      UserService userService,
                                      WhiteboardService whiteboardService,
-                                     com.example.collabodraw.service.RealtimeEventStore eventStore) {
+                                     com.example.collabodraw.realtime.EventStore eventStore) {
         this.messagingTemplate = messagingTemplate;
         this.sessionRepository = sessionRepository;
         this.cursorRepository = cursorRepository;

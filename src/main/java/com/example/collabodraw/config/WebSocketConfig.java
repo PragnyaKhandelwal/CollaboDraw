@@ -21,6 +21,20 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Value("${app.cors.allowed-origins:http://localhost:8080,http://localhost:3000,http://127.0.0.1:8080}")
     private String allowedOriginsProperty;
 
+    // See application.properties for the rationale. Off by default (SimpleBroker); flipping
+    // app.stomp.relay.enabled=true at deploy time moves broker state out of this process so
+    // multiple instances can share it, with no code change.
+    @Value("${app.stomp.relay.enabled:false}")
+    private boolean stompRelayEnabled;
+    @Value("${app.stomp.relay.host:localhost}")
+    private String stompRelayHost;
+    @Value("${app.stomp.relay.port:61613}")
+    private int stompRelayPort;
+    @Value("${app.stomp.relay.login:guest}")
+    private String stompRelayLogin;
+    @Value("${app.stomp.relay.passcode:guest}")
+    private String stompRelayPasscode;
+
     private final WebSocketAuthorizationInterceptor authorizationInterceptor;
 
     public WebSocketConfig(WebSocketAuthorizationInterceptor authorizationInterceptor) {
@@ -45,7 +59,17 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/topic", "/queue");
+        if (stompRelayEnabled) {
+            registry.enableStompBrokerRelay("/topic", "/queue")
+                    .setRelayHost(stompRelayHost)
+                    .setRelayPort(stompRelayPort)
+                    .setClientLogin(stompRelayLogin)
+                    .setClientPasscode(stompRelayPasscode)
+                    .setSystemLogin(stompRelayLogin)
+                    .setSystemPasscode(stompRelayPasscode);
+        } else {
+            registry.enableSimpleBroker("/topic", "/queue");
+        }
         registry.setApplicationDestinationPrefixes("/app");
     }
 }
