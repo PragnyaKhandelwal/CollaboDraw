@@ -83,35 +83,39 @@ async function initializeApp() {
  * Setup canvas event listeners
  */
 function setupEventListeners() {
-  // Drawing canvas
+  // Drawing canvas. Pointer events (not mouse events) so pen/highlighter/shapes/eraser
+  // work from touch and stylus input too, not just an actual mouse - previously this was
+  // mousedown/mousemove/mouseup only, so on a real touchscreen dragging across the canvas
+  // fired no events at all and nothing ever got drawn.
   if (AppState.canvas) {
-    AppState.canvas.addEventListener('mousedown', (e) => DrawingTools.startDrawing(e));
-    AppState.canvas.addEventListener('mousemove', (e) => DrawingTools.draw(e));
-    AppState.canvas.addEventListener('mouseup', () => DrawingTools.stopDrawing());
-    AppState.canvas.addEventListener('mouseout', () => DrawingTools.stopDrawing());
+    AppState.canvas.addEventListener('pointerdown', (e) => DrawingTools.startDrawing(e));
+    AppState.canvas.addEventListener('pointermove', (e) => DrawingTools.draw(e));
+    AppState.canvas.addEventListener('pointerup', () => DrawingTools.stopDrawing());
+    AppState.canvas.addEventListener('pointercancel', () => DrawingTools.stopDrawing());
+    AppState.canvas.addEventListener('pointerleave', () => DrawingTools.stopDrawing());
   }
 
-  // Main canvas. Eraser is handled by the drawingCanvas mousedown/mousemove/mouseup
+  // Main canvas. Eraser is handled by the drawingCanvas pointerdown/pointermove/pointerup
   // listeners above (DrawingTools.startDrawing/draw/stopDrawing) so it can erase
   // continuously while dragging, not just once per click here.
   AppState.mainCanvas.addEventListener('click', (e) => {
     if (AppState.currentTool === 'eraser') return;
     handleCanvasClick(e);
   });
-  
+
   AppState.mainCanvas.addEventListener('contextmenu', showContextMenu);
   let lastCursorSend = 0;
-  AppState.mainCanvas.addEventListener('mousedown', handleCanvasMouseDown);
-  AppState.mainCanvas.addEventListener('mousemove', (e) => {
+  AppState.mainCanvas.addEventListener('pointerdown', handleCanvasMouseDown);
+  AppState.mainCanvas.addEventListener('pointermove', (e) => {
     handleCanvasMouseMove(e);
-    
+
     // Broadcast cursor to real-time sync with 33ms throttle (~30 FPS)
     const now = Date.now();
     if (now - lastCursorSend > 33 && window.CD && window.CD.boardId && window.CollaboSocket) {
       const rect = AppState.mainCanvas.getBoundingClientRect();
       const x = (e.clientX - rect.left) / AppState.zoomLevel - AppState.panX;
       const y = (e.clientY - rect.top) / AppState.zoomLevel - AppState.panY;
-      
+
       try {
         const boardNumeric = String(window.CD.boardId).replace(/^board-/, '');
         const currentName = (window.CD && window.CD.currentUserName) || AppState.getCurrentUser().name;
@@ -122,7 +126,8 @@ function setupEventListeners() {
       }
     }
   });
-  AppState.mainCanvas.addEventListener('mouseup', handleCanvasMouseUp);
+  AppState.mainCanvas.addEventListener('pointerup', handleCanvasMouseUp);
+  AppState.mainCanvas.addEventListener('pointercancel', handleCanvasMouseUp);
   
   // Keyboard
   document.addEventListener('keydown', handleKeyboard);

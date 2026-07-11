@@ -24,7 +24,8 @@ const ElementManager = {
     if (this._globalHandlersInstalled) return;
     this._globalHandlersInstalled = true;
 
-    document.addEventListener('mousemove', (e) => {
+    // Pointer events (not mouse events) so dragging an element works from touch input too.
+    document.addEventListener('pointermove', (e) => {
       const element = this._drag.element;
       if (!element) return;
 
@@ -35,7 +36,7 @@ const ElementManager = {
       element.style.top = (this._drag.startTop + deltaY) + 'px';
     });
 
-    document.addEventListener('mouseup', () => {
+    const endDrag = () => {
       const element = this._drag.element;
       if (!element) return;
       this._drag.element = null;
@@ -58,7 +59,11 @@ const ElementManager = {
           });
         }
       } catch (_) { }
-    });
+    };
+    document.addEventListener('pointerup', endDrag);
+    // A touch drag can be interrupted (e.g. an OS gesture or notification) without ever
+    // firing pointerup - without this the element would stay stuck in "dragging" state.
+    document.addEventListener('pointercancel', endDrag);
   },
 
   /**
@@ -71,7 +76,7 @@ const ElementManager = {
     if (element.dataset.hasListeners === 'true') return;
     element.dataset.hasListeners = 'true';
 
-    element.addEventListener('mousedown', (e) => {
+    element.addEventListener('pointerdown', (e) => {
       // UI FIX: If clicking an input or textarea, don't trigger a drag
       const tag = e.target.tagName.toLowerCase();
       if (tag === 'input' || tag === 'textarea') return;

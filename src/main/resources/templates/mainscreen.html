@@ -70,6 +70,9 @@
         display: block !important;
         cursor: crosshair;
         border: 1px solid #e5e7eb;
+        /* Without this, touch-dragging here scrolls/zooms the page instead of drawing -
+           the browser claims the gesture before our pointer event handlers ever see it. */
+        touch-action: none;
       }
       /* Fix color picker visibility - make it always visible for testing */
       #colorPicker {
@@ -84,6 +87,7 @@
       #mainCanvas {
         background: white !important;
         position: relative !important;
+        touch-action: none;
       }
 
       /** Arrow pointing UP - for tooltip below element (default) **/
@@ -719,6 +723,7 @@
         position: absolute;
         user-select: none;
         transition: all 0.2s;
+        touch-action: none;
       }
 
       .canvas-element:hover {
@@ -740,6 +745,61 @@
       .canvas-element.dragging {
         transform: scale(1.05);
         z-index: 1000;
+      }
+
+      /* Sticky notes had no styling at all - just default browser input/textarea chrome -
+         and .sticky-footer (the intended drag handle) had collapsed to zero height because
+         its only child, .dot, had no size either, making the note nearly impossible to pick
+         up and move since the title/content areas are inputs that intentionally don't
+         start a drag (so typing doesn't get hijacked into moving the note). */
+      .sticky-note {
+        width: 180px;
+        background: #fef9c3;
+        border: 1px solid #eab308;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .sticky-title {
+        border: none;
+        background: transparent;
+        font-weight: 700;
+        font-size: 13px;
+        color: #713f12;
+        padding: 2px 0;
+      }
+
+      .sticky-content {
+        border: none;
+        background: transparent;
+        resize: none;
+        font-size: 13px;
+        color: #422006;
+        min-height: 48px;
+        font-family: inherit;
+      }
+
+      .sticky-footer {
+        display: flex;
+        justify-content: center;
+        padding: 4px 0;
+        cursor: move;
+      }
+
+      .sticky-dots {
+        display: flex;
+        gap: 3px;
+      }
+
+      .sticky-dots .dot {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: #ca8a04;
       }
 
       /* Resize Handles */
