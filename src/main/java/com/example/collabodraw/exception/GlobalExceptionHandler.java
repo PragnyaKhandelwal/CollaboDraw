@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
+import org.springframework.security.core.Authentication;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -53,7 +54,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public Object handleGenericException(Exception ex, HttpServletRequest request, RedirectAttributes redirectAttributes) {
+    public Object handleGenericException(Exception ex, HttpServletRequest request,
+            RedirectAttributes redirectAttributes, Authentication authentication) {
         // Never echo ex.getMessage()/class back to the client here: for /api/** most routes
         // are reached before authentication is enforced, so any leaked detail (SQL text,
         // table/column names, stack internals) is handed to an anonymous caller. Full detail
@@ -71,6 +73,9 @@ public class GlobalExceptionHandler {
                     ));
         }
         redirectAttributes.addFlashAttribute("error", "An unexpected error occurred. Reference: " + correlationId);
-        return "redirect:/auth";
+        // An authenticated user hitting a bug mid-session should land back in the app, not
+        // get bounced to what looks like a logged-out screen; only anonymous users go to /auth.
+        boolean isAuthenticated = authentication != null && authentication.isAuthenticated();
+        return "redirect:" + (isAuthenticated ? "/home" : "/auth");
     }
 }
