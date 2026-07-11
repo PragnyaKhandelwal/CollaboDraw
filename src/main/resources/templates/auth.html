@@ -4,6 +4,7 @@
   <meta name="_csrf" th:content="${_csrf.token}" />
   <meta name="_csrf_header" th:content="${_csrf.headerName}" />
   <script th:src="@{/js/csrf-fetch.js}"></script>
+  <link rel="stylesheet" th:href="@{/css/theme.css}" />
   <link rel="stylesheet" th:href="@{/css/theme-dark.css}" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -15,10 +16,11 @@
       box-sizing: border-box;
     }
     :root {
-      --main-green: #20b97c;
+      /* --main-green and --main-bg come from the shared theme.css so this page's brand
+         color always tracks the rest of the app; these remaining tokens are unique to
+         this page's glass-card treatment. */
       --main-blue: #50a8fc;
       --main-yellow: #f8e663;
-      --main-bg: #fafdff;
       --card-bg: rgba(255, 255, 255, 0.55); /* more glassy */
       --whiteboard-border: 2px solid #b7fbe2;
     }

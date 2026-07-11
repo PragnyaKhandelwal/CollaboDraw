@@ -4,6 +4,7 @@
     <meta name="_csrf" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <script th:src="@{/js/csrf-fetch.js}"></script>
+    <link rel="stylesheet" th:href="@{/css/theme.css}" />
     <link rel="stylesheet" th:href="@{/css/theme-dark.css}" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -11,24 +12,6 @@
     <title>CollaboDraw - Home</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --main-green: #20b97c;
-            --sidebar-bg: #0e7e58;
-            --sidebar-text: #ccece1;
-            --sidebar-width: 240px;
-            --sidebar-collapsed-width: 60px;
-            --nav-height: 56px;
-            --shadow-green: rgba(32, 185, 124, 0.15);
-            --main-bg: #fafdff;
-            --white: #ffffff;
-            --gray: #666666;
-            --light-gray: #f3f4f6;
-            --border: #e5e7eb;
-            --text-dark: #1f2937;
-            --blue: #3b82f6;
-            --purple: #8b5cf6;
-            --orange: #f59e0b;
-        }
 
         body {
             margin: 0;
@@ -715,6 +698,10 @@
         <div class="avatar" onclick="window.location.href='/settings'" th:text="${currentUser?.username?.substring(0,2)?.toUpperCase() ?: 'JD'}">JD</div>
       </div>
     </header>
+
+    <div th:if="${error}" class="alert alert-danger" style="background: #f8d7da; color: #721c24; padding: 10px 16px; border-radius: 5px; margin: 16px 32px 0; border: 1px solid #f5c6cb;">
+      <span th:text="${error}"></span>
+    </div>
 
     <!-- Dashboard Content -->
     <main class="dashboard-content">

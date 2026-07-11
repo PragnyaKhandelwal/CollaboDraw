@@ -1,0 +1,35 @@
+/*
+ * Shared design tokens for CollaboDraw.
+ * Single source of truth for the app's color palette - every template links this
+ * instead of redeclaring the same :root variables in its own <style> block.
+ * The --green/--dark-green/--light-bg/--yellow/--light-green/--tooltip-bg aliases
+ * exist so mainscreen.html's canvas editor CSS (which was written against those
+ * names) keeps working unchanged.
+ */
+:root {
+  --main-green: #20b97c;
+  --sidebar-bg: #0e7e58;
+  --sidebar-text: #ccece1;
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 60px;
+  --nav-height: 56px;
+  --shadow-green: rgba(32, 185, 124, 0.15);
+  --main-bg: #fafdff;
+  --white: #ffffff;
+  --gray: #666666;
+  --light-gray: #f3f4f6;
+  --border: #e5e7eb;
+  --text-dark: #1f2937;
+  --blue: #3b82f6;
+  --purple: #8b5cf6;
+  --orange: #f59e0b;
+  --red: #ef4444;
+
+  /* mainscreen.html editor aliases */
+  --green: var(--main-green);
+  --dark-green: var(--sidebar-bg);
+  --light-bg: #f8fffe;
+  --yellow: #fde68a;
+  --light-green: #a7f3d0;
+  --tooltip-bg: var(--text-dark);
+}
