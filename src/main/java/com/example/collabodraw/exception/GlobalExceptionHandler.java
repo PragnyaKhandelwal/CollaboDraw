@@ -11,6 +11,7 @@ import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.sql.SQLTransientConnectionException;
@@ -51,6 +52,15 @@ public class GlobalExceptionHandler {
         );
         model.addAttribute("error", errors.toString());
         return "auth";
+    }
+
+    // Missing routes/static files throw this; without a dedicated handler it falls into
+    // the catch-all below and gets redirected to /auth or /home instead of rendering the
+    // templates/error/404.html view. Rethrowing hands it back to Spring Boot's normal
+    // error-view resolution, which picks that template.
+    @ExceptionHandler(NoResourceFoundException.class)
+    public void handleNoResourceFound(NoResourceFoundException ex) throws NoResourceFoundException {
+        throw ex;
     }
 
     @ExceptionHandler(Exception.class)
