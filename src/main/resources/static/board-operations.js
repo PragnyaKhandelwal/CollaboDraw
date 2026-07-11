@@ -222,20 +222,22 @@ function showShareDialog(shareUrl) {
 
     const dialog = document.createElement('div');
     dialog.style.cssText = `
-        background: white;
+        background: var(--white, #fff);
+        color: var(--text-dark, #1f2937);
         padding: 20px;
         border-radius: 8px;
         max-width: 500px;
         width: 90%;
+        box-shadow: 0 20px 50px rgba(0,0,0,.25);
     `;
 
     dialog.innerHTML = `
         <h3>Share Board</h3>
         <p>Copy this link to share your board:</p>
-        <input type="text" value="${shareUrl}" readonly style="width: 100%; padding: 8px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px;">
+        <input type="text" value="${shareUrl}" readonly style="width: 100%; padding: 8px; margin: 10px 0; border: 1px solid var(--border, #ccc); border-radius: 4px; background: var(--light-gray, #f3f4f6); color: inherit;">
         <div style="text-align: right; margin-top: 15px;">
-            <button onclick="copyToClipboard('${shareUrl}')" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-right: 10px; cursor: pointer;">Copy Link</button>
-            <button onclick="this.closest('.modal').remove()" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Close</button>
+            <button onclick="copyToClipboard('${shareUrl}')" style="background: var(--main-green, #20b97c); color: white; border: none; padding: 8px 16px; border-radius: 6px; margin-right: 10px; cursor: pointer; font-weight: 600;">Copy Link</button>
+            <button onclick="this.closest('.modal').remove()" style="background: transparent; color: inherit; border: 1px solid var(--border, #ccc); padding: 8px 16px; border-radius: 6px; cursor: pointer;">Close</button>
         </div>
     `;
 

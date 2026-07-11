@@ -32,20 +32,20 @@
       listEl.innerHTML =
         '<div style="padding:12px 16px; font-size:14px;">' +
         '<div style="margin-bottom:8px;">No new notifications</div>' +
-        '<div style="color:#6b7280;">You\'re all caught up.</div>' +
+        '<div style="color:var(--gray,#6b7280);">You\'re all caught up.</div>' +
         '</div>';
       if (badgeEl) badgeEl.style.display = 'none';
       return;
     }
 
     listEl.innerHTML = items.map((n) => {
-      const unreadBg = n.read ? '' : 'background:#f0fdf9;';
-      const dot = n.read ? '' : '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#20b97c;margin-right:6px;"></span>';
+      const unreadBg = n.read ? '' : 'background:var(--light-gray,#f0fdf9);';
+      const dot = n.read ? '' : '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--main-green,#20b97c);margin-right:6px;"></span>';
       return (
-        '<div class="notif-item" data-id="' + n.id + '" style="padding:10px 16px; border-bottom:1px solid #f3f4f6; cursor:pointer; ' + unreadBg + '">' +
-        '<div style="font-size:13.5px; font-weight:600; color:#111827;">' + dot + escapeHtml(n.title || 'Notification') + '</div>' +
-        (n.message ? '<div style="font-size:12.5px; color:#4b5563; margin-top:2px;">' + escapeHtml(n.message) + '</div>' : '') +
-        '<div style="font-size:11px; color:#9ca3af; margin-top:4px;">' + escapeHtml(timeAgo(n.createdAt)) + '</div>' +
+        '<div class="notif-item" data-id="' + n.id + '" style="padding:10px 16px; border-bottom:1px solid var(--border,#f3f4f6); cursor:pointer; color:var(--text-dark,#111827); ' + unreadBg + '">' +
+        '<div style="font-size:13.5px; font-weight:600;">' + dot + escapeHtml(n.title || 'Notification') + '</div>' +
+        (n.message ? '<div style="font-size:12.5px; color:var(--gray,#4b5563); margin-top:2px;">' + escapeHtml(n.message) + '</div>' : '') +
+        '<div style="font-size:11px; color:var(--gray,#9ca3af); margin-top:4px;">' + escapeHtml(timeAgo(n.createdAt)) + '</div>' +
         '</div>'
       );
     }).join('');

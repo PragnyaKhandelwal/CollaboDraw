@@ -36,16 +36,16 @@
     if (!listHost) return;
 
     if (!items.length) {
-      listHost.innerHTML = '<div style="margin-bottom:8px">No new notifications</div><div style="color:#6b7280">You\'re all caught up.</div>';
+      listHost.innerHTML = '<div style="margin-bottom:8px">No new notifications</div><div style="color:var(--gray,#6b7280)">You\'re all caught up.</div>';
       return;
     }
 
     listHost.innerHTML = items.map((n) => {
       const color = n.type === 'error' ? '#ef4444' : (n.type === 'success' ? '#16a34a' : '#2563eb');
-      return '<div style="padding:8px 0;border-bottom:1px solid #f3f4f6">'
-        + '<div style="font-size:13px;color:#111827"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + color + ';margin-right:8px"></span>'
+      return '<div style="padding:8px 0;border-bottom:1px solid var(--border,#f3f4f6)">'
+        + '<div style="font-size:13px;color:var(--text-dark,#111827)"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + color + ';margin-right:8px"></span>'
         + String(n.message || '') + '</div>'
-        + '<div style="font-size:11px;color:#6b7280;margin-left:16px">' + formatTime(n.ts) + '</div>'
+        + '<div style="font-size:11px;color:var(--gray,#6b7280);margin-left:16px">' + formatTime(n.ts) + '</div>'
         + '</div>';
     }).join('');
   }
